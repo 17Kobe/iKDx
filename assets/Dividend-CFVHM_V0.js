@@ -1,1 +1,0 @@
-import{_ as e}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{c as o,o as t}from"./index-H7wWHouP.js";const c={},n={style:{padding:"32px"}};function r(s,_){return t(),o("div",n,"價差股利頁面")}const i=e(c,[["render",r]]);export{i as default};

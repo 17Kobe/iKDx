@@ -1,1 +1,0 @@
-import{_ as e}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{c as t,o}from"./index-H7wWHouP.js";const c={},s={style:{padding:"32px"}};function r(n,_){return o(),t("div",s,"資產表頁面")}const f=e(c,[["render",r]]);export{f as default};
