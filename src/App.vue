@@ -2,10 +2,56 @@
     <div :class="{ dark: isDark }" style="min-height: 100vh">
         <router-view />
         <Tabbar v-model="active" @change="onTabChange">
-            <TabbarItem icon="home-o">自選股</TabbarItem>
-            <TabbarItem icon="search">價差股利</TabbarItem>
-            <TabbarItem icon="friends-o">資產表</TabbarItem>
-            <TabbarItem icon="plus">新增</TabbarItem>
+            <TabbarItem>
+                <div class="tabbar-icon-wrap">
+                    <Icon
+                        :icon="active === 0 ? 'flowbite:star-solid' : 'flowbite:star-outline'"
+                        width="22"
+                        height="22"
+                    />
+                    <span>自選股</span>
+                </div>
+            </TabbarItem>
+            <TabbarItem>
+                <div class="tabbar-icon-wrap">
+                    <Icon
+                        :icon="
+                            active === 1
+                                ? 'ri:money-dollar-circle-fill'
+                                : 'ri:money-dollar-circle-line'
+                        "
+                        width="22"
+                        height="22"
+                    />
+                    <span>價差股利</span>
+                </div>
+            </TabbarItem>
+            <TabbarItem>
+                <div class="tabbar-icon-wrap">
+                    <Icon
+                        :icon="
+                            active === 2
+                                ? 'basil:chart-pie-alt-solid'
+                                : 'basil:chart-pie-alt-outline'
+                        "
+                        width="22"
+                        height="22"
+                    />
+                    <span>資產表</span>
+                </div>
+            </TabbarItem>
+            <TabbarItem>
+                <div class="tabbar-icon-wrap">
+                    <Icon
+                        :icon="
+                            active === 3 ? 'fluent:person-24-filled' : 'fluent:person-24-regular'
+                        "
+                        width="22"
+                        height="22"
+                    />
+                    <span>我的</span>
+                </div>
+            </TabbarItem>
         </Tabbar>
     </div>
 </template>
@@ -14,6 +60,7 @@
     import { ref, watch } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { Tabbar, TabbarItem } from 'vant';
+    import { Icon } from '@iconify/vue';
     import { usePreferredDark } from '@vueuse/core';
 
     const router = useRouter();
@@ -37,3 +84,19 @@
         router.push(tabRoutes[idx]);
     }
 </script>
+
+<style scoped>
+    .tabbar-icon-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        line-height: 1;
+    }
+    .tabbar-icon-wrap span {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+</style>
