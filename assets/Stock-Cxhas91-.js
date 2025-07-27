@@ -1,0 +1,1 @@
+import{_ as e}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{c as o,o as t}from"./index-H7wWHouP.js";const c={},r={style:{padding:"32px"}};function n(s,_){return t(),o("div",r,"自選股頁面")}const f=e(c,[["render",n]]);export{f as default};
