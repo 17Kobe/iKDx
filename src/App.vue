@@ -6,8 +6,8 @@
                 <div class="tabbar-icon-wrap">
                     <Icon
                         :icon="active === 0 ? 'flowbite:star-solid' : 'flowbite:star-outline'"
-                        width="22"
-                        height="22"
+                        width="24"
+                        height="24"
                     />
                     <span>自選股</span>
                 </div>
@@ -20,8 +20,8 @@
                                 ? 'ri:money-dollar-circle-fill'
                                 : 'ri:money-dollar-circle-line'
                         "
-                        width="22"
-                        height="22"
+                        width="24"
+                        height="24"
                     />
                     <span>價差股利</span>
                 </div>
@@ -45,8 +45,8 @@
                                 ? 'basil:chart-pie-alt-solid'
                                 : 'basil:chart-pie-alt-outline'
                         "
-                        width="22"
-                        height="22"
+                        width="24"
+                        height="24"
                     />
                     <span>資產表</span>
                 </div>
@@ -57,8 +57,8 @@
                         :icon="
                             active === 3 ? 'fluent:person-24-filled' : 'fluent:person-24-regular'
                         "
-                        width="22"
-                        height="22"
+                        width="24"
+                        height="24"
                     />
                     <span>我的</span>
                 </div>
