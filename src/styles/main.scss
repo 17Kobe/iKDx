@@ -1,0 +1,7 @@
+@use './theme-light.scss' as *;
+@use './theme-dark.scss' as *;
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
