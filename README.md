@@ -1,19 +1,19 @@
-# iKDx - Tauri + Vue 3
+# iKDx
 
 這是一個使用 Tauri + Vue 3 建立的桌面應用程式，同時支援自動部署到 GitHub Pages。
 
 ## 功能特色
 
--   🚀 使用 Tauri 2.0 建立跨平台桌面應用程式
--   🎨 使用 Vue 3 與 Composition API
--   ⚡ 使用 Vite 快速建置
--   🔄 自動部署到 GitHub Pages
+- 🚀 使用 Tauri 2.0 建立跨平台桌面應用程式
+- 🎨 使用 Vue 3 與 Composition API
+- ⚡ 使用 Vite 快速建置
+- 🔄 自動部署到 GitHub Pages
 
 ## 開發環境設定
 
 ### 建議的 IDE 設定
 
--   [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
 ### 安裝依賴
 
