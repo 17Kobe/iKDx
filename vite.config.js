@@ -5,9 +5,17 @@ import path from 'path';
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
+
+// 根據部署目標自動切換 base 路徑：
+// - 若 DEPLOY_TARGET=github，代表部署到 GitHub Pages，需設 base 為 '/iKDx/'（子目錄）
+// - 其他情境（如 Cloudflare Pages）則設 base 為 '/'（根目錄）
+// 這樣可讓同一份程式碼同時支援兩平台部署，避免資源路徑錯誤。
+const isGitHub = process.env.DEPLOY_TARGET === 'github';
+
 export default defineConfig(async () => ({
     plugins: [vue()],
-    base: process.env.NODE_ENV === 'production' ? '/iKDx/' : '/',
+    // base 路徑自動切換，確保靜態資源載入正確
+    base: isGitHub ? '/iKDx/' : '/',
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'src'),
