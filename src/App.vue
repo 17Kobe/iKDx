@@ -6,8 +6,8 @@
                 <div class="tabbar-icon-wrap">
                     <Icon
                         :icon="active === 0 ? 'flowbite:star-solid' : 'flowbite:star-outline'"
-                        width="24"
-                        height="24"
+                        width="26"
+                        height="26"
                     />
                     <span>自選股</span>
                 </div>
@@ -20,23 +20,14 @@
                                 ? 'ri:money-dollar-circle-fill'
                                 : 'ri:money-dollar-circle-line'
                         "
-                        width="24"
-                        height="24"
+                        width="26"
+                        height="26"
                     />
                     <span>價差股利</span>
                 </div>
             </TabbarItem>
-            <!-- Progress Bar 區塊 -->
-            <div class="tabbar-progress-wrap">
-                <div class="tabbar-progress-item">
-                    <div class="tabbar-progress-bar" style="width: 75%"></div>
-                    <span class="tabbar-progress-label">75% 極貪婪</span>
-                </div>
-                <div class="tabbar-progress-item">
-                    <div class="tabbar-progress-bar" style="width: 100%"></div>
-                    <span class="tabbar-progress-label">31分 穩定</span>
-                </div>
-            </div>
+            <!-- Progress Bar 區塊（已封裝元件） -->
+            <TabbarProgress :progress-list="progressList" />
             <TabbarItem>
                 <div class="tabbar-icon-wrap">
                     <Icon
@@ -45,8 +36,8 @@
                                 ? 'basil:chart-pie-alt-solid'
                                 : 'basil:chart-pie-alt-outline'
                         "
-                        width="24"
-                        height="24"
+                        width="26"
+                        height="26"
                     />
                     <span>資產表</span>
                 </div>
@@ -57,8 +48,8 @@
                         :icon="
                             active === 3 ? 'fluent:person-24-filled' : 'fluent:person-24-regular'
                         "
-                        width="24"
-                        height="24"
+                        width="26"
+                        height="26"
                     />
                     <span>我的</span>
                 </div>
@@ -71,6 +62,20 @@
     import { ref, watch } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { Tabbar, TabbarItem } from 'vant';
+    import TabbarProgress from '@/components/TabbarProgress.vue';
+    // 進度條資料，可依需求調整
+    const progressList = [
+        {
+            percent: 75,
+            label: '75% 極貪婪',
+            color: 'linear-gradient(90deg, #7be495 60%, #bdf7b7 100%)',
+        },
+        {
+            percent: 100,
+            label: '31分 穩定',
+            color: 'linear-gradient(90deg, #bdf7b7 60%, #7be495 100%)',
+        },
+    ];
     import { Icon } from '@iconify/vue';
     import { usePreferredDark } from '@vueuse/core';
 
@@ -97,48 +102,7 @@
 </script>
 
 <style scoped>
-    .tabbar-progress-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
-        margin: 0 8px;
-        gap: 4px;
-        min-width: 80px;
-        max-width: 100px;
-    }
-    .tabbar-progress-item {
-        position: relative;
-        width: 100%;
-        background: #e6f7e6;
-        border-radius: 16px;
-        height: 24px;
-        margin-bottom: 2px;
-        display: flex;
-        align-items: center;
-        padding: 0 4px;
-    }
-    .tabbar-progress-bar {
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        background: linear-gradient(90deg, #7be495 60%, #bdf7b7 100%);
-        border-radius: 16px;
-        z-index: 1;
-    }
-    .tabbar-progress-item:nth-child(2) .tabbar-progress-bar {
-        background: linear-gradient(90deg, #bdf7b7 60%, #7be495 100%);
-    }
-    .tabbar-progress-label {
-        position: relative;
-        z-index: 2;
-        font-size: 13px;
-        color: #222;
-        font-weight: 500;
-        white-space: nowrap;
-        margin-left: 2px;
-    }
+    /* Progress Bar 樣式已移至 TabbarProgress.vue */
     .tabbar-icon-wrap {
         display: flex;
         flex-direction: column;
@@ -149,7 +113,7 @@
         line-height: 1;
     }
     .tabbar-icon-wrap span {
-        font-size: 12px;
-        margin-top: 2px;
+        font-size: 14px;
+        margin-bottom: 7px;
     }
 </style>
