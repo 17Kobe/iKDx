@@ -1,7 +1,14 @@
 <template>
-    <div :class="{ dark: isDark }" style="min-height: 100vh">
-        <router-view />
+    <div :class="{ dark: isDark }" class="app-container">
+        <div class="main-content">
+            <router-view v-slot="{ Component, route }">
+                <transition name="slide-left" mode="out-in">
+                    <component :is="Component" :key="route.path" />
+                </transition>
+            </router-view>
+        </div>
         <FloatingBubble
+            v-if="showFloatingBubble"
             icon="plus"
             axis="xy"
             magnetic="x"
@@ -67,7 +74,7 @@
 </template>
 
 <script setup>
-    import { ref, watch } from 'vue';
+    import { ref, watch, computed } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { Tabbar, TabbarItem, FloatingBubble } from 'vant';
     import TabbarProgress from '@/components/TabbarProgress.vue';
@@ -95,6 +102,11 @@
 
     const isDark = usePreferredDark();
 
+    // 計算是否顯示 FloatingBubble - 只在自選股和股利價差頁面顯示
+    const showFloatingBubble = computed(() => {
+        return route.path === '/' || route.path === '/dividend';
+    });
+
     watch(
         () => route.path,
         val => {
@@ -114,6 +126,20 @@
 </script>
 
 <style scoped>
+    .app-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 70px; /* 為 Tabbar 留空間 */
+        position: relative; /* 為頁面切換動畫提供定位基準 */
+    }
+
     /* Progress Bar 樣式已移至 TabbarProgress.vue */
     .tabbar-icon-wrap {
         display: flex;
@@ -127,5 +153,28 @@
     .tabbar-icon-wrap span {
         font-size: 14px;
         margin-bottom: 7px;
+    }
+
+    /* 頁面切換動畫 - 新頁面從右側滑入，舊頁面向左移出200px */
+    .slide-left-enter-active,
+    .slide-left-leave-active {
+        transition: transform 0.17s ease-in-out;
+        position: absolute;
+        width: 100%;
+        top: 0;
+        left: 0;
+    }
+
+    .slide-left-enter-from {
+        transform: translateX(100%); /* 新頁面從右側進入 */
+    }
+
+    .slide-left-leave-to {
+        transform: translateX(-50px); /* 舊頁面只向左移出200px */
+    }
+
+    .slide-left-enter-to,
+    .slide-left-leave-from {
+        transform: translateX(0);
     }
 </style>

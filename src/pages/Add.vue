@@ -1,8 +1,8 @@
 <template>
-    <div style="padding: 16px; background: #f8f9fa; min-height: 100vh;">
-        <div style="margin-bottom: 20px;">
-            <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">新增股票</h2>
-            
+    <div style="padding: 16px; background: #f8f9fa">
+        <div style="margin-bottom: 20px">
+            <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600">新增股票</h2>
+
             <!-- 搜尋框 -->
             <Search
                 v-model="searchValue"
@@ -14,39 +14,38 @@
         </div>
 
         <!-- 搜尋結果列表 -->
-        <div v-if="searchResults.length > 0" style="margin-bottom: 20px;">
-            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #666;">搜尋結果</h3>
-            <Card v-for="stock in searchResults" :key="stock.code" style="margin-bottom: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div v-if="searchResults.length > 0" style="margin-bottom: 20px">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #666">搜尋結果</h3>
+            <Card v-for="stock in searchResults" :key="stock.code" style="margin-bottom: 8px">
+                <div style="display: flex; justify-content: space-between; align-items: center">
                     <div>
-                        <div style="font-weight: 600; margin-bottom: 4px;">{{ stock.name }}</div>
-                        <div style="color: #666; font-size: 14px;">{{ stock.code }}</div>
+                        <div style="font-weight: 600; margin-bottom: 4px">{{ stock.name }}</div>
+                        <div style="color: #666; font-size: 14px">{{ stock.code }}</div>
                     </div>
-                    <Button type="primary" size="small" @click="addStock(stock)">
-                        新增
-                    </Button>
+                    <Button type="primary" size="small" @click="addStock(stock)"> 新增 </Button>
                 </div>
             </Card>
         </div>
 
         <!-- 熱門股票推薦 -->
         <div v-if="searchValue === ''">
-            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #666;">熱門股票</h3>
-            <Card v-for="stock in popularStocks" :key="stock.code" style="margin-bottom: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #666">熱門股票</h3>
+            <Card v-for="stock in popularStocks" :key="stock.code" style="margin-bottom: 8px">
+                <div style="display: flex; justify-content: space-between; align-items: center">
                     <div>
-                        <div style="font-weight: 600; margin-bottom: 4px;">{{ stock.name }}</div>
-                        <div style="color: #666; font-size: 14px;">{{ stock.code }}</div>
+                        <div style="font-weight: 600; margin-bottom: 4px">{{ stock.name }}</div>
+                        <div style="color: #666; font-size: 14px">{{ stock.code }}</div>
                     </div>
-                    <Button type="primary" size="small" @click="addStock(stock)">
-                        新增
-                    </Button>
+                    <Button type="primary" size="small" @click="addStock(stock)"> 新增 </Button>
                 </div>
             </Card>
         </div>
 
         <!-- 空狀態 -->
-        <div v-if="searchValue !== '' && searchResults.length === 0" style="text-align: center; padding: 40px 0; color: #999;">
+        <div
+            v-if="searchValue !== '' && searchResults.length === 0"
+            style="text-align: center; padding: 40px 0; color: #999"
+        >
             查無相關股票
         </div>
     </div>
@@ -92,9 +91,9 @@
         }
 
         // 模擬搜尋邏輯
-        searchResults.value = allStocks.filter(stock => 
-            stock.code.includes(searchValue.value) || 
-            stock.name.includes(searchValue.value)
+        searchResults.value = allStocks.filter(
+            stock =>
+                stock.code.includes(searchValue.value) || stock.name.includes(searchValue.value)
         );
     }
 
