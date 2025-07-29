@@ -1,6 +1,14 @@
 <template>
     <div :class="{ dark: isDark }" style="min-height: 100vh">
         <router-view />
+        <FloatingBubble
+            icon="plus"
+            axis="xy"
+            magnetic="x"
+            :gap="{ x: 24, y: 70 }"
+            style="--van-floating-bubble-size: 48px"
+            @click="onBubbleClick"
+        />
         <Tabbar v-model="active" @change="onTabChange">
             <TabbarItem>
                 <div class="tabbar-icon-wrap">
@@ -61,7 +69,7 @@
 <script setup>
     import { ref, watch } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
-    import { Tabbar, TabbarItem } from 'vant';
+    import { Tabbar, TabbarItem, FloatingBubble } from 'vant';
     import TabbarProgress from '@/components/TabbarProgress.vue';
     // 進度條資料，可依需求調整
     const progressList = [
@@ -83,7 +91,7 @@
     const route = useRoute();
     const active = ref(0);
 
-    const tabRoutes = ['/', '/dividend', '/asset', '/add'];
+    const tabRoutes = ['/', '/dividend', '/asset', '/my'];
 
     const isDark = usePreferredDark();
 
@@ -98,6 +106,10 @@
 
     function onTabChange(idx) {
         router.push(tabRoutes[idx]);
+    }
+
+    function onBubbleClick() {
+        router.push('/add');
     }
 </script>
 
