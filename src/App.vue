@@ -2,7 +2,7 @@
     <div :class="{ dark: isDark }" class="app-container">
         <div class="main-content">
             <router-view v-slot="{ Component, route }">
-                <transition name="slide-left" mode="out-in">
+                <transition name="slide-left">
                     <component :is="Component" :key="route.path" />
                 </transition>
             </router-view>
@@ -155,14 +155,15 @@
         margin-bottom: 7px;
     }
 
-    /* 頁面切換動畫 - 新頁面從右側滑入，舊頁面向左移出200px */
+    /* 頁面切換動畫 - 新頁面從右側滑入，舊頁面向左移出50px，同時進行 */
     .slide-left-enter-active,
     .slide-left-leave-active {
-        transition: transform 0.17s ease-in-out;
+        transition: transform 0.35s ease-in-out;
         position: absolute;
         width: 100%;
         top: 0;
         left: 0;
+        height: 100%;
     }
 
     .slide-left-enter-from {
@@ -170,7 +171,7 @@
     }
 
     .slide-left-leave-to {
-        transform: translateX(-50px); /* 舊頁面只向左移出200px */
+        transform: translateX(-100px); /* 舊頁面向左移出100px */
     }
 
     .slide-left-enter-to,
