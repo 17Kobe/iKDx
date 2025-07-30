@@ -134,7 +134,7 @@
         line-height: 1;
     }
     .tabbar-icon-wrap span {
-        font-size: 16px; /* 從 14px 增加到 16px */
+        font-size: 14px; /* 從 16px 改為 14px */
         margin-top: 4px; /* 增加圖標與文字的間距 */
         margin-bottom: 7px;
     }
