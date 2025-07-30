@@ -7,7 +7,7 @@
             magnetic="x"
             :gap="{ x: 24, y: 80 }"
             style="--van-floating-bubble-size: 48px"
-            @click="showSheet = true"
+            @click="onBubbleClick"
         />
         <ShareSheet
             v-model:show="showSheet"
@@ -34,6 +34,7 @@
             <template #description>
                 <div>
                     <Search
+                        ref="searchInputRef"
                         v-model="search"
                         placeholder="請輸入股票名稱或代碼"
                         action-text=""
@@ -110,11 +111,21 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue';
+    import { ref, nextTick } from 'vue';
     import { FloatingBubble, ShareSheet, Search } from 'vant';
 
     const showSheet = ref(false);
     const search = ref('');
+    const searchInputRef = ref();
+
+    function onBubbleClick() {
+        showSheet.value = true;
+        // nextTick(() => {
+        //     // Vant Search 元件 input 實際為內部 input 元素
+        //     const input = searchInputRef.value?.$el?.querySelector('input');
+        //     if (input) input.focus();
+        // });
+    }
 
     function onSearch(val) {
         // 這裡寫搜尋邏輯
