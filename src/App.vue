@@ -7,22 +7,13 @@
                 </transition>
             </router-view>
         </div>
-        <FloatingBubble
-            v-if="showFloatingBubble"
-            icon="plus"
-            axis="xy"
-            magnetic="x"
-            :gap="{ x: 24, y: 70 }"
-            style="--van-floating-bubble-size: 48px"
-            @click="onBubbleClick"
-        />
-        <Tabbar v-model="active" @change="onTabChange">
+        <Tabbar v-model="active" @change="onTabChange" class="custom-tabbar">
             <TabbarItem>
                 <div class="tabbar-icon-wrap">
                     <Icon
                         :icon="active === 0 ? 'flowbite:star-solid' : 'flowbite:star-outline'"
-                        width="26"
-                        height="26"
+                        width="28"
+                        height="28"
                     />
                     <span>自選股</span>
                 </div>
@@ -35,8 +26,8 @@
                                 ? 'ri:money-dollar-circle-fill'
                                 : 'ri:money-dollar-circle-line'
                         "
-                        width="26"
-                        height="26"
+                        width="28"
+                        height="28"
                     />
                     <span>價差股利</span>
                 </div>
@@ -51,8 +42,8 @@
                                 ? 'basil:chart-pie-alt-solid'
                                 : 'basil:chart-pie-alt-outline'
                         "
-                        width="26"
-                        height="26"
+                        width="28"
+                        height="28"
                     />
                     <span>資產表</span>
                 </div>
@@ -63,8 +54,8 @@
                         :icon="
                             active === 3 ? 'fluent:person-24-filled' : 'fluent:person-24-regular'
                         "
-                        width="26"
-                        height="26"
+                        width="28"
+                        height="28"
                     />
                     <span>我的</span>
                 </div>
@@ -74,9 +65,9 @@
 </template>
 
 <script setup>
-    import { ref, watch, computed } from 'vue';
+    import { ref, watch } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
-    import { Tabbar, TabbarItem, FloatingBubble } from 'vant';
+    import { Tabbar, TabbarItem } from 'vant';
     import TabbarProgress from '@/components/TabbarProgress.vue';
     // 進度條資料，可依需求調整
     const progressList = [
@@ -102,11 +93,6 @@
 
     const isDark = usePreferredDark();
 
-    // 計算是否顯示 FloatingBubble - 只在自選股和股利價差頁面顯示
-    const showFloatingBubble = computed(() => {
-        return route.path === '/' || route.path === '/dividend';
-    });
-
     watch(
         () => route.path,
         val => {
@@ -118,10 +104,6 @@
 
     function onTabChange(idx) {
         router.push(tabRoutes[idx]);
-    }
-
-    function onBubbleClick() {
-        router.push('/add');
     }
 </script>
 
@@ -136,8 +118,9 @@
     .main-content {
         flex: 1;
         overflow-y: auto;
-        padding-bottom: 70px; /* 為 Tabbar 留空間 */
+        padding-bottom: 80px; /* 為 Tabbar 留空間 */
         position: relative; /* 為頁面切換動畫提供定位基準 */
+        height: 100%; /* 設定高度為 100% */
     }
 
     /* Progress Bar 樣式已移至 TabbarProgress.vue */
@@ -151,7 +134,8 @@
         line-height: 1;
     }
     .tabbar-icon-wrap span {
-        font-size: 14px;
+        font-size: 16px; /* 從 14px 增加到 16px */
+        margin-top: 4px; /* 增加圖標與文字的間距 */
         margin-bottom: 7px;
     }
 
@@ -177,5 +161,13 @@
     .slide-left-enter-to,
     .slide-left-leave-from {
         transform: translateX(0);
+    }
+
+    /* 自定義 Tabbar 高度 */
+    .custom-tabbar {
+        height: 80px !important;
+        border-top: 1px solid #ebedf0 !important; /* 確保有明顯的分隔線 */
+        background-color: rgba(255, 255, 255, 0.9) !important; /* 白色背景，90% 透明度 */
+        backdrop-filter: blur(10px); /* 添加背景模糊效果 */
     }
 </style>
