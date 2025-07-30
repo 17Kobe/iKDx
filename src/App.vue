@@ -118,7 +118,7 @@
     .main-content {
         flex: 1;
         overflow-y: auto;
-        padding-bottom: 80px; /* 為 Tabbar 留空間 */
+        padding-bottom: 60px; /* 為 Tabbar 留空間 */
         position: relative; /* 為頁面切換動畫提供定位基準 */
         height: 100%; /* 設定高度為 100% */
     }
@@ -165,7 +165,7 @@
 
     /* 自定義 Tabbar 高度 */
     .custom-tabbar {
-        height: 80px !important;
+        height: 60px !important;
         border-top: 1px solid #ebedf0 !important; /* 確保有明顯的分隔線 */
         background-color: rgba(255, 255, 255, 0.9) !important; /* 白色背景，90% 透明度 */
         backdrop-filter: blur(10px); /* 添加背景模糊效果 */
