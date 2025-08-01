@@ -134,23 +134,23 @@
     const localSearch = ref('');
     const searchResults = ref([]);
 
-    const hotStocks = [
-        '台積電',
-        '鴻海',
-        '聯發科',
-        '長榮',
-        '中鋼',
-    ];
+    const hotStocks = ['台積電', '鴻海', '聯發科', '長榮', '中鋼'];
+
+    function focusSearchInput() {
+        nextTick(() => {
+            const input = searchInputRef.value?.$el?.querySelector('input');
+            if (input) input.focus();
+        });
+    }
 
     // showSheet 開啟時自動 focus
     watch(
         () => showSheet.value,
         val => {
             if (val) {
-                nextTick(() => {
-                    const input = searchInputRef.value?.$el?.querySelector('input');
-                    if (input) input.focus();
-                });
+                setTimeout(() => {
+                    focusSearchInput();
+                }, 300);
             }
         }
     );
@@ -174,9 +174,6 @@
 
     function onHotTagClick(tag) {
         localSearch.value = tag;
-        nextTick(() => {
-            const input = searchInputRef.value?.$el?.querySelector('input');
-            if (input) input.focus();
-        });
+        focusSearchInput();
     }
 </script>
