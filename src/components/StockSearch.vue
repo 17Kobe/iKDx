@@ -1,11 +1,8 @@
 <template>
-    <!--
-        @update:show 這行是為了讓 v-model:show 能正確雙向綁定，
-        當 ShareSheet 關閉時會自動通知父元件更新 modelValue，即為父 showSheet 狀態
-    -->
+    <!-- 以 showSheet 控制顯示，移除 v-model:show -->
     <ShareSheet
-        :show="props.modelValue"
-        @update:show="$emit('update:modelValue', $event)"
+        :show="showSheet"
+        @update:show="bus.emit(false)"
         :options="[]"
         cancel-text=""
         style="--van-share-sheet-header-padding: 24px 24px 0 24px; min-height: 80vh; height: 80vh"
@@ -61,49 +58,22 @@
                     "
                 >
                     <span
-                        style="
-                            background: #f2f3f5;
-                            border-radius: 16px;
-                            padding: 4px 12px;
-                            font-size: 15px;
-                        "
-                        >台積電</span
-                    >
-                    <span
-                        style="
-                            background: #f2f3f5;
-                            border-radius: 16px;
-                            padding: 4px 12px;
-                            font-size: 15px;
-                        "
-                        >鴻海</span
-                    >
-                    <span
-                        style="
-                            background: #f2f3f5;
-                            border-radius: 16px;
-                            padding: 4px 12px;
-                            font-size: 15px;
-                        "
-                        >聯發科</span
-                    >
-                    <span
-                        style="
-                            background: #f2f3f5;
-                            border-radius: 16px;
-                            padding: 4px 12px;
-                            font-size: 15px;
-                        "
-                        >長榮</span
-                    >
-                    <span
-                        style="
-                            background: #f2f3f5;
-                            border-radius: 16px;
-                            padding: 4px 12px;
-                            font-size: 15px;
-                        "
-                        >中鋼</span
+                        v-for="tag in hotStocks"
+                        :key="tag"
+                        @click="onHotTagClick(tag)"
+                        :style="{
+                            background: localSearch === tag ? '#1976d2' : '#e3eafc',
+                            color: localSearch === tag ? '#fff' : '#1976d2',
+                            borderRadius: '16px',
+                            padding: '4px 12px',
+                            fontSize: '15px',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            fontWeight: localSearch === tag ? 'bold' : 'normal',
+                            boxShadow: localSearch === tag ? '0 0 0 2px #1976d233' : 'none',
+                            transition: 'background 0.2s, color 0.2s',
+                        }"
+                        >{{ tag }}</span
                     >
                 </div>
                 <!-- 搜尋結果卡片區塊 -->
@@ -150,19 +120,31 @@
     import { ref, watch, nextTick } from 'vue';
     import { ShareSheet, Search } from 'vant';
     import { getStocksFromDB } from '@/lib/stockService.js';
+    import { useEventBus } from '@vueuse/core';
 
-    // Props
-    const props = defineProps({
-        modelValue: Boolean,
+    // 事件總線：控制顯示狀態
+    const bus = useEventBus('stock-search');
+    const showSheet = ref(false);
+
+    bus.on(val => {
+        showSheet.value = val;
     });
 
     const searchInputRef = ref();
     const localSearch = ref('');
     const searchResults = ref([]);
 
-    // show 開啟時自動 focus
+    const hotStocks = [
+        '台積電',
+        '鴻海',
+        '聯發科',
+        '長榮',
+        '中鋼',
+    ];
+
+    // showSheet 開啟時自動 focus
     watch(
-        () => props.modelValue,
+        () => showSheet.value,
         val => {
             if (val) {
                 nextTick(() => {
@@ -182,14 +164,19 @@
                 return;
             }
             const allStocks = await getStocksFromDB();
-            console.log('allStocks', allStocks);
-
             searchResults.value = allStocks.filter(s => s.name.includes(val) || s.id.includes(val));
-            console.log('searchResults', searchResults.value);
         }
     );
 
     function onSearch(val) {
         // 可選：按下搜尋按鈕時的額外行為
+    }
+
+    function onHotTagClick(tag) {
+        localSearch.value = tag;
+        nextTick(() => {
+            const input = searchInputRef.value?.$el?.querySelector('input');
+            if (input) input.focus();
+        });
     }
 </script>

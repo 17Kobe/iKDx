@@ -9,17 +9,19 @@
             style="--van-floating-bubble-size: 48px"
             @click="onBubbleClick"
         />
-        <StockSearch v-model:show="showSheet" />
+        <StockSearch />
     </div>
 </template>
 
 <script setup>
-    import { ref } from 'vue';
     import { FloatingBubble } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
+    import { useEventBus } from '@vueuse/core';
 
-    const showSheet = ref(false);
+    // 事件總線
+    const bus = useEventBus('stock-search');
+
     function onBubbleClick() {
-        showSheet.value = true;
+        bus.emit(true);
     }
 </script>
