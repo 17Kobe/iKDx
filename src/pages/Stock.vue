@@ -9,14 +9,14 @@
             style="--van-floating-bubble-size: 48px"
             @click="onBubbleClick"
         />
-        <StockSearchSheet v-model:show="showSheet" />
+        <StockSearch v-model:show="showSheet" />
     </div>
 </template>
 
 <script setup>
     import { ref } from 'vue';
     import { FloatingBubble } from 'vant';
-    import StockSearchSheet from '@/components/StockSearchSheet.vue';
+    import StockSearch from '@/components/StockSearch.vue';
 
     const showSheet = ref(false);
     function onBubbleClick() {

@@ -19,7 +19,9 @@ export async function getStocksFromDB() {
     if (count > 0) {
         return await db.getAll('stocks');
     } else {
-        const res = await fetch('/stocks/stocks.json');
+        // 使用 base 路徑，支援 GitHub Pages 與 Cloudflare Pages
+        const base = import.meta.env.BASE_URL || '/';
+        const res = await fetch(base + 'stocks/stocks.json');
         const stocks = await res.json();
         const tx = db.transaction('stocks', 'readwrite');
         const store = tx.objectStore('stocks');

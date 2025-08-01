@@ -8,7 +8,7 @@
         @update:show="$emit('update:modelValue', $event)"
         :options="[]"
         cancel-text=""
-        style="--van-share-sheet-header-padding: 24px 24px 0 24px; min-height: 60vh"
+        style="--van-share-sheet-header-padding: 24px 24px 0 24px; min-height: 80vh; height: 80vh"
     >
         <template #title>
             <div
