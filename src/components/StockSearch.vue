@@ -143,7 +143,19 @@
         });
     }
 
+    function blurSearchInput() {
+        nextTick(() => {
+            const input = searchInputRef.value?.$el?.querySelector('input');
+            if (input) input.blur();
+            // iOS 有時需強制 blur activeElement
+            if (typeof document !== 'undefined' && document.activeElement) {
+                document.activeElement.blur();
+            }
+        });
+    }
+
     // showSheet 開啟時自動 focus
+    // 300ms 延遲是為了確保 ShareSheet 完全渲染後再 focus，但手機版因安全考量不生效
     watch(
         () => showSheet.value,
         val => {
@@ -151,6 +163,16 @@
                 setTimeout(() => {
                     focusSearchInput();
                 }, 300);
+            }
+        }
+    );
+
+    // ShareSheet 關閉時自動 blur，收回鍵盤
+    watch(
+        () => showSheet.value,
+        val => {
+            if (!val) {
+                blurSearchInput();
             }
         }
     );
