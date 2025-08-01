@@ -1,0 +1,27 @@
+name: Fetch CNN Index
+
+on:
+    schedule:
+        - cron: '0 8 * * *' # 每天 UTC+8 上午8點
+    workflow_dispatch:
+
+jobs:
+    fetch-and-commit:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+            - name: Install dependencies
+              run: npm install
+            - name: Fetch All Data
+              run: node scripts/crawler/fetch-all-data.js
+            - name: Commit & Push
+              run: |
+                  git config --global user.name 'github-actions'
+                  git config --global user.email 'github-actions@github.com'
+                  git add public/data/*.json
+                  git commit -m 'Update all data'
+                  git push
