@@ -129,10 +129,12 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        color: #959698;
         height: 100%;
         width: 100%;
         line-height: 1;
     }
+
     .tabbar-icon-wrap span {
         font-size: 14px; /* 從 16px 改為 14px */
         margin-top: 4px; /* 增加圖標與文字的間距 */
@@ -174,7 +176,7 @@
     }
 
     /* 讓 Tabbar 的 active item 也有透明度 */
-    .van-tabbar-item--active {
-        background: rgba(255, 255, 255, 0) !important;
+    .van-tabbar-item--active .tabbar-icon-wrap {
+        color: #2196f3 !important;
     }
 </style>
