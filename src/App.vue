@@ -166,8 +166,15 @@
     /* 自定義 Tabbar 高度 */
     .custom-tabbar {
         height: 60px !important;
-        border-top: 1px solid #ebedf0 !important; /* 確保有明顯的分隔線 */
-        background-color: rgba(255, 255, 255, 0.9) !important; /* 白色背景，90% 透明度 */
-        backdrop-filter: blur(10px); /* 添加背景模糊效果 */
+        border-top: 1px solid #ebedf0 !important;
+        background: rgba(255, 255, 255, 0.95);
+        /* backdrop-filter: blur(1px); */
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+        z-index: 100;
+    }
+
+    /* 讓 Tabbar 的 active item 也有透明度 */
+    .van-tabbar-item--active {
+        background: rgba(255, 255, 255, 0) !important;
     }
 </style>
