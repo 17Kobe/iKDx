@@ -370,7 +370,6 @@
         padding: 16px;
         background-color: #f5f5f5;
         min-height: 100vh;
-        padding-bottom: 56px !important;
     }
 
     /* 標題欄 */
