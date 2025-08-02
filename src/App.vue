@@ -2,7 +2,7 @@
     <div :class="{ dark: isDark }" class="app-container">
         <div class="main-content">
             <router-view v-slot="{ Component, route }">
-                <transition name="slide-left">
+                <transition :name="firstLoad ? '' : 'slide-left'">
                     <component :is="Component" :key="route.path" />
                 </transition>
             </router-view>
@@ -88,16 +88,20 @@
     const router = useRouter();
     const route = useRoute();
     const active = ref(0);
+    const firstLoad = ref(true);
 
     const tabRoutes = ['/', '/dividend', '/asset', '/my'];
 
     const isDark = usePreferredDark();
 
+    let firstWatch = true;
     watch(
         () => route.path,
         val => {
             const idx = tabRoutes.indexOf(val);
             if (idx !== -1) active.value = idx;
+            if (firstLoad.value && !firstWatch) firstLoad.value = false;
+            firstWatch = false;
         },
         { immediate: true }
     );
