@@ -104,6 +104,7 @@
             <br />
             <br />
             <br />
+            <br />
         </div>
 
         <!-- 浮動按鈕 -->
@@ -113,9 +114,9 @@
             :gap="{ x: 20, y: 80 }"
             icon="plus"
             style="
-                --van-floating-bubble-size: 48px;
+                --van-floating-bubble-size: 56px;
                 --van-floating-bubble-background: #ffe066;
-                --van-floating-bubble-icon-size: 20px;
+                --van-floating-bubble-icon-size: 22px;
                 --van-floating-bubble-color: #322b0d;
             "
             @click="onBubbleClick"

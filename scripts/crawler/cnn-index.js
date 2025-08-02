@@ -1,5 +1,9 @@
 import axios from 'axios';
 import { writeFileSync } from 'fs';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = resolve(fileURLToPath(import.meta.url), '..');
 
 export const fetchCNN = async () => {
     const res = await axios.get('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
@@ -24,7 +28,7 @@ export const fetchCNN = async () => {
             : '';
     }
     writeFileSync(
-        '../../public/data/cnn-index.json',
+        resolve(__dirname, '../../public/data/cnn-index.json'),
         JSON.stringify({ index, status, updateText })
     );
 };
