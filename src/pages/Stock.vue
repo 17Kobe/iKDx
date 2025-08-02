@@ -425,7 +425,11 @@
 
     /* 股票名稱欄 - 固定不動 */
     .stock-name {
-        flex: 1;
+        width: 162px;
+        min-width: 162px;
+        max-width: 162px;
+        /* flex: none; 無論螢幕大小都會保持固定寬度。 */
+        flex: none;
         padding-right: 16px;
     }
 
