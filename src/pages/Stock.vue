@@ -189,6 +189,36 @@
             weeklyKD: 55.4,
             rsi: 52.1,
         },
+        {
+            id: '1215',
+            name: '卜蜂',
+            code: '1215',
+            price: 115.5,
+            change: -0.5,
+            changePercent: -0.43,
+            weeklyKD: 56.87,
+            rsi: 71.63,
+        },
+        {
+            id: '2885',
+            name: '元大金',
+            code: '2885',
+            price: 34.81,
+            change: 0.06,
+            changePercent: 0.17,
+            weeklyKD: 73.16,
+            rsi: 80.46,
+        },
+        {
+            id: '2646',
+            name: '星宇航空',
+            code: '2646',
+            price: 47.7,
+            change: 0.5,
+            changePercent: 1.06,
+            weeklyKD: 54.87,
+            rsi: 58.55,
+        },
     ]);
 
     // 浮動按鈕點擊
