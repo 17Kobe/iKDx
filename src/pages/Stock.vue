@@ -109,13 +109,25 @@
 
         <!-- 浮動按鈕 -->
         <FloatingBubble
-            icon="plus"
             axis="xy"
             magnetic="x"
             :gap="{ x: 24, y: 80 }"
-            style="--van-floating-bubble-size: 48px"
+            icon="plus"
+            style="
+                --van-floating-bubble-size: 48px;
+                --van-floating-bubble-background: #ffe066;
+                --van-floating-bubble-icon-size: 20px;
+            "
             @click="onBubbleClick"
         />
+
+        <!-- 自定義浮動按鈕 -->
+        <div class="custom-floating-bubble" @click="onBubbleClick">
+            <div class="bubble-content">
+                <span class="bubble-plus">+</span>
+                <span class="bubble-label">新增</span>
+            </div>
+        </div>
 
         <!-- 股票搜尋組件 -->
         <StockSearch />
@@ -621,5 +633,57 @@
         .rsi-value {
             font-size: 16px;
         }
+    }
+
+    /* 自定義浮動按鈕 */
+    .custom-floating-bubble {
+        position: fixed;
+        right: 24px;
+        bottom: 80px;
+        width: 48px;
+        height: 48px;
+        background-color: #ffe066;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+        cursor: pointer;
+        z-index: 1000;
+        user-select: none;
+        transition: all 0.3s ease;
+    }
+
+    .custom-floating-bubble:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    }
+
+    .custom-floating-bubble:active {
+        transform: scale(0.95);
+    }
+
+    .bubble-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 48px;
+        width: 48px;
+        position: relative;
+    }
+    .bubble-plus {
+        color: #322b0d;
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 1;
+        margin-top: -2px;
+    }
+    .bubble-label {
+        color: #322b0d;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        margin-top: 0px;
     }
 </style>

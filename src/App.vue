@@ -181,6 +181,9 @@
 
     /* 讓 Tabbar 的 active item 也有透明度 */
     .van-tabbar-item--active .tabbar-icon-wrap {
-        color: #2196f3 !important;
+        color: #fae54c !important;
+    }
+    .van-tabbar-item--active .tabbar-icon-wrap span {
+        color: #222 !important;
     }
 </style>
