@@ -118,7 +118,7 @@
     .main-content {
         flex: 1;
         overflow-y: auto;
-        padding-bottom: 60px; /* 為 Tabbar 留空間 */
+        /* 為 Tabbar padding-bottom: 60px; 留空間 */
         position: relative; /* 為頁面切換動畫提供定位基準 */
         height: 100vh; /* 設定高度為 100vh */
     }

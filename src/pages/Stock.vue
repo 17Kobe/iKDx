@@ -99,6 +99,12 @@
                     </div>
                 </SwipeCell>
             </div>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
         </div>
 
         <!-- 浮動按鈕 -->
@@ -367,9 +373,10 @@
 
 <style scoped>
     .stock-page {
-        padding: 16px;
+        /* padding: 16px; */
         background-color: #f5f5f5;
         min-height: 100vh;
+        padding-bottom: 60px !important;
     }
 
     /* 標題欄 */
@@ -427,14 +434,14 @@
     }
 
     /* 股票列表 */
-    .stock-list {
+    /* .stock-list {
         margin-top: 8px;
-    }
+    } */
 
     .stock-row {
         background: white;
         border-radius: 12px;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
@@ -595,7 +602,7 @@
     /* 響應式設計 */
     @media (max-width: 480px) {
         .stock-page {
-            padding: 12px;
+            padding: 6px;
         }
 
         .stock-content {
