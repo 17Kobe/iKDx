@@ -1,39 +1,40 @@
 <template>
     <div class="tabbar-progress-wrap">
-        <div class="tabbar-progress-item" v-for="item in progressList" :key="item.label">
+        <div class="tabbar-progress-item">
             <van-progress
-                :percentage="item.percent"
-                :color="item.color"
+                :percentage="progressList[0].percent"
+                color="#ffe066"
                 :show-pivot="false"
                 stroke-width="24"
-                style="width: 100%"
+                style="width: 100%; height: 32px"
             />
-            <span class="tabbar-progress-label">{{ item.label }}</span>
+            <span class="tabbar-progress-label">{{ progressList[0].label }}</span>
         </div>
     </div>
 </template>
 
 <script setup>
     import { Progress as VanProgress } from 'vant';
-    import { computed } from 'vue';
+    import { useEventBus } from '@vueuse/core';
+    import { ref, onMounted, onUnmounted } from 'vue';
 
-    // 傳入 progress 資訊陣列
-    const props = defineProps({
-        progressList: {
-            type: Array,
-            default: () => [
-                {
-                    percent: 75,
-                    label: '75% 極貪婪',
-                    color: 'linear-gradient(90deg, #7be495 60%, #bdf7b7 100%)',
-                },
-                {
-                    percent: 100,
-                    label: '31分 穩定',
-                    color: 'linear-gradient(90deg, #bdf7b7 60%, #7be495 100%)',
-                },
-            ],
+    // 監聽 event bus
+    const progressList = ref([
+        {
+            percent: 75,
+            label: '75% 極貪婪',
         },
+    ]);
+    const progressBus = useEventBus('tabbar-progress');
+
+    // 註冊監聽
+    onMounted(() => {
+        progressBus.on(val => {
+            if (Array.isArray(val)) progressList.value = val;
+        });
+    });
+    onUnmounted(() => {
+        progressBus.reset();
     });
 </script>
 
@@ -44,30 +45,27 @@
         align-items: flex-start;
         justify-content: center;
         margin: 0 8px;
-        gap: 4px;
         min-width: 80px;
         max-width: 100px;
     }
     .tabbar-progress-item {
         position: relative;
         width: 100%;
-        height: 24px;
-        margin-bottom: 2px;
+        height: 32px;
         display: flex;
         align-items: center;
-        padding: 0 0;
         overflow: hidden;
         border-radius: 16px;
         background: none;
     }
     .tabbar-progress-item :deep(.van-progress__track) {
-        background: #e6f7e6 !important;
+        background: #ffe066 !important;
         border-radius: 16px !important;
-        height: 24px !important;
+        height: 32px !important;
     }
     .tabbar-progress-item :deep(.van-progress__portion) {
         border-radius: 16px !important;
-        height: 24px !important;
+        height: 32px !important;
     }
     .tabbar-progress-label {
         position: absolute;
