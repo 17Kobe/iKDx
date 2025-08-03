@@ -69,13 +69,12 @@
     }
     .tabbar-progress-label {
         position: absolute;
-        left: 12px;
         z-index: 2;
         font-size: 13px;
         color: #222;
         font-weight: 500;
         white-space: nowrap;
-        margin-left: 2px;
+        margin-left: 6px;
         pointer-events: none;
     }
 </style>

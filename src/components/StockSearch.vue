@@ -3,6 +3,7 @@
     <ShareSheet
         :show="showSheet"
         @update:show="bus.emit(false)"
+        cancel-text="離開"
         :options="[]"
         style="--van-share-sheet-header-padding: 24px 24px 0 24px"
     >
@@ -23,7 +24,7 @@
             </div>
         </template>
         <template #description>
-            <div style="display: flex; flex-direction: column; height: 100%; min-height: 65vh">
+            <div style="display: flex; flex-direction: column; height: 100%; min-height: 60vh">
                 <div style="flex: 1 1 auto">
                     <div>
                         <Search
@@ -196,6 +197,5 @@
 
     function onHotTagClick(tag) {
         localSearch.value = tag;
-        focusSearchInput();
     }
 </script>
