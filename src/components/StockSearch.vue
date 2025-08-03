@@ -4,8 +4,7 @@
         :show="showSheet"
         @update:show="bus.emit(false)"
         :options="[]"
-        cancel-text=""
-        style="--van-share-sheet-header-padding: 24px 24px 0 24px; min-height: 80vh; height: 80vh"
+        style="--van-share-sheet-header-padding: 24px 24px 0 24px"
     >
         <template #title>
             <div
@@ -24,80 +23,86 @@
             </div>
         </template>
         <template #description>
-            <div>
-                <Search
-                    ref="searchInputRef"
-                    v-model="localSearch"
-                    placeholder="請輸入股票名稱或代碼"
-                    action-text=""
-                    style="--van-search-input-height: 48px; font-size: 18px"
-                    @search="onSearch"
-                />
-            </div>
-            <div>
-                <div style="display: flex; align-items: center; margin: 0 0 10px 0">
-                    <div
-                        style="
-                            margin-left: 16px;
-                            font-size: 16px;
-                            color: #222;
-                            font-weight: bold;
-                            letter-spacing: 1px;
-                        "
-                    >
-                        | 熱門股票
+            <div style="display: flex; flex-direction: column; height: 100%; min-height: 65vh">
+                <div style="flex: 1 1 auto">
+                    <div>
+                        <Search
+                            ref="searchInputRef"
+                            v-model="localSearch"
+                            placeholder="請輸入股票名稱或代碼"
+                            action-text=""
+                            style="--van-search-input-height: 48px; font-size: 18px"
+                            @search="onSearch"
+                        />
                     </div>
-                </div>
-                <div
-                    style="
-                        display: flex;
-                        gap: 8px;
-                        flex-wrap: wrap;
-                        justify-content: center;
-                        margin-bottom: 24px;
-                    "
-                >
-                    <span
-                        v-for="tag in hotStocks"
-                        :key="tag"
-                        @click="onHotTagClick(tag)"
-                        :style="getTagStyle(tag)"
-                        >{{ tag }}</span
-                    >
-                </div>
-                <!-- 搜尋結果卡片區塊 -->
-                <div v-if="localSearch && localSearch.length >= 1" style="margin-top: 12px">
-                    <div v-if="searchResults.length">
-                        <div
-                            v-for="item in searchResults"
-                            :key="item.id"
-                            style="
-                                background: #fff;
-                                border-radius: 12px;
-                                box-shadow: 0 2px 8px #0001;
-                                padding: 16px 20px;
-                                margin-bottom: 12px;
-                                display: flex;
-                                align-items: center;
-                                min-height: 56px;
-                            "
-                        >
+                    <div>
+                        <div style="display: flex; align-items: center; margin: 0 0 10px 0">
                             <div
                                 style="
-                                    font-size: 17px;
-                                    font-weight: bold;
+                                    margin-left: 16px;
+                                    font-size: 16px;
                                     color: #222;
-                                    margin-right: 16px;
-                                    min-width: 60px;
+                                    font-weight: bold;
+                                    letter-spacing: 1px;
                                 "
                             >
-                                {{ item.id }}
+                                | 熱門股票
                             </div>
-                            <div style="font-size: 16px; color: #333; flex: 1">{{ item.name }}</div>
                         </div>
-                    </div>
-                    <div v-else style="color: #999; text-align: center; margin-top: 16px">
-                        查無資料
+                        <div
+                            style="
+                                display: flex;
+                                gap: 8px;
+                                flex-wrap: wrap;
+                                justify-content: center;
+                                margin-bottom: 24px;
+                            "
+                        >
+                            <span
+                                v-for="tag in hotStocks"
+                                :key="tag"
+                                @click="onHotTagClick(tag)"
+                                :style="getTagStyle(tag)"
+                                >{{ tag }}</span
+                            >
+                        </div>
+                        <!-- 搜尋結果卡片區塊 -->
+                        <div v-if="localSearch && localSearch.length >= 1" style="margin-top: 12px">
+                            <div v-if="searchResults.length">
+                                <div
+                                    v-for="item in searchResults"
+                                    :key="item.id"
+                                    style="
+                                        background: #fff;
+                                        border-radius: 12px;
+                                        box-shadow: 0 2px 8px #0001;
+                                        padding: 16px 20px;
+                                        margin-bottom: 12px;
+                                        display: flex;
+                                        align-items: center;
+                                        min-height: 56px;
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            font-size: 17px;
+                                            font-weight: bold;
+                                            color: #222;
+                                            margin-right: 16px;
+                                            min-width: 60px;
+                                        "
+                                    >
+                                        {{ item.id }}
+                                    </div>
+                                    <div style="font-size: 16px; color: #333; flex: 1">
+                                        {{ item.name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else style="color: #999; text-align: center; margin-top: 16px">
+                                查無資料
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,7 +136,7 @@
     const hotStocks = ['台積電', '鴻海', '聯發科', '長榮', '中鋼'];
 
     const tagBaseStyle = {
-        background: '#ececec',
+        background: '#fff',
         color: '#878787',
         borderRadius: '16px',
         padding: '4px 16px',
