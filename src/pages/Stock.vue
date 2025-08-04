@@ -25,6 +25,7 @@
         <draggable
             v-model="stockList"
             item-key="id"
+            :delay="200"
             :animation="200"
             ghost-class="stock-row-ghost"
             @start="onDragStart"
@@ -324,13 +325,37 @@
         /* overflow: hidden; */
     }
 
-    /* vuedraggable ghost 效果 */
+    /* vuedraggable ghost 拖曳目標位置效果 */
     .stock-row-ghost {
-        opacity: 0.5;
-        background: #ffe066;
-        /* transform: rotate(3deg) scale(1.05); */
-        border: 2px dashed #ffcc00;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        background: rgba(210, 210, 210, 0.5) !important;
+        border: none;
+        box-shadow: none;
+        color: transparent;
+        /* 隱藏所有內容 */
+        pointer-events: none;
+    }
+    .stock-row-ghost * {
+        color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .stock-row.sortable-chosen {
+        /* 拖曳中的殘影（跟隨滑鼠） */
+        background: rgba(255, 224, 102, 0.8);
+    }
+
+    .stock-row.sortable-drag {
+        /* 拖曳中的殘影（跟隨滑鼠） */
+        transform: rotate(3deg);
+        /* opacity: 1; */
+        z-index: 9999;
+        /* box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); */
+        background: rgba(255, 224, 102, 0.8);
+        /* filter: none; */
+        /* border: 2px dashed #ffcc00;
+        transition: none; */
     }
 
     /* 標題欄 */

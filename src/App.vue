@@ -120,7 +120,7 @@
         padding: 0;
         height: 100dvh; /* ✅ 確保 wrapper 能拿到正確高度 */
         overflow-y: visible; /* ✅ 禁用整頁 scroll */
-        -webkit-overflow-scrolling: touch;
+        /* -webkit-overflow-scrolling: touch; */
     }
 
     /* .app-container { */
