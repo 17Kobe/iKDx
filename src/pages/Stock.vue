@@ -22,84 +22,87 @@
         </div> -->
 
         <!-- 股票列表 -->
-        <div class="stock-list" ref="stockListRef">
-            <div
-                v-for="(stock, index) in stockList"
-                :key="stock.id"
-                class="stock-row"
-                :class="{ 'is-dragging': dragIndex === index }"
-                @touchstart="onTouchStart($event, index)"
-                @touchmove="onTouchMove"
-                @touchend="onTouchEnd"
-                @contextmenu.prevent
-            >
-                <SwipeCell :left-width="120" @click-left="onLeftAction">
-                    <template #left>
-                        <div class="action-buttons">
-                            <Button
-                                type="primary"
-                                size="small"
-                                class="action-btn buy-btn"
-                                @click="onBuyStock(stock)"
-                            >
-                                交 易
-                            </Button>
-                            <Button
-                                type="warning"
-                                size="small"
-                                class="action-btn strategy-btn"
-                                @click="onStrategyStock(stock)"
-                            >
-                                策 略
-                            </Button>
-                        </div>
-                    </template>
-
-                    <div class="stock-content">
-                        <!-- 固定的名稱欄 -->
-                        <div class="stock-name">
-                            <div class="name">{{ stock.name }}</div>
-                            <div class="code">{{ stock.code }}</div>
-                            <div class="price" :class="getPriceClass(stock.change)">
-                                {{ stock.price }}
+        <draggable
+            v-model="stockList"
+            item-key="id"
+            :animation="200"
+            ghost-class="stock-row-ghost"
+            @start="onDragStart"
+            @end="onDragEnd"
+        >
+            <template #item="{ element: stock, index }">
+                <div class="stock-row" @contextmenu.prevent>
+                    <SwipeCell :left-width="120" @click-left="onLeftAction">
+                        <template #left>
+                            <div class="action-buttons">
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    class="action-btn buy-btn"
+                                    @click="onBuyStock(stock)"
+                                >
+                                    交 易
+                                </Button>
+                                <Button
+                                    type="warning"
+                                    size="small"
+                                    class="action-btn strategy-btn"
+                                    @click="onStrategyStock(stock)"
+                                >
+                                    策 略
+                                </Button>
                             </div>
-                            <div class="change" :class="getPriceClass(stock.change)">
-                                {{ stock.change > 0 ? '+' : '' }}{{ stock.change }} ({{
-                                    stock.changePercent
-                                }}%)
+                        </template>
+
+                        <div class="stock-content">
+                            <!-- 固定的名稱欄 -->
+                            <div class="stock-name">
+                                <div class="name">{{ stock.name }}</div>
+                                <div class="code">{{ stock.code }}</div>
+                                <div class="price" :class="getPriceClass(stock.change)">
+                                    {{ stock.price }}
+                                </div>
+                                <div class="change" :class="getPriceClass(stock.change)">
+                                    {{ stock.change > 0 ? '+' : '' }}{{ stock.change }} ({{
+                                        stock.changePercent
+                                    }}%)
+                                </div>
+                            </div>
+
+                            <!-- 可滑動的指標欄 -->
+                            <div class="stock-indicator">
+                                <Swipe
+                                    :show-indicators="false"
+                                    :loop="false"
+                                    :autoplay="0"
+                                    @change="current => onStockIndicatorChange(current, index)"
+                                >
+                                    <SwipeItem class="indicator-content">
+                                        <div class="kd-indicator">
+                                            <div class="kd-value">{{ stock.weeklyKD }}</div>
+                                            <div
+                                                class="kd-trend"
+                                                :class="getKDClass(stock.weeklyKD)"
+                                            >
+                                                {{ getKDStatus(stock.weeklyKD) }}
+                                            </div>
+                                        </div>
+                                    </SwipeItem>
+                                    <SwipeItem class="indicator-content">
+                                        <div class="rsi-indicator">
+                                            <div class="rsi-value">{{ stock.rsi }}</div>
+                                            <div class="rsi-trend" :class="getRSIClass(stock.rsi)">
+                                                {{ getRSIStatus(stock.rsi) }}
+                                            </div>
+                                        </div>
+                                    </SwipeItem>
+                                </Swipe>
                             </div>
                         </div>
-
-                        <!-- 可滑動的指標欄 -->
-                        <div class="stock-indicator">
-                            <Swipe
-                                :show-indicators="false"
-                                :loop="false"
-                                :autoplay="0"
-                                @change="current => onStockIndicatorChange(current, index)"
-                            >
-                                <SwipeItem class="indicator-content">
-                                    <div class="kd-indicator">
-                                        <div class="kd-value">{{ stock.weeklyKD }}</div>
-                                        <div class="kd-trend" :class="getKDClass(stock.weeklyKD)">
-                                            {{ getKDStatus(stock.weeklyKD) }}
-                                        </div>
-                                    </div>
-                                </SwipeItem>
-                                <SwipeItem class="indicator-content">
-                                    <div class="rsi-indicator">
-                                        <div class="rsi-value">{{ stock.rsi }}</div>
-                                        <div class="rsi-trend" :class="getRSIClass(stock.rsi)">
-                                            {{ getRSIStatus(stock.rsi) }}
-                                        </div>
-                                    </div>
-                                </SwipeItem>
-                            </Swipe>
-                        </div>
-                    </div>
-                </SwipeCell>
-            </div>
-        </div>
+                    </SwipeCell>
+                </div>
+            </template>
+        </draggable>
 
         <!-- 浮動按鈕 -->
         <FloatingBubble
@@ -130,6 +133,7 @@
     import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, showToast } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import { useEventBus } from '@vueuse/core';
+    import draggable from 'vuedraggable/src/vuedraggable';
 
     // 事件總線
     const bus = useEventBus('stock-search');
@@ -138,13 +142,6 @@
     const stockListRef = ref(null);
     const indicatorSwipeRef = ref(null);
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
-
-    // 拖拽相關
-    const dragIndex = ref(-1);
-    const dragStartY = ref(0);
-    const dragCurrentY = ref(0);
-    const isDragging = ref(false);
-    const longPressTimer = ref(null);
 
     // 模擬股票數據
     const stockList = ref([
@@ -301,82 +298,13 @@
         showToast(`${stock.name} 策略設定`);
     }
 
-    // 觸控事件處理 - 長按拖拽
-    function onTouchStart(event, index) {
-        const touch = event.touches[0];
-        dragStartY.value = touch.clientY;
-        dragCurrentY.value = touch.clientY;
-
-        // 設置長按計時器
-        longPressTimer.value = setTimeout(() => {
-            if (!isDragging.value) {
-                startDrag(index);
-            }
-        }, 500); // 500ms 長按
+    // 拖拽事件
+    function onDragStart(evt) {
+        console.log('開始拖曳', evt);
     }
 
-    function onTouchMove(event) {
-        if (longPressTimer.value) {
-            const touch = event.touches[0];
-            const deltaY = Math.abs(touch.clientY - dragStartY.value);
-
-            // 如果移動超過 10px，取消長按
-            if (deltaY > 10) {
-                clearTimeout(longPressTimer.value);
-                longPressTimer.value = null;
-            }
-        }
-
-        if (isDragging.value) {
-            event.preventDefault();
-            const touch = event.touches[0];
-            dragCurrentY.value = touch.clientY;
-
-            // 計算新位置
-            const deltaY = dragCurrentY.value - dragStartY.value;
-            const newIndex = calculateNewIndex(dragIndex.value, deltaY);
-
-            if (
-                newIndex !== dragIndex.value &&
-                newIndex >= 0 &&
-                newIndex < stockList.value.length
-            ) {
-                // 交換位置
-                const item = stockList.value.splice(dragIndex.value, 1)[0];
-                stockList.value.splice(newIndex, 0, item);
-                dragIndex.value = newIndex;
-                dragStartY.value = dragCurrentY.value;
-            }
-        }
-    }
-
-    function onTouchEnd() {
-        if (longPressTimer.value) {
-            clearTimeout(longPressTimer.value);
-            longPressTimer.value = null;
-        }
-
-        if (isDragging.value) {
-            endDrag();
-        }
-    }
-
-    function startDrag(index) {
-        isDragging.value = true;
-        dragIndex.value = index;
-        showToast('長按拖拽模式');
-    }
-
-    function endDrag() {
-        isDragging.value = false;
-        dragIndex.value = -1;
-        showToast('拖拽結束');
-    }
-
-    function calculateNewIndex(currentIndex, deltaY) {
-        const rowHeight = 80; // 估算每行高度
-        const steps = Math.round(deltaY / rowHeight);
-        return Math.max(0, Math.min(stockList.value.length - 1, currentIndex + steps));
+    function onDragEnd(evt) {
+        console.log('拖曳結束', evt);
     }
 
     onMounted(() => {
@@ -394,6 +322,15 @@
         /* min-height: 100vh; 保證整頁佔滿可視區域，避免 scroll bug */
         /* overflow-y: auto; */
         /* overflow: hidden; */
+    }
+
+    /* vuedraggable ghost 效果 */
+    .stock-row-ghost {
+        opacity: 0.5;
+        background: #ffe066;
+        /* transform: rotate(3deg) scale(1.05); */
+        border: 2px dashed #ffcc00;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 
     /* 標題欄 */
@@ -461,13 +398,7 @@
         margin-bottom: 4px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-    }
-
-    .stock-row.is-dragging {
-        transform: scale(1.02) rotate(4deg);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-        z-index: 10;
+        cursor: move;
     }
 
     .stock-content {
