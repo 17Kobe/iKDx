@@ -391,7 +391,8 @@
 
     .col-indicator {
         flex: 1;
-        text-align: center;
+        min-width: 0;
+        text-align: right;
     }
 
     .indicator-swipe {
@@ -418,6 +419,8 @@
     } */
 
     .stock-row {
+        display: flex;
+        align-items: center;
         background: white;
         border-radius: 12px;
         margin-bottom: 4px;
@@ -483,6 +486,8 @@
     .stock-indicator {
         flex: 1;
         height: 60px;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .indicator-content {
