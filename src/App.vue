@@ -1,5 +1,5 @@
 <template>
-    <div :class="{ dark: isDark }" class="app-container">
+    <div class="app-container" :class="{ dark: isDark }">
         <div class="main-content">
             <router-view v-slot="{ Component, route }">
                 <transition :name="firstLoad ? '' : 'slide-left'">
@@ -65,15 +65,17 @@
 </template>
 
 <script setup>
-    import { ref, watch } from 'vue';
+    import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { Tabbar, TabbarItem } from 'vant';
     import TabbarProgress from '@/components/TabbarProgress.vue';
+    // 移除 JS 動態高度，改用 CSS 100dvh
+
     // 進度條資料，可依需求調整
     const progressList = [
         {
-            percent: 75,
-            label: '75% 極貪婪',
+            percent: 76,
+            label: '76% 極貪婪',
             color: 'linear-gradient(90deg, #7be495 60%, #bdf7b7 100%)',
         },
         {
@@ -112,19 +114,35 @@
 </script>
 
 <style scoped>
-    .app-container {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100dvh; /* ✅ 確保 wrapper 能拿到正確高度 */
+        overflow-y: visible; /* ✅ 禁用整頁 scroll */
+        -webkit-overflow-scrolling: touch;
     }
 
+    /* .app-container { */
+    /* overflow: hidden; */
+    /* min-height: 100dvh; */
+    /* overflow: hidden; */
+    /* padding-bottom: 60px; */
+    /* display: flex;
+        flex-direction: column;
+        overflow: hidden; */
+    /* } */
+
     .main-content {
-        flex: 1;
-        overflow-y: auto;
+        /* flex: 1; */
+        /* overflow-y: auto; */
         /* 為 Tabbar padding-bottom: 60px; 留空間 */
-        position: relative; /* 為頁面切換動畫提供定位基準 */
-        height: 100vh; /* 設定高度為 100vh */
+        /* position: relative; 為頁面切換動畫提供定位基準 */
+        /* height: 100vh; 設定高度為 100vh */
+        /* min-height: 100dvh; 新瀏覽器支援，舊瀏覽器自動 fallback */
+        padding-bottom: 60px;
+        /* overflow: hidden; */
+        /* overflow-y: auto; */
     }
 
     /* Progress Bar 樣式已移至 TabbarProgress.vue */
@@ -177,6 +195,9 @@
         /* backdrop-filter: blur(1px); */
         box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
         z-index: 100;
+        /* position: absolute;
+        bottom: 0; */
+        /* bottom: 10px; */
     }
 
     /* 讓 Tabbar 的 active item 也有透明度 */

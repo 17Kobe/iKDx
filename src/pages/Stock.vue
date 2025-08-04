@@ -99,12 +99,6 @@
                     </div>
                 </SwipeCell>
             </div>
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
         </div>
 
         <!-- 浮動按鈕 -->
@@ -227,6 +221,16 @@
         {
             id: '2646',
             name: '星宇航空',
+            code: '2646',
+            price: 47.7,
+            change: 0.5,
+            changePercent: 1.06,
+            weeklyKD: 54.87,
+            rsi: 58.55,
+        },
+        {
+            id: '2646',
+            name: '華泰',
             code: '2646',
             price: 47.7,
             change: 0.5,
@@ -384,8 +388,12 @@
     .stock-page {
         /* padding: 16px; */
         background-color: #f5f5f5;
-        min-height: 100vh;
-        padding-bottom: 60px !important;
+        /* min-height: 100vh; */
+        /* padding-bottom: 60px !important; */
+        /* padding-bottom: 60px; */
+        /* min-height: 100vh; 保證整頁佔滿可視區域，避免 scroll bug */
+        /* overflow-y: auto; */
+        /* overflow: hidden; */
     }
 
     /* 標題欄 */

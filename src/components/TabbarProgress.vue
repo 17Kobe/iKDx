@@ -21,8 +21,8 @@
     // 監聽 event bus
     const progressList = ref([
         {
-            percent: 75,
-            label: '75% 極貪婪',
+            percent: 82,
+            label: '82% 極貪婪',
         },
     ]);
     const progressBus = useEventBus('tabbar-progress');
