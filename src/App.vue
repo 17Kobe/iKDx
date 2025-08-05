@@ -211,7 +211,7 @@
     .custom-tabbar {
         height: 60px !important;
         border-top: 1px solid #ebedf0 !important;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.97);
         /* backdrop-filter: blur(1px); */
         box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
         z-index: 100;

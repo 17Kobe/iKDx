@@ -33,7 +33,7 @@
         >
             <template #item="{ element: stock, index }">
                 <div class="stock-row" @contextmenu.prevent>
-                    <SwipeCell :left-width="120" @click-left="onLeftAction">
+                    <SwipeCell :left-width="200" @click-left="onLeftAction">
                         <template #left>
                             <div class="action-buttons">
                                 <Button
@@ -42,7 +42,8 @@
                                     class="action-btn buy-btn"
                                     @click="onBuyStock(stock)"
                                 >
-                                    交 易
+                                    <div>交 易</div>
+                                    <div>記 錄</div>
                                 </Button>
                                 <Button
                                     type="warning"
@@ -51,6 +52,14 @@
                                     @click="onStrategyStock(stock)"
                                 >
                                     策 略
+                                </Button>
+                                <Button
+                                    type="default"
+                                    size="small"
+                                    class="action-btn other-btn"
+                                    @click="onOtherAction(stock)"
+                                >
+                                    更 多
                                 </Button>
                             </div>
                         </template>
@@ -110,7 +119,6 @@
             axis="xy"
             magnetic="x"
             :gap="{ x: 20, y: 80 }"
-            icon="plus"
             style="
                 --van-floating-bubble-size: 56px;
                 --van-floating-bubble-background: #ffe066;
@@ -119,8 +127,17 @@
             "
             @click="onBubbleClick"
         >
-            <div class="bubble-content">
-                <span class="bubble-label" style="color: #322b0d">新增</span>
+            <div
+                class="bubble-content"
+                style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                "
+            >
+                <Icon name="plus" size="22" color="#322b0d" style="margin-bottom: 2px" />
+                <span class="bubble-label" style="color: #322b0d; font-size: 14px">新增</span>
             </div>
         </FloatingBubble>
 
@@ -131,7 +148,7 @@
 
 <script setup>
     import { ref, reactive, onMounted } from 'vue';
-    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, showToast } from 'vant';
+    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import { useEventBus } from '@vueuse/core';
     import draggable from 'vuedraggable/src/vuedraggable';
@@ -291,12 +308,21 @@
         // SwipeCell 的左滑動作
     }
 
+    // 右滑動作
+    function onRightAction() {
+        // SwipeCell 的右滑動作
+    }
+
     function onBuyStock(stock) {
         showToast(`買賣 ${stock.name}`);
     }
 
     function onStrategyStock(stock) {
         showToast(`${stock.name} 策略設定`);
+    }
+
+    function onOtherAction(stock) {
+        showToast(`${stock.name} 其他功能`);
     }
 
     // 拖拽事件
@@ -348,7 +374,7 @@
 
     .stock-row.sortable-drag {
         /* 拖曳中的殘影（跟隨滑鼠） */
-        transform: rotate(3deg);
+        transform: rotate(5deg);
         /* opacity: 1; */
         z-index: 9999;
         /* box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); */
@@ -555,7 +581,7 @@
     .action-buttons {
         display: flex;
         height: 100%;
-        width: 120px;
+        width: 200px;
     }
 
     .action-btn {
@@ -575,6 +601,12 @@
     .strategy-btn {
         background-color: #f39c12;
         border-color: #f39c12;
+    }
+
+    .other-btn {
+        background-color: #eee;
+        border-color: #ccc;
+        color: #666;
     }
 
     /* 響應式設計 */
