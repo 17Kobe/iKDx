@@ -16,7 +16,7 @@
 <script setup>
     import { Progress as VanProgress, showToast, closeToast } from 'vant';
     import { ref, onMounted } from 'vue';
-    import axios from 'axios';
+    import axios from '@/lib/axios';
 
     /**
      * percent: CNN 指數百分比
@@ -30,9 +30,7 @@
 
     async function fetchGlobal() {
         try {
-            const base = import.meta.env.BASE_URL || '/';
-            const url = base.endsWith('/') ? `${base}data/global.json` : `${base}/data/global.json`;
-            const res = await axios.get(url);
+            const res = await axios.get('data/global.json');
             const data = res.data;
             percent.value = Math.round(Number(data.cnnIndex) || 0);
             let fearLevel = '';
@@ -66,7 +64,7 @@
         showToast({
             message:
                 'CNN 恐慌與貪婪指數說明\n' +
-                '抓取時間：2025-08-05 15:29\n' +
+                '更新時間：2025-08-05 15:29\n' +
                 '--------------------------------------\n' +
                 '0～24　→　極恐慌：市場極度悲觀\n' +
                 '25～44　→　恐懼：市場偏向保守\n' +
@@ -131,19 +129,5 @@
         white-space: nowrap;
         margin-left: 6px;
         pointer-events: none;
-    }
-
-    /* CNN Toast 樣式 */
-    .cnn-toast {
-        font-size: 18px;
-        line-height: 1.7;
-        text-align: left;
-        white-space: pre-line;
-        background: #222 !important;
-        color: #fff !important;
-        border-radius: 12px !important;
-        padding: 18px 16px !important;
-        max-width: 340px;
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
     }
 </style>

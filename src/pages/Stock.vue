@@ -589,7 +589,7 @@
         height: 100%;
         margin: 0;
         border-radius: 0;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: bold;
     }
 

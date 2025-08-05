@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import axios from './axios';
 
 // 初始化 IndexedDB，建立 stocks store
 const dbPromise = openDB('stock-db', 1, {
@@ -19,10 +20,9 @@ export async function getStocksFromDB() {
     if (count > 0) {
         return await db.getAll('stocks');
     } else {
-        // 使用 base 路徑，支援 GitHub Pages 與 Cloudflare Pages
-        const base = import.meta.env.BASE_URL || '/';
-        const res = await fetch(base + 'stocks/stocks.json');
-        const stocks = await res.json();
+        // 直接用 axios，路徑自動加 baseURL
+        const res = await axios.get('stocks/stocks.json');
+        const stocks = res.data;
         const tx = db.transaction('stocks', 'readwrite');
         const store = tx.objectStore('stocks');
         for (const stock of stocks) {
