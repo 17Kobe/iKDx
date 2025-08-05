@@ -2,39 +2,53 @@
     <div class="tabbar-progress-wrap">
         <div class="tabbar-progress-item">
             <van-progress
-                :percentage="progressList[0].percent"
-                color="#ffe066"
+                :percentage="percent"
+                color="linear-gradient(90deg, #fff9c4 0%, #ffe066 100%)"
                 :show-pivot="false"
                 stroke-width="24"
                 style="width: 100%; height: 32px"
             />
-            <span class="tabbar-progress-label">{{ progressList[0].label }}</span>
+            <span class="tabbar-progress-label">{{ label }}</span>
         </div>
     </div>
 </template>
 
 <script setup>
-    import { Progress as VanProgress } from 'vant';
-    import { useEventBus } from '@vueuse/core';
-    import { ref, onMounted, onUnmounted } from 'vue';
+import { Progress as VanProgress } from 'vant';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
-    // 監聽 event bus
-    const progressList = ref([
-        {
-            percent: 82,
-            label: '82% 極貪婪',
-        },
-    ]);
-    const progressBus = useEventBus('tabbar-progress');
+    const percent = ref(0);
+    const label = ref('');
 
-    // 註冊監聽
+    async function fetchGlobal() {
+        try {
+            const base = import.meta.env.BASE_URL || '/';
+            const url = base.endsWith('/') ? `${base}data/global.json` : `${base}/data/global.json`;
+            const res = await axios.get(url);
+            const data = res.data;
+            percent.value = Math.round(Number(data.cnnIndex) || 0);
+            let fearLevel = '';
+            if (percent.value <= 24) {
+                fearLevel = '極恐慌';
+            } else if (percent.value <= 44) {
+                fearLevel = '恐懼';
+            } else if (percent.value <= 54) {
+                fearLevel = '中性';
+            } else if (percent.value <= 74) {
+                fearLevel = '貪婪';
+            } else {
+                fearLevel = '極貪婪';
+            }
+            label.value = `${percent.value}% ${fearLevel}`;
+        } catch (e) {
+            percent.value = 0;
+            label.value = 'N/A';
+        }
+    }
+
     onMounted(() => {
-        progressBus.on(val => {
-            if (Array.isArray(val)) progressList.value = val;
-        });
-    });
-    onUnmounted(() => {
-        progressBus.reset();
+        fetchGlobal();
     });
 </script>
 
@@ -57,9 +71,10 @@
         overflow: hidden;
         border-radius: 16px;
         background: none;
+        border: 1px solid #e0e0e0;
     }
     .tabbar-progress-item :deep(.van-progress__track) {
-        background: #ffe066 !important;
+        background: linear-gradient(90deg, #fffde7 0%, #fff9c4 60%, #ffe066 100%) !important;
         border-radius: 16px !important;
         height: 32px !important;
     }

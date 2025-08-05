@@ -121,7 +121,7 @@
             :gap="{ x: 20, y: 80 }"
             style="
                 --van-floating-bubble-size: 56px;
-                --van-floating-bubble-background: #ffe066;
+                --van-floating-bubble-background: rgba(255, 224, 102, 0.9);
                 --van-floating-bubble-icon-size: 22px;
                 --van-floating-bubble-color: #322b0d;
             "

@@ -33,7 +33,7 @@
                 </div>
             </TabbarItem>
             <!-- Progress Bar 區塊（已封裝元件） -->
-            <TabbarProgress :progress-list="progressList" />
+            <TabbarProgress />
             <TabbarItem>
                 <div class="tabbar-icon-wrap">
                     <Icon
@@ -82,19 +82,6 @@
         document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     });
 
-    // 進度條資料，可依需求調整
-    const progressList = [
-        {
-            percent: 76,
-            label: '76% 極貪婪',
-            color: 'linear-gradient(90deg, #7be495 60%, #bdf7b7 100%)',
-        },
-        {
-            percent: 100,
-            label: '31分 穩定',
-            color: 'linear-gradient(90deg, #bdf7b7 60%, #7be495 100%)',
-        },
-    ];
     import { Icon } from '@iconify/vue';
     import { usePreferredDark } from '@vueuse/core';
 
