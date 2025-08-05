@@ -65,11 +65,22 @@
 </template>
 
 <script setup>
-    import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+    import { ref, watch, onMounted, onBeforeUnmount, watchEffect } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { Tabbar, TabbarItem } from 'vant';
+    import { useWindowSize } from '@vueuse/core';
     import TabbarProgress from '@/components/TabbarProgress.vue';
     // 移除 JS 動態高度，改用 CSS 100dvh
+
+    // const { height } = useWindowSize();
+    // onMounted(() => {
+    //     watchEffect(() => {
+    //         document.documentElement.style.setProperty('--app-height', `${height.value}px`);
+    //     });
+    // });
+    onMounted(() => {
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+    });
 
     // 進度條資料，可依需求調整
     const progressList = [
@@ -127,8 +138,9 @@
 
     .app-container {
         width: 100%;
-        min-height: 100vh; /* min-height 讓內容至少撐滿可視區域，但不會超出，工具列可隱藏，但 chrome 會有抖動。 */
-        /* height: 100dvh; 加此tabbar 換頁整個高度會一致不會只有新頁的高(如此會很短)，但加此手機就不隱藏工具列 */
+        /* min-height: var(--app-height); 用 vueUse 去取得視窗大小，chrome 會有抖動。 */
+        /* min-height: 100vh; min-height 讓內容至少撐滿可視區域，但不會超出，工具列可隱藏，100vh 及 100dvh 都會有 chrome 會有抖動。 */
+        height: 100dvh; /* 加此tabbar 換頁整個高度會一致不會只有新頁的高(如此會很短)，但加此手機就不隱藏工具列 */
         overflow-x: hidden; /* 避免出現橫向捲軸 */
 
         /* overflow: hidden; */
