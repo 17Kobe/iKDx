@@ -119,21 +119,29 @@
         margin: 0;
         padding: 0;
         height: 100dvh; /* ✅ 確保 wrapper 能拿到正確高度 */
-        overflow-y: visible; /* ✅ 禁用整頁 scroll */
+        width: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
         /* -webkit-overflow-scrolling: touch; */
     }
 
-    /* .app-container { */
-    /* overflow: hidden; */
-    /* min-height: 100dvh; */
-    /* overflow: hidden; */
-    /* padding-bottom: 60px; */
-    /* display: flex;
+    .app-container {
+        width: 100%;
+        min-height: 100vh; /* min-height 讓內容至少撐滿可視區域，但不會超出，工具列可隱藏，但 chrome 會有抖動。 */
+        /* height: 100dvh; 加此tabbar 換頁整個高度會一致不會只有新頁的高(如此會很短)，但加此手機就不隱藏工具列 */
+        overflow-x: hidden; /* 避免出現橫向捲軸 */
+
+        /* overflow: hidden; */
+        /* min-height: 100dvh; */
+        /* overflow: hidden; */
+        /* padding-bottom: 60px; */
+        /* display: flex;
         flex-direction: column;
         overflow: hidden; */
-    /* } */
+    }
 
     .main-content {
+        position: relative; /* 讓動畫層不會超出父層。 */
         /* flex: 1; */
         /* overflow-y: auto; */
         /* 為 Tabbar padding-bottom: 60px; 留空間 */
