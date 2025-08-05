@@ -17,18 +17,18 @@ export const fetchCNN = async () => {
         },
     });
     const body = res.data;
-    let index = '';
-    let status = '';
-    let updateText = '';
+    let cnnIndex = '';
+    let cnnStatus = '';
+    let cnnUpdateTime = '';
     if (body.fear_and_greed && typeof body.fear_and_greed === 'object') {
-        index = body.fear_and_greed.score || '';
-        status = body.fear_and_greed.rating || '';
-        updateText = body.fear_and_greed.timestamp
+        cnnIndex = body.fear_and_greed.score || '';
+        cnnStatus = body.fear_and_greed.rating || '';
+        cnnUpdateTime = body.fear_and_greed.timestamp
             ? new Date(body.fear_and_greed.timestamp).toLocaleString('zh-TW', { hour12: false })
             : '';
     }
     writeFileSync(
-        resolve(__dirname, '../../public/data/cnn-index.json'),
-        JSON.stringify({ index, status, updateText })
+        resolve(__dirname, '../../public/data/global.json'),
+        JSON.stringify({ cnnIndex, cnnStatus, cnnUpdateTime })
     );
 };
