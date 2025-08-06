@@ -238,6 +238,7 @@
 
     // 拖拽事件
     function onDragStart(evt) {
+        evt.preventDefault(); // 阻止點擊事件的預設行為，避免全選或放大鏡觸發
         console.log('開始拖曳', evt);
     }
 
