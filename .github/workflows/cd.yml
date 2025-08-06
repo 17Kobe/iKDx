@@ -1,33 +1,34 @@
-name: Deploy Vue to GitHub Pages
+name: CD
 
 on:
-    push:
-        branches: [main]
+  workflow_run:
+    workflows: [CI]
+    types:
+      - completed
 
 jobs:
-    build-and-deploy:
-        runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-        steps:
-            - name: Checkout repo
-              uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm install
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 24
-                  cache: 'npm'
+      - name: Build project (set base for GitHub Pages)
+        run: |
+          export DEPLOY_TARGET=github
+          npm run build
 
-            - name: Install dependencies
-              run: npm install
+      - name: Copy Jest HTML report from main
+        run: |
+          git fetch origin main
+          git checkout origin/main -- public/test/jest-report.html || echo "No test report found"
 
-            - name: Build project (set base for GitHub Pages)
-              run: |
-                  export DEPLOY_TARGET=github
-                  npm run build
-
-            - name: Deploy to GitHub Pages
-              uses: peaceiris/actions-gh-pages@v4
-              with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./dist
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public

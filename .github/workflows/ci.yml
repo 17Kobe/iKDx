@@ -31,16 +31,3 @@ jobs:
           name: jest-report
           path: ./jest-report.html
         if: always()
-
-      - name: Copy Jest HTML report to public/test
-        run: |
-          mkdir -p public/test
-          if [ -f jest-report.html ]; then cp jest-report.html public/test/; fi
-
-      - name: Commit & Push test report
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git add public/test/*.html
-          git commit -m 'Update test report [ci skip]' || echo "No changes to commit"
-          git push
