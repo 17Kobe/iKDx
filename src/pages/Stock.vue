@@ -122,6 +122,11 @@
 
         <!-- 股票搜尋組件 -->
         <StockSearch />
+
+        <!-- 刪除資料庫按鈕 -->
+        <Button type="danger" size="small" class="delete-db-btn" @click="onDeleteDB">
+            刪除資料庫
+        </Button>
     </div>
 </template>
 
@@ -132,6 +137,7 @@
     import { useEventBus } from '@vueuse/core';
     import { useStockStore } from '@/stores/stockStore.js';
     import draggable from 'vuedraggable/src/vuedraggable';
+    // import { initDB, ensureStoreExists } from '@/lib/idb';
 
     // 使用 Pinia store
     const stockStore = useStockStore();
@@ -144,9 +150,15 @@
     const indicatorSwipeRef = ref(null);
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
 
-    onMounted(() => {
-        // 載入使用者股票清單
-        stockStore.loadUserStocks();
+    onMounted(async () => {
+        try {
+            // await initDB();
+            // await ensureStoreExists('all-stocks');
+            // await ensureStoreExists('user-stocks');
+            stockStore.loadUserStocks();
+        } catch (error) {
+            console.error('初始化資料庫失敗:', error);
+        }
     });
 
     // 計算屬性：取得使用者股票清單
@@ -234,6 +246,12 @@
                 showToast(result.message);
             }
         });
+    }
+
+    function onDeleteDB() {
+        indexedDB.deleteDatabase('ikdx-db');
+        showToast('資料庫已刪除');
+        console.log('IndexedDB 已刪除');
     }
 
     // 拖拽事件

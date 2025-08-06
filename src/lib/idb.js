@@ -7,15 +7,32 @@ let db;
 export async function initDB() {
     db = await openDB('ikdx-db', 1, {
         upgrade(db, oldVersion, newVersion) {
-            // 第一版只有 users，第二版新增了 settings：
-            // if (oldVersion < 1) {
-            //     db.createObjectStore('users', { keyPath: 'id' });
-            // }
-            // if (oldVersion < 2) {
-            //     db.createObjectStore('settings'); // key: string
-            // }
+            // 第一版包含 all-stocks 和 user-stocks 資料表
+            if (oldVersion < 1) {
+                db.createObjectStore('all-stocks', { keyPath: 'id' });
+                db.createObjectStore('user-stocks', { keyPath: 'id' });
+            }
         },
     });
+}
+
+// 確保指定的 Object Store 存在
+export async function ensureStoreExists(storeName) {
+    if (!db) {
+        throw new Error('Database is not initialized. Call initDB() first.');
+    }
+
+    if (!db.objectStoreNames.contains(storeName)) {
+        console.warn(`${storeName} store 不存在，開始建立`);
+        const version = db.version + 1;
+        db.close();
+        db = await openDB('ikdx-db', version, {
+            upgrade(upgradeDb) {
+                upgradeDb.createObjectStore(storeName, { keyPath: 'id' });
+            },
+        });
+        console.log(`${storeName} store 已建立`);
+    }
 }
 
 // 取得所有資料
