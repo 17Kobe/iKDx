@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Jest tests
+        run: npm test
+
+      - name: Upload Jest HTML report (if exists)
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-report
+          path: ./jest-report.html
+        if: always()
+
+      - name: Copy Jest HTML report to public/test
+        run: |
+          mkdir -p public/test
+          if [ -f jest-report.html ]; then cp jest-report.html public/test/; fi
+
+      - name: Commit & Push test report
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add public/test/*.html
+          git commit -m 'Update test report [ci skip]' || echo "No changes to commit"
+          git push

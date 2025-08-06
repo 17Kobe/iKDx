@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test": "jest --runInBand"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
@@ -23,13 +24,17 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.28.0",
     "@tauri-apps/api": "^2.7.0",
     "@tauri-apps/cli": "^2.7.1",
     "@vitejs/plugin-vue": "^6.0.0",
+    "babel-jest": "^30.0.5",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
     "eslint-plugin-vue": "^10.3.0",
+    "jest": "^30.0.5",
+    "jest-html-reporter": "^4.3.0",
     "prettier": "^3.6.2",
     "sass": "^1.89.2",
     "vite": "^7.0.6"
