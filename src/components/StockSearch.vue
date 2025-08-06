@@ -98,6 +98,17 @@
                                     <div style="font-size: 16px; color: #333; flex: 1">
                                         {{ item.name }}
                                     </div>
+                                    <Button
+                                        :type="
+                                            stockStore.isStockAdded(item.id) ? 'default' : 'primary'
+                                        "
+                                        size="small"
+                                        :disabled="stockStore.isStockAdded(item.id)"
+                                        @click="onAddStock(item)"
+                                        style="margin-left: 12px; min-width: 60px"
+                                    >
+                                        {{ stockStore.isStockAdded(item.id) ? '已新增' : '新增' }}
+                                    </Button>
                                 </div>
                             </div>
                             <div v-else style="color: #999; text-align: center; margin-top: 16px">
@@ -113,9 +124,13 @@
 
 <script setup>
     import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-    import { ShareSheet, Search } from 'vant';
-    import { getStocksFromDB } from '@/lib/stockService.js';
+    import { ShareSheet, Search, Button, showToast } from 'vant';
+    import { getStocksFromDB } from '@/lib/idb';
     import { useEventBus } from '@vueuse/core';
+    import { useStockStore } from '@/stores/stockStore.js';
+
+    // 使用 Pinia store
+    const stockStore = useStockStore();
 
     // 事件總線：控制顯示狀態
     const bus = useEventBus('stock-search');
@@ -125,6 +140,8 @@
         bus.on(val => {
             showSheet.value = val;
         });
+        // 載入使用者股票清單
+        stockStore.loadUserStocks();
     });
     onUnmounted(() => {
         bus.reset();
@@ -182,12 +199,22 @@
     watch(
         () => localSearch.value,
         async val => {
+            console.log('localSearch 更新:', val);
             if (!val || val.length < 1) {
                 searchResults.value = [];
                 return;
             }
-            const allStocks = await getStocksFromDB();
-            searchResults.value = allStocks.filter(s => s.name.includes(val) || s.id.includes(val));
+            console.log('觸發 getStocksFromDB');
+            try {
+                const allStocks = await getStocksFromDB();
+                console.log('getStocksFromDB 執行成功');
+                searchResults.value = allStocks.filter(
+                    s => s.name.includes(val) || s.id.includes(val)
+                );
+                console.log('搜尋結果:', searchResults.value);
+            } catch (error) {
+                console.error('getStocksFromDB 執行失敗:', error);
+            }
         }
     );
 
@@ -196,6 +223,19 @@
     }
 
     function onHotTagClick(tag) {
+        console.log('點擊熱門標籤:', tag);
         localSearch.value = tag;
+    }
+
+    /**
+     * 新增股票到使用者清單
+     * @param {Object} stock - 股票資料 { id, name }
+     */
+    async function onAddStock(stock) {
+        const result = await stockStore.addStock(stock);
+        showToast({
+            message: result.message,
+            type: result.success ? 'success' : 'fail',
+        });
     }
 </script>

@@ -1,26 +1,5 @@
 <template>
     <div class="stock-page">
-        <!-- 標題欄 -->
-        <!-- <div class="header">
-            <div class="header-title">自選股</div>
-            <div class="header-columns">
-                <div class="col-name">名稱</div>
-                <div class="col-indicator">
-                    <Swipe
-                        ref="indicatorSwipeRef"
-                        :show-indicators="false"
-                        :loop="false"
-                        :autoplay="0"
-                        class="indicator-swipe"
-                        @change="onIndicatorChange"
-                    >
-                        <SwipeItem class="indicator-item">週KD</SwipeItem>
-                        <SwipeItem class="indicator-item">RSI</SwipeItem>
-                    </Swipe>
-                </div>
-            </div>
-        </div> -->
-
         <!-- 股票列表 -->
         <draggable
             v-model="stockList"
@@ -147,11 +126,15 @@
 </template>
 
 <script setup>
-    import { ref, reactive, onMounted } from 'vue';
+    import { ref, reactive, onMounted, computed } from 'vue';
     import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import { useEventBus } from '@vueuse/core';
+    import { useStockStore } from '@/stores/stockStore.js';
     import draggable from 'vuedraggable/src/vuedraggable';
+
+    // 使用 Pinia store
+    const stockStore = useStockStore();
 
     // 事件總線
     const bus = useEventBus('stock-search');
@@ -161,99 +144,21 @@
     const indicatorSwipeRef = ref(null);
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
 
-    // 模擬股票數據
-    const stockList = ref([
-        {
-            id: '2330',
-            name: '台積電',
-            code: '2330',
-            price: 1140.0,
-            change: -1.72,
-            changePercent: -0.15,
-            weeklyKD: 22.6,
-            rsi: 45.2,
+    onMounted(() => {
+        // 載入使用者股票清單
+        stockStore.loadUserStocks();
+    });
+
+    // 計算屬性：取得使用者股票清單
+    const stockList = computed({
+        get() {
+            return stockStore.userStocks;
         },
-        {
-            id: '2317',
-            name: '鴻海',
-            code: '2317',
-            price: 135.0,
-            change: 1.45,
-            changePercent: 1.08,
-            weeklyKD: 68.5,
-            rsi: 62.1,
+        set(newList) {
+            // 支援拖拽排序功能
+            stockStore.reorderStocks(newList);
         },
-        {
-            id: '2454',
-            name: '聯發科',
-            code: '2454',
-            price: 1350.0,
-            change: -18.5,
-            changePercent: -1.35,
-            weeklyKD: 20.8,
-            rsi: 38.9,
-        },
-        {
-            id: '2881',
-            name: '富邦金',
-            code: '2881',
-            price: 31.55,
-            change: 0.35,
-            changePercent: 1.12,
-            weeklyKD: 72.3,
-            rsi: 58.7,
-        },
-        {
-            id: '0056',
-            name: '元大高股息',
-            code: '0056',
-            price: 34.81,
-            change: 0.02,
-            changePercent: 0.06,
-            weeklyKD: 55.4,
-            rsi: 52.1,
-        },
-        {
-            id: '1215',
-            name: '卜蜂',
-            code: '1215',
-            price: 115.5,
-            change: -0.5,
-            changePercent: -0.43,
-            weeklyKD: 56.87,
-            rsi: 71.63,
-        },
-        {
-            id: '2885',
-            name: '元大金',
-            code: '2885',
-            price: 34.81,
-            change: 0.06,
-            changePercent: 0.17,
-            weeklyKD: 73.16,
-            rsi: 80.46,
-        },
-        {
-            id: '2646',
-            name: '星宇航空',
-            code: '2646',
-            price: 47.7,
-            change: 0.5,
-            changePercent: 1.06,
-            weeklyKD: 54.87,
-            rsi: 58.55,
-        },
-        {
-            id: '2646',
-            name: '華泰',
-            code: '2646',
-            price: 47.7,
-            change: 0.5,
-            changePercent: 1.06,
-            weeklyKD: 54.87,
-            rsi: 58.55,
-        },
-    ]);
+    });
 
     // 浮動按鈕點擊
     function onBubbleClick() {
@@ -321,8 +226,14 @@
         showToast(`${stock.name} 策略設定`);
     }
 
-    function onOtherAction(stock) {
-        showToast(`${stock.name} 其他功能`);
+    function onRemoveStock(stock) {
+        stockStore.removeStock(stock.id).then(result => {
+            if (result.success) {
+                showToast(result.message);
+            } else {
+                showToast(result.message);
+            }
+        });
     }
 
     // 拖拽事件
