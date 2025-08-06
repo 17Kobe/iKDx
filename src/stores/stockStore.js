@@ -1,52 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { dbPromise, getAllFromStore, putToStore, clearStore } from '@/lib/idb';
+import { getAllFromStore, putToStore, clearStore, getStock, setStock } from '@/lib/idb';
 
 export const useStockStore = defineStore('stock', () => {
     const userStocks = ref([]);
-
-    /**
-     * 重置 IndexedDB（開發用）
-     */
-    async function resetDatabase() {
-        try {
-            console.log('開始重置資料庫...');
-
-            // 先嘗試關閉現有連接
-            try {
-                const db = await dbPromise;
-                db.close();
-                console.log('已關閉現有資料庫連接');
-            } catch (error) {
-                console.log('無法關閉現有連接，繼續刪除資料庫');
-            }
-
-            // 刪除資料庫
-            const deleteRequest = indexedDB.deleteDatabase('ikdx-db');
-            await new Promise((resolve, reject) => {
-                deleteRequest.onsuccess = () => {
-                    console.log('資料庫刪除成功');
-                    resolve();
-                };
-                deleteRequest.onerror = () => {
-                    console.error('資料庫刪除失敗:', deleteRequest.error);
-                    reject(deleteRequest.error);
-                };
-                deleteRequest.onblocked = () => {
-                    console.warn('資料庫刪除被阻擋，強制重新載入');
-                    window.location.reload();
-                };
-            });
-
-            console.log('資料庫已重置，準備重新載入頁面');
-            // 重新載入頁面以重新初始化資料庫
-            window.location.reload();
-        } catch (error) {
-            console.error('重置資料庫失敗:', error);
-            // 即使失敗也嘗試重新載入
-            window.location.reload();
-        }
-    }
 
     /**
      * 從 IndexedDB 載入使用者股票清單
@@ -151,6 +108,30 @@ export const useStockStore = defineStore('stock', () => {
         }
     }
 
+    /**
+     * 根據 ID 從 IndexedDB 獲取單一股票資料
+     * @param {string} id - 股票代碼
+     */
+    async function loadStock(id) {
+        const stock = await getStock(id);
+        if (stock) {
+            const exists = userStocks.value.find(s => s.id === stock.id);
+            if (!exists) {
+                userStocks.value.push(stock);
+            }
+        }
+    }
+
+    /**
+     * 將單一股票資料儲存至 IndexedDB
+     */
+    async function saveStock() {
+        const stock = userStocks.value.find(s => s.id === id);
+        if (stock) {
+            await setStock(stock);
+        }
+    }
+
     return {
         userStocks,
         loadUserStocks,
@@ -158,6 +139,7 @@ export const useStockStore = defineStore('stock', () => {
         removeStock,
         isStockAdded,
         reorderStocks,
-        resetDatabase,
+        loadStock,
+        saveStock,
     };
 });

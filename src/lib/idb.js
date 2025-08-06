@@ -1,54 +1,59 @@
 import { openDB } from 'idb';
 import axios from './axios';
 
-// 初始化 IndexedDB，建立通用函式
-export const dbPromise = openDB('ikdx-db', 2, {
-    upgrade(db, oldVersion, newVersion) {
-        console.log(`升級資料庫從版本 ${oldVersion} 到 ${newVersion}`);
+let db;
 
-        // 建立 all-stocks object store（如果不存在）
-        if (!db.objectStoreNames.contains('all-stocks')) {
-            db.createObjectStore('all-stocks', { keyPath: 'id' });
-            console.log('建立 all-stocks object store');
-        }
+// 初始化資料庫
+export async function initDB() {
+    db = await openDB('ikdx-db', 1, {
+        upgrade(db, oldVersion, newVersion) {
+            // 第一版只有 users，第二版新增了 settings：
+            // if (oldVersion < 1) {
+            //     db.createObjectStore('users', { keyPath: 'id' });
+            // }
+            // if (oldVersion < 2) {
+            //     db.createObjectStore('settings'); // key: string
+            // }
+        },
+    });
+}
 
-        // 建立 user-stocks object store（如果不存在）
-        if (!db.objectStoreNames.contains('user-stocks')) {
-            db.createObjectStore('user-stocks', { keyPath: 'id' });
-            console.log('建立 user-stocks object store');
-        }
-    },
-    blocked() {
-        console.error('資料庫升級被阻擋，請關閉所有其他使用此應用程式的頁面，然後重新載入此頁面。');
-    },
-    blocking() {
-        console.warn('新版本等待中，建議關閉其他頁面');
-    },
-});
-
+// 取得所有資料
 export async function getAllFromStore(storeName) {
-    const db = await dbPromise;
+    if (!db) {
+        throw new Error('Database is not initialized. Call initDB() first.');
+    }
     return db.getAll(storeName);
 }
 
+// 新增或更新資料
 export async function putToStore(storeName, data) {
-    const db = await dbPromise;
+    if (!db) {
+        throw new Error('Database is not initialized. Call initDB() first.');
+    }
     const tx = db.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     await store.put(data);
     await tx.done;
 }
 
+// 清除資料
 export async function clearStore(storeName) {
-    const db = await dbPromise;
+    if (!db) {
+        throw new Error('Database is not initialized. Call initDB() first.');
+    }
     const tx = db.transaction(storeName, 'readwrite');
     await tx.objectStore(storeName).clear();
     await tx.done;
 }
 
+// 取得 all-stocks 中的股票資料
 export async function getStocksFromDB() {
     console.log('開始執行 getStocksFromDB');
-    const db = await dbPromise;
+
+    if (!db) {
+        throw new Error('Database is not initialized. Call initDB() first.');
+    }
 
     // 確認 all-stocks store 是否存在
     if (!db.objectStoreNames.contains('all-stocks')) {
@@ -72,4 +77,30 @@ export async function getStocksFromDB() {
         console.log('股票資料已快取到 IndexedDB:', stocks);
         return stocks;
     }
+}
+
+// all-stocks 操作
+export async function getStock(id) {
+    return db.get('all-stocks', id);
+}
+
+export async function setStock(stock) {
+    return db.put('all-stocks', stock);
+}
+
+export async function deleteStock(id) {
+    return db.delete('all-stocks', id);
+}
+
+// user-stocks 操作
+export async function getUserStock(id) {
+    return db.get('user-stocks', id);
+}
+
+export async function setUserStock(stock) {
+    return db.put('user-stocks', stock);
+}
+
+export async function deleteUserStock(id) {
+    return db.delete('user-stocks', id);
 }

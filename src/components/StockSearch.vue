@@ -140,8 +140,6 @@
         bus.on(val => {
             showSheet.value = val;
         });
-        // 載入使用者股票清單
-        stockStore.loadUserStocks();
     });
     onUnmounted(() => {
         bus.reset();
