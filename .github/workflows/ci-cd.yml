@@ -49,19 +49,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Download Jest HTML report artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: jest-report
-          path: public/test
-
       - name: Build project (set base for GitHub Pages)
         run: |
           export DEPLOY_TARGET=github
           npm run build
 
+      - name: Download Jest HTML report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jest-report
+          path: dist/test
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./dist
