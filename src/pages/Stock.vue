@@ -445,7 +445,6 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        padding: 8px;
     }
 
     .kd-indicator,
