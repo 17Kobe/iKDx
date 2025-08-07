@@ -2,7 +2,7 @@ name: Fetch Stock Data
 
 on:
     schedule:
-        - cron: '0 6 * * 1-5' # 每週一到五台灣時間下午2點 (UTC+8, 所以是UTC 6點)
+        - cron: '35 5 * * 1-5' # 每週一到五台灣時間下午1點40分 (UTC+8, 所以是UTC 5:40)
     workflow_dispatch:
 
 jobs:
@@ -10,18 +10,18 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            
+
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: 20
-                  
+
             - name: Install dependencies
               run: npm install
-              
+
             - name: Fetch Stock Data
               run: node scripts/crawler/fetch-stocks-data.js
-                  
+
             - name: Commit & Push Stock Data
               run: |
                   git config --global user.name 'github-actions'
