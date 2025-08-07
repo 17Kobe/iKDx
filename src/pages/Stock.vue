@@ -60,12 +60,6 @@
 
                             <!-- K線圖 + 可滑動指標欄 -->
                             <div class="stock-indicator">
-                                <KChart 
-                                    :width="120" 
-                                    :height="60" 
-                                    :stock-data="stock"
-                                    :stock-index="index"
-                                />
                                 <Swipe
                                     :show-indicators="false"
                                     :loop="false"
@@ -74,13 +68,12 @@
                                 >
                                     <SwipeItem class="indicator-content">
                                         <div class="kd-indicator">
-                                            <div class="kd-value">{{ stock.weeklyKD }}</div>
-                                            <div
-                                                class="kd-trend"
-                                                :class="getKDClass(stock.weeklyKD)"
-                                            >
-                                                {{ getKDStatus(stock.weeklyKD) }}
-                                            </div>
+                                            <KChart
+                                                :width="120"
+                                                :height="60"
+                                                :stock-data="stock"
+                                                :stock-index="index"
+                                            />
                                         </div>
                                     </SwipeItem>
                                     <SwipeItem class="indicator-content">
@@ -128,7 +121,6 @@
 
         <!-- 股票搜尋組件 -->
         <StockSearch />
-
     </div>
 </template>
 
@@ -255,7 +247,6 @@
             }
         });
     }
-
 
     // 拖拽事件
     function onDragStart(evt) {
