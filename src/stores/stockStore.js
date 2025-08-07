@@ -1,9 +1,44 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getAllFromStore, putToStore, clearStore, getStock, setStock } from '@/lib/idb';
+import { getAllFromStore, putToStore, clearStore, getStock, setStock, deleteUserStock } from '@/lib/idb';
 
 export const useStockStore = defineStore('stock', () => {
-    const userStocks = ref([]);
+    // 初始化一些測試資料
+    const userStocks = ref([
+        {
+            id: '2330',
+            name: '台積電',
+            code: '2330',
+            price: 589,
+            change: 12,
+            changePercent: 2.08,
+            weeklyKD: 65,
+            rsi: 58,
+            addedAt: new Date().toISOString(),
+        },
+        {
+            id: '2317',
+            name: '鴻海',
+            code: '2317',
+            price: 102,
+            change: -2,
+            changePercent: -1.92,
+            weeklyKD: 34,
+            rsi: 42,
+            addedAt: new Date().toISOString(),
+        },
+        {
+            id: '2454',
+            name: '聯發科',
+            code: '2454',
+            price: 895,
+            change: 25,
+            changePercent: 2.87,
+            weeklyKD: 78,
+            rsi: 68,
+            addedAt: new Date().toISOString(),
+        },
+    ]);
 
     /**
      * 從 IndexedDB 載入使用者股票清單
@@ -13,12 +48,16 @@ export const useStockStore = defineStore('stock', () => {
             console.log('開始載入使用者股票清單...');
             const stocks = await getAllFromStore('user-stocks');
             console.log('從 IndexedDB 載入的股票:', stocks);
-            userStocks.value = stocks;
-            return stocks;
+            
+            // 如果 IndexedDB 中有資料，使用載入的資料；否則保持現有的測試資料
+            if (stocks && stocks.length > 0) {
+                userStocks.value = stocks;
+            }
+            return userStocks.value;
         } catch (error) {
             console.error('載入使用者股票清單失敗:', error);
-            userStocks.value = [];
-            return [];
+            // 發生錯誤時保持現有資料，不要清空
+            return userStocks.value;
         }
     }
 
@@ -64,11 +103,9 @@ export const useStockStore = defineStore('stock', () => {
      */
     async function removeStock(stockId) {
         try {
-            const db = await dbPromise;
-            // 檢查 object store 是否存在
-            if (db.objectStoreNames.contains('user-stocks')) {
-                await db.delete('user-stocks', stockId);
-            }
+            // 從 IndexedDB 移除
+            await deleteUserStock(stockId);
+            // 從 Pinia store 移除
             userStocks.value = userStocks.value.filter(s => s.id !== stockId);
             return { success: true, message: '股票已從清單中移除' };
         } catch (error) {
@@ -124,8 +161,9 @@ export const useStockStore = defineStore('stock', () => {
 
     /**
      * 將單一股票資料儲存至 IndexedDB
+     * @param {string} id - 股票代碼
      */
-    async function saveStock() {
+    async function saveStock(id) {
         const stock = userStocks.value.find(s => s.id === id);
         if (stock) {
             await setStock(stock);

@@ -58,8 +58,14 @@
                                 </div>
                             </div>
 
-                            <!-- 可滑動的指標欄 -->
+                            <!-- K線圖 + 可滑動指標欄 -->
                             <div class="stock-indicator">
+                                <KChart 
+                                    :width="120" 
+                                    :height="60" 
+                                    :stock-data="stock"
+                                    :stock-index="index"
+                                />
                                 <Swipe
                                     :show-indicators="false"
                                     :loop="false"
@@ -130,9 +136,11 @@
     import { ref, reactive, onMounted, computed } from 'vue';
     import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
+    import KChart from '@/components/KChart.vue';
     import { useEventBus } from '@vueuse/core';
     import { useStockStore } from '@/stores/stockStore.js';
     import draggable from 'vuedraggable/src/vuedraggable';
+    // import { createChart } from 'lightweight-charts';
     // import { initDB, ensureStoreExists } from '@/lib/idb';
 
     // 使用 Pinia store
@@ -232,6 +240,10 @@
 
     function onStrategyStock(stock) {
         showToast(`${stock.name} 策略設定`);
+    }
+
+    function onOtherAction(stock) {
+        showToast(`${stock.name} 其他功能`);
     }
 
     function onRemoveStock(stock) {
