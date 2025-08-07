@@ -395,7 +395,7 @@
         max-width: 162px;
         /* flex: none; 無論螢幕大小都會保持固定寬度。 */
         flex: none;
-        padding-right: 16px;
+        /* padding-right: 16px; */
     }
 
     .stock-name .name {
@@ -437,7 +437,8 @@
     /* 指標欄 - 可滑動 */
     .stock-indicator {
         flex: 1;
-        height: 60px;
+        height: 100%;
+        min-height: 100%;
         min-width: 0;
         max-width: 100%;
     }
@@ -541,7 +542,7 @@
         }
 
         .stock-content {
-            padding: 12px;
+            padding: 10px;
         }
 
         .stock-name .name {
