@@ -121,3 +121,11 @@ export async function setUserStock(stock) {
 export async function deleteUserStock(id) {
     return db.delete('user-stocks', id);
 }
+
+// 清除整個 IndexedDB 所有資料
+export async function clearAllDB() {
+    if (db) {
+        db.close();
+    }
+    await indexedDB.deleteDatabase('ikdx-db');
+}

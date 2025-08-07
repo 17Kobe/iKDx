@@ -123,10 +123,6 @@
         <!-- 股票搜尋組件 -->
         <StockSearch />
 
-        <!-- 刪除資料庫按鈕 -->
-        <Button type="danger" size="small" class="delete-db-btn" @click="onDeleteDB">
-            刪除資料庫
-        </Button>
     </div>
 </template>
 
@@ -248,11 +244,6 @@
         });
     }
 
-    function onDeleteDB() {
-        indexedDB.deleteDatabase('ikdx-db');
-        showToast('資料庫已刪除');
-        console.log('IndexedDB 已刪除');
-    }
 
     // 拖拽事件
     function onDragStart(evt) {
