@@ -250,8 +250,11 @@
 
     // 拖拽事件
     function onDragStart(evt) {
-        evt.preventDefault(); // 阻止點擊事件的預設行為，避免全選或放大鏡觸發
         console.log('開始拖曳', evt);
+        // 為拖曳元素添加特殊樣式類，讓 K 線圖知道正在拖曳
+        if (evt.item) {
+            evt.item.classList.add('dragging-in-progress');
+        }
     }
 
     function onDragEnd(evt) {
@@ -289,23 +292,22 @@
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
+        opacity: 0 !important; /* 強制隱藏所有子元素，包括 Canvas */
     }
 
     .stock-row.sortable-chosen {
         /* 拖曳中的殘影（跟隨滑鼠） */
         background: rgba(255, 224, 102, 0.8);
+        transform: rotate(2deg);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 
     .stock-row.sortable-drag {
         /* 拖曳中的殘影（跟隨滑鼠） */
         transform: rotate(5deg);
-        /* opacity: 1; */
-        z-index: 9999;
-        /* box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); */
+        z-index: 1;
         background: rgba(255, 224, 102, 0.8);
-        /* filter: none; */
-        /* border: 2px dashed #ffcc00;
-        transition: none; */
+        /* box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); */
     }
 
     /* 標題欄 */

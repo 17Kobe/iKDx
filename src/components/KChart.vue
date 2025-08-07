@@ -206,7 +206,7 @@
 
 <style scoped>
     .mini-k-chart {
-        background: #fff;
+        /* background: #fff; */
         border-radius: 6px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         overflow: hidden;
