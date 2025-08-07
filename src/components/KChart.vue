@@ -1,13 +1,11 @@
 <template>
-    <div 
-        ref="chartContainer" 
-        class="mini-k-chart"
-        :style="{ width: '100%', height: '100%' }"
-    >
+    <div ref="chartContainer" class="mini-k-chart" :style="{ width: '100%', height: '100%' }">
         <!-- 載入中顯示 -->
         <div v-if="!isVisible" class="chart-placeholder">
             <div class="placeholder-content">圖表載入中...</div>
         </div>
+        <!-- Chart.js Canvas -->
+        <canvas v-else ref="chartCanvas" :style="{ width: '100%', height: '100%' }"></canvas>
     </div>
 </template>
 
@@ -37,6 +35,7 @@
 
     // 響應式變數
     const chartContainer = ref(null);
+    const chartCanvas = ref(null);
     const isVisible = ref(false);
     const chartInstance = ref(null);
 
@@ -60,165 +59,33 @@
 
     // 創建 K 線圖表
     function createChart() {
-        if (!chartContainer.value || chartInstance.value) {
+        if (!chartCanvas.value) {
             return;
         }
 
         try {
             console.log(`正在為股票 ${props.stockData.name} 創建 K 線圖...`);
-            
-            // 清空容器
-            chartContainer.value.innerHTML = '';
-            
-            // 創建 SVG K 棒圖表
-            const svg = createSVGKChart();
-            chartContainer.value.appendChild(svg);
-            
-            chartInstance.value = svg;
+
+            // 創建簡單的 Canvas K 線圖
+            const ctx = chartCanvas.value.getContext('2d');
+            const candleData = generateKLineData();
+            drawCandlestickChart(ctx, candleData);
+
             console.log(`股票 ${props.stockData.name} 的 K 線圖創建成功`);
-            
         } catch (error) {
             console.error(`創建股票 ${props.stockData.name} 的圖表時發生錯誤:`, error);
             showErrorPlaceholder();
         }
     }
 
-    // 創建 SVG K 棒圖表
-    function createSVGKChart() {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '100%');
-        svg.setAttribute('height', '100%');
-        svg.setAttribute('viewBox', `0 0 ${props.width} ${props.height}`);
-
-        // 邊界自動依比例縮放
-        const padding = Math.max(props.width, props.height) * 0.08;
-        const chartW = props.width - padding * 2;
-        const chartH = props.height - padding * 2;
-
-        // 產生 K 線資料
-        const basePrice = 30 + (props.stockIndex * 2);
-        const volatility = 8 + (props.stockIndex % 3) * 2;
-        const candleData = generateKLineData(basePrice, volatility);
-
-        // 計算 Y 軸最大最小
-        const prices = candleData.flatMap(c => [c.open, c.close, c.high, c.low]);
-        const minY = Math.min(...prices);
-        const maxY = Math.max(...prices);
-
-        // 畫 Y 軸
-        const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        yAxis.setAttribute('x1', padding);
-        yAxis.setAttribute('y1', padding);
-        yAxis.setAttribute('x2', padding);
-        yAxis.setAttribute('y2', props.height - padding);
-        yAxis.setAttribute('stroke', '#bbb');
-        yAxis.setAttribute('stroke-width', '1');
-        svg.appendChild(yAxis);
-
-        // 畫 X 軸
-        const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        xAxis.setAttribute('x1', padding);
-        xAxis.setAttribute('y1', props.height - padding);
-        xAxis.setAttribute('x2', props.width - padding);
-        xAxis.setAttribute('y2', props.height - padding);
-        xAxis.setAttribute('stroke', '#bbb');
-        xAxis.setAttribute('stroke-width', '1');
-        svg.appendChild(xAxis);
-
-        // Y 軸刻度
-        for (let i = 0; i <= 2; i++) {
-            const y = padding + (chartH * i) / 2;
-            const price = (maxY - ((maxY - minY) * i) / 2).toFixed(1);
-            const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            tick.setAttribute('x1', padding - 3);
-            tick.setAttribute('y1', y);
-            tick.setAttribute('x2', padding);
-            tick.setAttribute('y2', y);
-            tick.setAttribute('stroke', '#bbb');
-            tick.setAttribute('stroke-width', '1');
-            svg.appendChild(tick);
-
-            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            label.setAttribute('x', 2);
-            label.setAttribute('y', y + 3);
-            label.setAttribute('font-size', '8');
-            label.setAttribute('fill', '#888');
-            label.textContent = price;
-            svg.appendChild(label);
-        }
-
-        // X 軸刻度
-        for (let i = 0; i < candleData.length; i++) {
-            const x = padding + (i + 1) * (chartW / (candleData.length + 1));
-            const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            tick.setAttribute('x1', x);
-            tick.setAttribute('y1', props.height - padding);
-            tick.setAttribute('x2', x);
-            tick.setAttribute('y2', props.height - padding + 3);
-            tick.setAttribute('stroke', '#bbb');
-            tick.setAttribute('stroke-width', '1');
-            svg.appendChild(tick);
-        }
-
-        // 畫 K 棒
-        candleData.forEach((candle, i) => {
-            const isRising = candle.close > candle.open;
-            const color = isRising ? '#ef5350' : '#26a69a';
-            // 價格轉換為 SVG Y 座標（Y 軸反向）
-            const priceToY = price => padding + ((maxY - price) / (maxY - minY)) * chartH;
-            const x = padding + (i + 1) * (chartW / (candleData.length + 1));
-            const openY = priceToY(candle.open);
-            const closeY = priceToY(candle.close);
-            const highY = priceToY(candle.high);
-            const lowY = priceToY(candle.low);
-            const bodyTop = Math.min(openY, closeY);
-            const bodyBottom = Math.max(openY, closeY);
-            const bodyHeight = Math.abs(closeY - openY);
-
-            // 上影線
-            if (highY < bodyTop) {
-                const upperWick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                upperWick.setAttribute('x1', x);
-                upperWick.setAttribute('y1', highY);
-                upperWick.setAttribute('x2', x);
-                upperWick.setAttribute('y2', bodyTop);
-                upperWick.setAttribute('stroke', color);
-                upperWick.setAttribute('stroke-width', '1');
-                svg.appendChild(upperWick);
-            }
-
-            // 下影線
-            if (lowY > bodyBottom) {
-                const lowerWick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                lowerWick.setAttribute('x1', x);
-                lowerWick.setAttribute('y1', bodyBottom);
-                lowerWick.setAttribute('x2', x);
-                lowerWick.setAttribute('y2', lowY);
-                lowerWick.setAttribute('stroke', color);
-                lowerWick.setAttribute('stroke-width', '1');
-                svg.appendChild(lowerWick);
-            }
-
-            // K 棒實體
-            const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            body.setAttribute('x', x - 3);
-            body.setAttribute('y', bodyTop);
-            body.setAttribute('width', '6');
-            body.setAttribute('height', Math.max(bodyHeight, 1));
-            body.setAttribute('fill', isRising ? color : '#fff');
-            body.setAttribute('stroke', color);
-            body.setAttribute('stroke-width', '1');
-            svg.appendChild(body);
-        });
-
-        return svg;
-    }
-
     // 生成 K 線資料
-    function generateKLineData(basePrice, volatility) {
+    function generateKLineData() {
         const candleCount = 6;
         const data = [];
+        const basePrice = 30 + props.stockIndex * 2;
+        const volatility = 8 + (props.stockIndex % 3) * 2;
         let currentPrice = basePrice;
+
         for (let i = 0; i < candleCount; i++) {
             // 生成 OHLC 資料
             const open = currentPrice;
@@ -226,6 +93,7 @@
             const close = open + priceChange;
             const high = Math.max(open, close) + Math.random() * (volatility * 0.3);
             const low = Math.min(open, close) - Math.random() * (volatility * 0.3);
+
             data.push({
                 open: open,
                 high: high,
@@ -237,6 +105,65 @@
         return data;
     }
 
+    // 使用 Canvas 繪製 K 線圖
+    function drawCandlestickChart(ctx, data) {
+        const canvas = chartCanvas.value;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+
+        // 設定 canvas 實際大小
+        canvas.width = width;
+        canvas.height = height;
+
+        // 清除畫布
+        ctx.clearRect(0, 0, width, height);
+
+        const padding = 10;
+        const chartWidth = width - padding * 2;
+        const chartHeight = height - padding * 2;
+
+        // 計算價格範圍
+        const prices = data.flatMap(d => [d.open, d.high, d.low, d.close]);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceRange = maxPrice - minPrice;
+
+        // 繪製每個 K 棒
+        const candleWidth = chartWidth / data.length;
+        const bodyWidth = candleWidth * 0.6;
+
+        data.forEach((candle, i) => {
+            const x = padding + (i + 0.5) * candleWidth;
+            const isRising = candle.close > candle.open;
+            const color = isRising ? '#ef5350' : '#26a69a';
+
+            // 計算 Y 座標
+            const highY = padding + ((maxPrice - candle.high) / priceRange) * chartHeight;
+            const lowY = padding + ((maxPrice - candle.low) / priceRange) * chartHeight;
+            const openY = padding + ((maxPrice - candle.open) / priceRange) * chartHeight;
+            const closeY = padding + ((maxPrice - candle.close) / priceRange) * chartHeight;
+
+            const bodyTop = Math.min(openY, closeY);
+            const bodyBottom = Math.max(openY, closeY);
+            const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
+
+            // 繪製影線
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, highY);
+            ctx.lineTo(x, lowY);
+            ctx.stroke();
+
+            // 繪製實體
+            ctx.fillStyle = isRising ? color : '#fff';
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.fillRect(x - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+            ctx.strokeRect(x - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+        });
+    }
+
     // 顯示錯誤佔位符
     function showErrorPlaceholder() {
         if (chartContainer.value) {
@@ -245,7 +172,7 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    height: ${props.height}px;
+                    height: 100%;
                     background: #f0f0f0;
                     color: #666;
                     font-size: 12px;
