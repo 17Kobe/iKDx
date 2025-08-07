@@ -1,0 +1,31 @@
+name: Fetch Stock Data
+
+on:
+    schedule:
+        - cron: '0 6 * * 1-5' # 每週一到五台灣時間下午2點 (UTC+8, 所以是UTC 6點)
+    workflow_dispatch:
+
+jobs:
+    fetch-stock-data:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  
+            - name: Install dependencies
+              run: npm install
+              
+            - name: Fetch Stock Data
+              run: node scripts/crawler/fetch-stocks-data.js
+                  
+            - name: Commit & Push Stock Data
+              run: |
+                  git config --global user.name 'github-actions'
+                  git config --global user.email 'github-actions@github.com'
+                  git add public/stocks/*/
+                  git commit -m 'Update stock data - $(date +"%Y-%m-%d %H:%M")' || echo "No changes to commit"
+                  git push
