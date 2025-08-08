@@ -254,9 +254,9 @@
         // debugger;
 
         // 為拖曳元素添加特殊樣式類，讓 K 線圖知道正在拖曳
-        if (evt.item) {
-            evt.item.classList.add('dragging-in-progress');
-        }
+        // if (evt.item) {
+        //     evt.item.classList.add('dragging-in-progress');
+        // }
     }
 
     function onDragEnd(evt) {
@@ -325,7 +325,7 @@
 
     .stock-content {
         display: flex;
-        align-items: center;
+        align-items: stretch; /* 等高關鍵 */
         min-height: 80px;
         padding: 10px;
     }
@@ -335,9 +335,10 @@
         width: 162px;
         min-width: 162px;
         max-width: 162px;
-        /* flex: none; 無論螢幕大小都會保持固定寬度。 */
         flex: none;
-        /* padding-right: 16px; */
+        display: flex;              /* 讓內容垂直置中 */
+        flex-direction: column;
+        justify-content: center;
     }
 
     .stock-name .name {
@@ -376,13 +377,19 @@
         color: #333;
     }
 
-    /* 指標欄 - 可滑動 */
+    /* 指標欄 - 可滑動，等高 */
     .stock-indicator {
         flex: 1;
-        height: 100%;
-        min-height: 100%;
         min-width: 0;
-        max-width: 100%;
+        display: flex;              /* 讓內層可吃到 100% 高度 */
+        align-items: stretch;
+    }
+
+    /* 強制 Vant Swipe 內層填滿高度 */
+    :deep(.van-swipe),
+    :deep(.van-swipe__track),
+    :deep(.van-swipe-item) {
+        height: 100% !important;
     }
 
     .indicator-content {
@@ -390,12 +397,17 @@
         align-items: center;
         justify-content: center;
         height: 100%;
+        width: 100%;
     }
 
     .kd-indicator,
     .rsi-indicator {
         text-align: center;
         width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .kd-value,
