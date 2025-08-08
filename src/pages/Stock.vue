@@ -251,6 +251,8 @@
     // 拖拽事件
     function onDragStart(evt) {
         console.log('開始拖曳', evt);
+        // debugger;
+
         // 為拖曳元素添加特殊樣式類，讓 K 線圖知道正在拖曳
         if (evt.item) {
             evt.item.classList.add('dragging-in-progress');
@@ -270,6 +272,7 @@
     .stock-page {
         /* padding: 16px; */
         background-color: #f5f5f5;
+        padding: 6px;
         /* min-height: 100vh; */
         /* padding-bottom: 60px !important; */
         /* padding-bottom: 60px; */
@@ -286,13 +289,7 @@
         color: transparent;
         /* 隱藏所有內容 */
         pointer-events: none;
-    }
-    .stock-row-ghost * {
-        color: transparent !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        opacity: 0 !important; /* 強制隱藏所有子元素，包括 Canvas */
+        opacity: 0 !important;
     }
 
     .stock-row.sortable-chosen {
@@ -308,61 +305,6 @@
         z-index: 1;
         background: rgba(255, 224, 102, 0.8);
         /* box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); */
-    }
-
-    /* 標題欄 */
-    .header {
-        background: white;
-        border-radius: 12px;
-        margin-bottom: 16px;
-        padding: 16px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .header-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 12px;
-        text-align: center;
-    }
-
-    .header-columns {
-        display: flex;
-        align-items: center;
-        padding: 8px 0;
-        border-top: 1px solid #eee;
-    }
-
-    .col-name {
-        flex: 1;
-        font-weight: bold;
-        color: #666;
-        font-size: 14px;
-    }
-
-    .col-indicator {
-        flex: 1;
-        min-width: 0;
-        text-align: right;
-    }
-
-    .indicator-swipe {
-        height: 30px;
-        background: #f8f9fa;
-        border-radius: 15px;
-        overflow: hidden;
-    }
-
-    .indicator-item {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        color: #666;
-        font-size: 14px;
-        height: 100%;
-        background: #f8f9fa;
     }
 
     /* 股票列表 */
@@ -384,8 +326,8 @@
     .stock-content {
         display: flex;
         align-items: center;
-        padding: 16px;
         min-height: 80px;
+        padding: 10px;
     }
 
     /* 股票名稱欄 - 固定不動 */
@@ -537,14 +479,6 @@
 
     /* 響應式設計 */
     @media (max-width: 480px) {
-        .stock-page {
-            padding: 6px;
-        }
-
-        .stock-content {
-            padding: 10px;
-        }
-
         .stock-name .name {
             font-size: 14px;
         }

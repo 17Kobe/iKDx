@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "nvm": "nvm use 24.4.1"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
