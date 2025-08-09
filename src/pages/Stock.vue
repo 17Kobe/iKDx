@@ -122,12 +122,12 @@
 </template>
 
 <script setup>
-    import { ref, reactive, onMounted, computed } from 'vue';
+    import { ref, reactive, onMounted, computed, watch } from 'vue';
     import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import KChart from '@/components/KChart.vue';
     import StockName from '@/components/StockName.vue';
-    import { useEventBus } from '@vueuse/core';
+    import { useEventBus, useEventListener } from '@vueuse/core';
     import { useStockStore } from '@/stores/stockStore.js';
     import draggable from 'vuedraggable/src/vuedraggable';
     // import { createChart } from 'lightweight-charts';
@@ -260,6 +260,13 @@
     function onDragEnd(evt) {
         console.log('拖曳結束', evt);
     }
+
+    // 使用 VueUse 的 useEventListener 監聽 visibilitychange
+    useEventListener(document, 'visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            stockStore.loadUserStocks();
+        }
+    });
 
     onMounted(() => {
         // 組件掛載後的初始化

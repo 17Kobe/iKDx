@@ -49,9 +49,16 @@ async function main() {
     for (let i = 0; i < uniqueStocks.length; i += batchSize) {
         // 取出本批要處理的股票
         const batch = uniqueStocks.slice(i, i + batchSize);
-        // 同時非同步呼叫 fetchStockPrice
-        await Promise.all(batch.map(stock => fetchStockPrice(stock)));
-        // 若還有下一批，則等待 500ms 再繼續
+        // 同時非同步呼叫 fetchStockPrice 並取得 logs
+        const results = await Promise.all(batch.map(stock => fetchStockPrice(stock)));
+        // 統一輸出每檔股票的日誌
+        for (const { id, name, logs } of results) {
+            // 清晰分隔線
+            const sep = '='.repeat(60);
+            console.log(sep);
+            // 輸出日誌內容
+            logs.forEach(line => console.log(line));
+        }
         // 若還有下一批，則等待 500ms 再繼續
         if (i + batchSize < uniqueStocks.length) {
             await sleep(500);

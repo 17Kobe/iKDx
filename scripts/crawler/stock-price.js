@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
  */
 export async function fetchStockPrice(stock) {
     const __dirname = dirname(fileURLToPath(import.meta.url));
+    const logs = [];
     const rootDir = resolve(__dirname, '../../');
     const stockDir = resolve(rootDir, 'public/stocks', stock.id);
     const allJsonPath = resolve(stockDir, 'all.json');
@@ -24,7 +25,7 @@ export async function fetchStockPrice(stock) {
     let klineArr = [];
     if (!existedBefore) {
         try {
-            console.log(`抓取 ${stock.id} (${stock.name}) 的歷史資料...`);
+            logs.push(`抓取 ${stock.id} (${stock.name}) 的歷史資料...`);
             const startDate = dayjs().subtract(10, 'year').format('YYYY-MM-DD');
             const url = 'https://api.finmindtrade.com/api/v4/data';
             const params = {
@@ -44,18 +45,16 @@ export async function fetchStockPrice(stock) {
                     item.Trading_Volume,
                 ]);
                 await fs.writeFile(allJsonPath, JSON.stringify(klineArr), 'utf8');
-                console.log(
-                    `✓ ${stock.id} 歷史資料已儲存 (${klineArr.length} 筆記錄): ${allJsonPath}`
-                );
+                logs.push(`✓ ${stock.id} 歷史資料已儲存 (${klineArr.length} 筆記錄): ${allJsonPath}`);
             } else {
-                console.log(`⚠ ${stock.id} 無歷史資料`);
+                logs.push(`⚠ ${stock.id} 無歷史資料`);
             }
         } catch (error) {
             let detail = '';
             if (error.response && error.response.data) {
                 detail = `\nFinMind 回應: ${JSON.stringify(error.response.data, null, 2)}`;
             }
-            console.error(`✗ 抓取 ${stock.id} 歷史資料失敗:`, error.message, detail);
+            logs.push(`✗ 抓取 ${stock.id} 歷史資料失敗: ${error.message}${detail}`);
         }
     } else {
         // 2. 若已有 all.json，讀取現有資料
@@ -83,8 +82,8 @@ export async function fetchStockPrice(stock) {
             ) {
                 const todayData = twseResponse.data.msgArray[0];
                 // 成功取得今日資料後才印出更新訊息
-                console.log(`更新 ${stock.id} (${stock.name}) 今日資料...`);
-                console.log(`✓ ${stock.id} 今日資料已取得 (價格: ${todayData.z || 'N/A'})`);
+                logs.push(`更新 ${stock.id} (${stock.name}) 今日資料...`);
+                logs.push(`✓ ${stock.id} 今日資料已取得 (價格: ${todayData.z || 'N/A'})`);
                 // 若 t 為 13:30:00，才視為確定值，並檢查 all.json 是否已有今日資料
                 if (todayData.t === '13:30:00') {
                     const todayDate =
@@ -104,20 +103,21 @@ export async function fetchStockPrice(stock) {
                             Number(todayData.v),
                         ]);
                         await fs.writeFile(allJsonPath, JSON.stringify(klineArr), 'utf8');
-                        console.log(`✓ ${stock.id} 已 append 今日資料到 all.json`);
+                        logs.push(`✓ ${stock.id} 已 append 今日資料到 all.json`);
                     } else if (hasToday) {
-                        console.log(`✓ ${stock.id} all.json 已有今日資料，略過 append`);
+                        logs.push(`✓ ${stock.id} all.json 已有今日資料，略過 append`);
                     }
                 }
             } else {
                 console.log(`⚠ ${stock.id} 無今日交易資料`);
             }
         } catch (error) {
-            console.error(`✗ 更新 ${stock.id} 今日資料失敗:`, error.message);
+            logs.push(`✗ 更新 ${stock.id} 今日資料失敗: ${error.message}`);
         }
     } else {
-        console.log(`跳過 ${stock.id} 今日資料更新，因歷史資料檔案無建立`);
+        logs.push(`跳過 ${stock.id} 今日資料更新，因歷史資料檔案無建立`);
     }
+    return { id: stock.id, name: stock.name, logs };
 }
 
 /**
