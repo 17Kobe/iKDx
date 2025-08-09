@@ -18,7 +18,13 @@ export async function getAllUserStockInfo() {
     return await getAllFromStore('user-stock-info');
 }
 
-// 你可依需求再擴充 putUserStockInfo、deleteUserStockInfo、getUserStockInfo 等方法
+/**
+ * 新增或更新單一 user-stock-info
+ * @param {Object} info
+ */
+export async function putUserStockInfo(info) {
+    return await putToStoreSimple('user-stock-info', info);
+}
 
 /**
  * 清空所有 user-stock-info

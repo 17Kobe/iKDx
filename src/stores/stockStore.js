@@ -1,19 +1,16 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import {
-    getAllFromStore,
-    putToStore,
-    clearStore,
-    getFromStore,
-    putToStoreSimple,
-    deleteFromStore,
-} from '@/lib/idb';
-import {
     batchFetchStockData,
     fetchAndUpdateStockPrice,
     getUserStockData,
 } from '@/services/userStockDataService';
-import { getAllUserStockInfo, clearAllUserStockInfo, deleteUserStockInfo } from '@/services/userStockInfoService';
+import {
+    getAllUserStockInfo,
+    clearAllUserStockInfo,
+    deleteUserStockInfo,
+    putUserStockInfo,
+} from '@/services/userStockInfoService';
 import { getAllStockById } from '@/services/allStocksService';
 
 export const useStockStore = defineStore('stock', () => {
@@ -120,7 +117,7 @@ export const useStockStore = defineStore('stock', () => {
         // 儲存到 IndexedDB
         try {
             console.log('準備儲存股票到 user-stock-info:', info);
-            await putToStoreSimple('user-stock-info', info);
+            await putUserStockInfo(info);
             console.log('股票已成功儲存到 user-stock-info');
             // 背景抓取該股票的價格資料
             updateSingleStockPrice(stock.id).catch(error => {
@@ -188,7 +185,7 @@ export const useStockStore = defineStore('stock', () => {
                     type: stock.type,
                     addedAt: stock.addedAt,
                 };
-                await putToStoreSimple('user-stock-info', info);
+                await putUserStockInfo(info);
             }
         } catch (error) {
             console.error('儲存股票排序失敗:', error);
@@ -216,7 +213,7 @@ export const useStockStore = defineStore('stock', () => {
     async function saveStock(id) {
         const stock = userStocks.value.find(s => s.id === id);
         if (stock) {
-            await putToStoreSimple('all-stocks', stock);
+            await putAllStock(stock);
         }
     }
 
@@ -341,7 +338,7 @@ export const useStockStore = defineStore('stock', () => {
                     lastValue,
                 };
                 console.log(`[user-stock-info] set`, info);
-                await putToStoreSimple('user-stock-info', info);
+                await putUserStockInfo(info);
                 console.log(`股票 ${stockId} 價格更新完成`);
             }
         } catch (error) {

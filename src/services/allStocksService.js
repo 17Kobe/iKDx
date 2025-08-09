@@ -31,3 +31,10 @@ export async function getStocksFromDB() {
 export async function getAllStockById(stockId) {
     return await getFromStore('all-stocks', stockId);
 }
+/**
+ * 新增或更新單一 all-stocks 資料
+ * @param {Object} stock
+ */
+export async function putAllStock(stock) {
+    return await putToStoreSimple('all-stocks', stock);
+}
