@@ -326,8 +326,10 @@
     .stock-content {
         display: flex;
         align-items: stretch; /* 等高關鍵 */
+        max-height: 105px; /* 新增最大高度限制 */
         min-height: 80px;
         padding: 10px;
+        width: 100%;
     }
 
     /* 股票名稱欄 - 固定不動 */
@@ -336,7 +338,7 @@
         min-width: 162px;
         max-width: 162px;
         flex: none;
-        display: flex;              /* 讓內容垂直置中 */
+        display: flex; /* 讓內容垂直置中 */
         flex-direction: column;
         justify-content: center;
     }
@@ -379,9 +381,10 @@
 
     /* 指標欄 - 可滑動，等高 */
     .stock-indicator {
-        flex: 1;
-        min-width: 0;
-        display: flex;              /* 讓內層可吃到 100% 高度 */
+        width: calc(100% - 173px); /*  這裡自動扣掉左側寬度 */
+        /* flex: 1;
+        min-width: 0; */
+        display: flex; /* 讓內層可吃到 100% 高度 */
         align-items: stretch;
     }
 
@@ -389,6 +392,8 @@
     :deep(.van-swipe),
     :deep(.van-swipe__track),
     :deep(.van-swipe-item) {
+        width: 100% !important;
+        min-width: 0 !important;
         height: 100% !important;
     }
 
@@ -397,7 +402,7 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        width: 100%;
+        width: 100% !important;
     }
 
     .kd-indicator,

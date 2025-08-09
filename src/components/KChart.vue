@@ -33,6 +33,29 @@
         },
     });
 
+    onMounted(() => {
+        nextTick(() => {
+            // resizeCanvas();
+            // ...繪圖邏輯
+        });
+        // window.addEventListener('resize', resizeCanvas);
+    });
+
+    // function resizeCanvas() {
+    //     const canvas = chartCanvas.value;
+    //     if (!canvas) return;
+    //     const dpr = window.devicePixelRatio || 1;
+    //     // 取得父容器實際顯示尺寸
+    //     const rect = canvas.parentElement.getBoundingClientRect();
+    //     canvas.width = rect.width * dpr;
+    //     canvas.height = rect.height * dpr;
+    //     canvas.style.width = rect.width + 'px';
+    //     canvas.style.height = rect.height + 'px';
+    //     const ctx = canvas.getContext('2d');
+    //     ctx.setTransform(1, 0, 0, 1, 0, 0); // 重設
+    //     ctx.scale(dpr, dpr);
+    // }
+
     // 響應式變數
     const chartContainer = ref(null);
     const chartCanvas = ref(null);
