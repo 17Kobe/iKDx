@@ -4,10 +4,17 @@
  */
 import axios from '@/lib/axios';
 import { initDB, putToStore, getAllFromStore, getDB } from '@/lib/idb';
-import { openDB } from 'idb';
 import dayjs from 'dayjs';
 
-// ...已移除 getDB 與 db，統一使用共用 idb.js 的 getDB ...
+/**
+ * 取得單一 user-stock-data 資料
+ * @param {string} stockId - 股票代碼
+ * @returns {Promise<Object|null>} 該股票的 user-stock-data
+ */
+export async function getUserStockData(stockId) {
+    const db = await getDB();
+    return db.get('user-stock-data', stockId);
+}
 
 /**
  * 檢查快取資料是否過期

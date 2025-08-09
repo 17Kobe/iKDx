@@ -8,7 +8,7 @@ import {
     putToStoreSimple,
     deleteFromStore,
 } from '@/lib/idb';
-import { batchFetchStockData, fetchAndUpdateStockPrice } from '@/services/userStockDataService';
+import { batchFetchStockData, fetchAndUpdateStockPrice, getUserStockData } from '@/services/userStockDataService';
 
 export const useStockStore = defineStore('stock', () => {
     // 初始化一些測試資料
@@ -304,7 +304,7 @@ export const useStockStore = defineStore('stock', () => {
                 let lastDate = null;
                 let lastValue = null;
                 try {
-                    const stockData = await getFromStore('user-stock-data', stockId);
+                    const stockData = await getUserStockData(stockId);
                     if (stockData && Array.isArray(stockData.daily) && stockData.daily.length > 0) {
                         const last = stockData.daily[stockData.daily.length - 1];
                         // 假設格式為 [date, value, ...] 或 {date, value}
