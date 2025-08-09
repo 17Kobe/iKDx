@@ -13,6 +13,7 @@ export async function fetchStockList() {
     const url = 'https://api.finmindtrade.com/api/v4/data';
     const params = {
         dataset: 'TaiwanStockInfo',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRlIjoiMjAyNC0wMS0wMiAxNTowODoyMyIsInVzZXJfaWQiOiIxN2tvYmUiLCJpcCI6IjIxMC43MS4yMTcuMjUxIn0.Dl5cEreMFOqT_4rrpwHwApyVn6vrEovKPMP3-zygpHk',
     };
     const { data } = await axios.get(url, { params });
     if (!data.data) throw new Error('FinMind 股票清單 API 回傳異常');

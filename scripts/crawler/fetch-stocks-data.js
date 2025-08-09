@@ -32,8 +32,30 @@ async function main() {
         '00679B',
     ];
     const filteredStocks = stocksData.filter(stock => targetIds.includes(stock.id));
-    for (const stock of filteredStocks) {
-        await fetchStockPrice(stock);
+    // 去除重複股票，確保唯一性
+    const uniqueStocks = Array.from(
+        new Map(filteredStocks.map(stock => [stock.id, stock])).values()
+    );
+    /**
+     * 批次非同步抓取股票價格
+     * - 每批同時處理 3 檔，避免 API 過度集中
+     * - 每批間隔 500ms，降低被封鎖風險
+     */
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    const batchSize = 3; // 每批同時處理數量
+    for (let i = 0; i < uniqueStocks.length; i += batchSize) {
+        // 取出本批要處理的股票
+        const batch = uniqueStocks.slice(i, i + batchSize);
+        // 同時非同步呼叫 fetchStockPrice
+        await Promise.all(batch.map(stock => fetchStockPrice(stock)));
+        // 若還有下一批，則等待 500ms 再繼續
+        // 若還有下一批，則等待 500ms 再繼續
+        if (i + batchSize < uniqueStocks.length) {
+            await sleep(500);
+        }
     }
     console.log('全部股票資料抓取完成！');
 }

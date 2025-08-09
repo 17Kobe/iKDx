@@ -18,9 +18,11 @@ export async function fetchStockPrice(stock) {
     // 確保目錄存在
     await fs.mkdir(stockDir, { recursive: true });
 
-    // 1. 若無 all.json，先抓 FinMind 歷史資料
+    // 1. 檢查歷史檔案是否存在
+    const existedBefore = await fileExists(allJsonPath);
+    // 2. 讀取或抓取歷史資料
     let klineArr = [];
-    if (!(await fileExists(allJsonPath))) {
+    if (!existedBefore) {
         try {
             console.log(`抓取 ${stock.id} (${stock.name}) 的歷史資料...`);
             const startDate = dayjs().subtract(10, 'year').format('YYYY-MM-DD');
@@ -29,7 +31,7 @@ export async function fetchStockPrice(stock) {
                 dataset: 'TaiwanStockPrice',
                 data_id: stock.id,
                 start_date: startDate,
-                token: 'eyJGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRlIjoiMjAyNC0wMS0wMiAxNTowODoyMyIsInVzZXJfaWQiOiIxN2tvYmUiLCJpcCI6IjIxMC43MS4yMTcuMjUxIn0.Dl5cEreMFOqT_4rrpwHwApyVn6vrEovKPMP3-zygpHk',
+                token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRlIjoiMjAyNC0wMS0wMiAxNTowODoyMyIsInVzZXJfaWQiOiIxN2tvYmUiLCJpcCI6IjIxMC43MS4yMTcuMjUxIn0.Dl5cEreMFOqT_4rrpwHwApyVn6vrEovKPMP3-zygpHk',
             };
             const res = await axios.get(url, { params });
             if (res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
@@ -49,7 +51,11 @@ export async function fetchStockPrice(stock) {
                 console.log(`⚠ ${stock.id} 無歷史資料`);
             }
         } catch (error) {
-            console.error(`✗ 抓取 ${stock.id} 歷史資料失敗:`, error.message);
+            let detail = '';
+            if (error.response && error.response.data) {
+                detail = `\nFinMind 回應: ${JSON.stringify(error.response.data, null, 2)}`;
+            }
+            console.error(`✗ 抓取 ${stock.id} 歷史資料失敗:`, error.message, detail);
         }
     } else {
         // 2. 若已有 all.json，讀取現有資料
@@ -61,51 +67,56 @@ export async function fetchStockPrice(stock) {
         }
     }
 
-    // 3. 更新今日資料（僅當 all.json 存在時才補今日）
-    try {
-        console.log(`更新 ${stock.id} (${stock.name}) 今日資料...`);
-        const exchange = stock.id.length === 4 ? 'tse' : 'otc';
-        const stockParam = `${exchange}_${stock.id}.tw`;
-        const twseResponse = await axios.get(
-            `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${stockParam}`,
-            { timeout: 10000 }
-        );
-        if (
-            twseResponse.data &&
-            twseResponse.data.msgArray &&
-            twseResponse.data.msgArray.length > 0
-        ) {
-            const todayData = twseResponse.data.msgArray[0];
-            console.log(`✓ ${stock.id} 今日資料已取得 (價格: ${todayData.z || 'N/A'})`);
-            // 若 t 為 13:30:00，才視為確定值，並檢查 all.json 是否已有今日資料
-            if (todayData.t === '13:30:00') {
-                const todayDate =
-                    todayData.d ||
-                    todayData.date ||
-                    (todayData.tlong
-                        ? new Date(Number(todayData.tlong)).toISOString().slice(0, 10)
-                        : null);
-                const hasToday = klineArr.some(row => row[0] === todayDate);
-                if (!hasToday && todayDate) {
-                    klineArr.push([
-                        todayDate,
-                        Number(todayData.o),
-                        Number(todayData.h),
-                        Number(todayData.l),
-                        Number(todayData.z),
-                        Number(todayData.v),
-                    ]);
-                    await fs.writeFile(allJsonPath, JSON.stringify(klineArr), 'utf8');
-                    console.log(`✓ ${stock.id} 已 append 今日資料到 all.json`);
-                } else if (hasToday) {
-                    console.log(`✓ ${stock.id} all.json 已有今日資料，略過 append`);
+    // 3. 更新今日資料（僅當歷史資料檔案已存在時才抓取）
+    if (existedBefore) {
+        try {
+            const exchange = stock.id.length === 4 ? 'tse' : 'otc';
+            const stockParam = `${exchange}_${stock.id}.tw`;
+            const twseResponse = await axios.get(
+                `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${stockParam}`,
+                { timeout: 10000 }
+            );
+            if (
+                twseResponse.data &&
+                twseResponse.data.msgArray &&
+                twseResponse.data.msgArray.length > 0
+            ) {
+                const todayData = twseResponse.data.msgArray[0];
+                // 成功取得今日資料後才印出更新訊息
+                console.log(`更新 ${stock.id} (${stock.name}) 今日資料...`);
+                console.log(`✓ ${stock.id} 今日資料已取得 (價格: ${todayData.z || 'N/A'})`);
+                // 若 t 為 13:30:00，才視為確定值，並檢查 all.json 是否已有今日資料
+                if (todayData.t === '13:30:00') {
+                    const todayDate =
+                        todayData.d ||
+                        todayData.date ||
+                        (todayData.tlong
+                            ? new Date(Number(todayData.tlong)).toISOString().slice(0, 10)
+                            : null);
+                    const hasToday = klineArr.some(row => row[0] === todayDate);
+                    if (!hasToday && todayDate) {
+                        klineArr.push([
+                            todayDate,
+                            Number(todayData.o),
+                            Number(todayData.h),
+                            Number(todayData.l),
+                            Number(todayData.z),
+                            Number(todayData.v),
+                        ]);
+                        await fs.writeFile(allJsonPath, JSON.stringify(klineArr), 'utf8');
+                        console.log(`✓ ${stock.id} 已 append 今日資料到 all.json`);
+                    } else if (hasToday) {
+                        console.log(`✓ ${stock.id} all.json 已有今日資料，略過 append`);
+                    }
                 }
+            } else {
+                console.log(`⚠ ${stock.id} 無今日交易資料`);
             }
-        } else {
-            console.log(`⚠ ${stock.id} 無今日交易資料`);
+        } catch (error) {
+            console.error(`✗ 更新 ${stock.id} 今日資料失敗:`, error.message);
         }
-    } catch (error) {
-        console.error(`✗ 更新 ${stock.id} 今日資料失敗:`, error.message);
+    } else {
+        console.log(`跳過 ${stock.id} 今日資料更新，因歷史資料檔案無建立`);
     }
 }
 
