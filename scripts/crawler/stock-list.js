@@ -4,6 +4,7 @@ import axios from 'axios';
 import { promises as fs } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import _ from 'lodash';
 
 /**
  * 取得台股股票清單，轉換格式並寫入 stock_list.json
@@ -17,12 +18,13 @@ export async function fetchStockList() {
     };
     const { data } = await axios.get(url, { params });
     if (!data.data) throw new Error('FinMind 股票清單 API 回傳異常');
-    // 轉換格式：stock_id -> id, stock_name -> name, 加入 industry_category, type
-    const stocks = data.data.map(item => ({
-        id: item.stock_id,
-        name: item.stock_name,
-        industry_category: item.industry_category,
-        type: item.type,
+    // 用 lodash groupBy + map + uniq 合併同 id+type，industryCategory 陣列去重
+    const grouped = _.groupBy(data.data, item => `${item.stock_id}_${item.type}`);
+    const stocks = Object.values(grouped).map(group => ({
+        id: group[0].stock_id,
+        name: group[0].stock_name,
+        industryCategory: _.uniq(group.map(i => i.industry_category)),
+        type: group[0].type,
     }));
     // 寫入 public/stocks/stock_list.json
     // 目前 stock-list.js 的邏輯是每次執行都會將最新取得的股票清單「全部覆寫」寫入 public/stocks/stock_list.json，不會保留舊資料。這樣可確保 stock_list.json 內容永遠是最新的全量清單

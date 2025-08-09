@@ -1,15 +1,23 @@
 <template>
     <div class="stock-page">
-        <!-- 股票列表 -->
-        <draggable
-            v-model="stockList"
-            item-key="id"
-            :delay="200"
-            :animation="200"
-            ghost-class="stock-row-ghost"
-            @start="onDragStart"
-            @end="onDragEnd"
+        <!-- 下拉重新整理 -->
+        <PullRefresh 
+            v-model="isRefreshing" 
+            @refresh="onRefresh"
+            pulling-text="下拉重新整理股票價格"
+            loosing-text="釋放立即更新"
+            loading-text="正在更新股票價格..."
         >
+            <!-- 股票列表 -->
+            <draggable
+                v-model="stockList"
+                item-key="id"
+                :delay="200"
+                :animation="200"
+                ghost-class="stock-row-ghost"
+                @start="onDragStart"
+                @end="onDragEnd"
+            >
             <template #item="{ element: stock, index }">
                 <div class="stock-row" @contextmenu.prevent>
                     <SwipeCell :left-width="200" @click-left="onLeftAction">
@@ -88,6 +96,7 @@
                 </div>
             </template>
         </draggable>
+        </PullRefresh>
 
         <!-- 浮動按鈕 -->
         <FloatingBubble
@@ -123,7 +132,7 @@
 
 <script setup>
     import { ref, reactive, onMounted, computed, watch } from 'vue';
-    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast } from 'vant';
+    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast, PullRefresh } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import KChart from '@/components/KChart.vue';
     import StockName from '@/components/StockName.vue';
@@ -143,6 +152,7 @@
     const stockListRef = ref(null);
     const indicatorSwipeRef = ref(null);
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
+    const isRefreshing = ref(false);
 
     onMounted(async () => {
         try {
@@ -169,6 +179,20 @@
     // 浮動按鈕點擊
     function onBubbleClick() {
         bus.emit(true);
+    }
+
+    // 下拉重新整理
+    async function onRefresh() {
+        isRefreshing.value = true;
+        try {
+            const result = await stockStore.refreshAllStockPrices();
+            showToast(result.message);
+        } catch (error) {
+            console.error('重新整理失敗:', error);
+            showToast('重新整理失敗');
+        } finally {
+            isRefreshing.value = false;
+        }
     }
 
     // 指標切換

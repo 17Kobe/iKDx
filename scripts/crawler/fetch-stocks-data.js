@@ -1,9 +1,9 @@
 // Orchestrator: 先抓股票清單，再抓價格
-// import { fetchStockList } from './stock-list.js';
+import { fetchStockList } from './stock-list.js';
 import { fetchStockPrice } from './stock-price.js';
 
 async function main() {
-    // await fetchStockList();
+    await fetchStockList();
     // 讀取 stock-list.js 寫入的 stock_list.json
     const fs = await import('fs');
     const path = await import('path');

@@ -7,10 +7,11 @@ let db;
 export async function initDB() {
     db = await openDB('ikdx-db', 1, {
         upgrade(db, oldVersion, newVersion) {
-            // 第一版包含 all-stocks 和 user-stocks 資料表
+            // 第一版包含 all-stocks、user-stock-info、user-stock-data
             if (oldVersion < 1) {
                 db.createObjectStore('all-stocks', { keyPath: 'id' });
-                db.createObjectStore('user-stocks', { keyPath: 'id' });
+                db.createObjectStore('user-stock-info', { keyPath: 'id' });
+                db.createObjectStore('user-stock-data', { keyPath: 'id' });
             }
         },
     });
@@ -109,17 +110,31 @@ export async function deleteStock(id) {
     return db.delete('all-stocks', id);
 }
 
-// user-stocks 操作
-export async function getUserStock(id) {
-    return db.get('user-stocks', id);
+
+// user-stock-info 操作
+export async function getUserStockInfo(id) {
+    return db.get('user-stock-info', id);
 }
 
-export async function setUserStock(stock) {
-    return db.put('user-stocks', stock);
+export async function setUserStockInfo(info) {
+    return db.put('user-stock-info', info);
 }
 
-export async function deleteUserStock(id) {
-    return db.delete('user-stocks', id);
+export async function deleteUserStockInfo(id) {
+    return db.delete('user-stock-info', id);
+}
+
+// user-stock-data 操作
+export async function getUserStockData(id) {
+    return db.get('user-stock-data', id);
+}
+
+export async function setUserStockData(data) {
+    return db.put('user-stock-data', data);
+}
+
+export async function deleteUserStockData(id) {
+    return db.delete('user-stock-data', id);
 }
 
 // 清除整個 IndexedDB 所有資料
