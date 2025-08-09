@@ -3,25 +3,11 @@
  * 負責抓取和快取股票價格資料到 IndexedDB
  */
 import axios from '@/lib/axios';
-import { initDB, putToStore, getAllFromStore } from '@/lib/idb';
+import { initDB, putToStore, getAllFromStore, getDB } from '@/lib/idb';
 import { openDB } from 'idb';
 import dayjs from 'dayjs';
 
-// 使用現有的 ikdx-db 資料庫
-let db;
-
-/**
- * 初始化並取得資料庫連線
- */
-async function getDB() {
-    if (!db) {
-        // 確保主資料庫已初始化
-        await initDB();
-        // 取得 ikdx-db 的連線
-        db = await openDB('ikdx-db', 1);
-    }
-    return db;
-}
+// ...已移除 getDB 與 db，統一使用共用 idb.js 的 getDB ...
 
 /**
  * 檢查快取資料是否過期
@@ -45,7 +31,7 @@ async function fetchStockDataFromAPI(stockCode) {
     try {
         console.log(`開始抓取股票 ${stockCode} 的資料...`);
         const response = await axios.get(`stocks/${stockCode}/all.json`);
-        
+
         if (response.data) {
             const stockData = {
                 stockCode,
@@ -53,11 +39,11 @@ async function fetchStockDataFromAPI(stockCode) {
                 lastUpdated: new Date().toISOString(),
                 fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             };
-            
+
             console.log(`成功抓取股票 ${stockCode} 資料`);
             return stockData;
         }
-        
+
         console.warn(`股票 ${stockCode} 無資料回傳`);
         return null;
     } catch (error) {
@@ -120,21 +106,21 @@ export async function getStockData(stockCode, forceRefresh = false) {
             };
         }
     }
-    
+
     // 從 API 抓取新資料
     const freshData = await fetchStockDataFromAPI(stockCode);
     if (freshData) {
         await saveStockDataToDB(freshData);
         return freshData;
     }
-    
+
     // 如果 API 失敗，嘗試使用舊的快取資料
     const fallbackData = await getStockDataFromDB(stockCode);
     if (fallbackData) {
         console.warn(`API 失敗，使用舊快取資料: ${stockCode}`);
         return fallbackData;
     }
-    
+
     return null;
 }
 
@@ -149,22 +135,22 @@ export async function batchFetchStockData(stockCodes, concurrency = 5, forceRefr
     if (!stockCodes || stockCodes.length === 0) {
         return [];
     }
-    
+
     console.log(`開始批量抓取 ${stockCodes.length} 支股票資料，併發數: ${concurrency}`);
-    
+
     const results = [];
     const chunks = [];
-    
+
     // 將股票代碼分批處理
     for (let i = 0; i < stockCodes.length; i += concurrency) {
         chunks.push(stockCodes.slice(i, i + concurrency));
     }
-    
+
     // 逐批並發處理
     for (const chunk of chunks) {
         const promises = chunk.map(stockCode => getStockData(stockCode, forceRefresh));
         const chunkResults = await Promise.allSettled(promises);
-        
+
         chunkResults.forEach((result, index) => {
             if (result.status === 'fulfilled' && result.value) {
                 results.push(result.value);
@@ -172,13 +158,13 @@ export async function batchFetchStockData(stockCodes, concurrency = 5, forceRefr
                 console.error(`股票 ${chunk[index]} 抓取失敗:`, result.reason);
             }
         });
-        
+
         // 避免過於頻繁的請求，批次間稍作延遲
         if (chunks.indexOf(chunk) < chunks.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
     }
-    
+
     console.log(`批量抓取完成，成功: ${results.length}/${stockCodes.length}`);
     return results;
 }
@@ -191,30 +177,30 @@ export async function batchFetchStockData(stockCodes, concurrency = 5, forceRefr
  */
 export async function fetchAndUpdateStockPrice(stockCode, baseStockInfo) {
     const stockData = await getStockData(stockCode);
-    
+
     if (!stockData || !stockData.data) {
         console.warn(`股票 ${stockCode} 無價格資料`);
         return null;
     }
-    
+
     // 處理股票資料，提取最新價格資訊
     const priceData = stockData.data;
-    
+
     // 假設 all.json 包含歷史價格資料，取最新一筆
     let latestPrice = null;
     let change = 0;
     let changePercent = 0;
-    
+
     if (Array.isArray(priceData) && priceData.length > 0) {
         // 如果是陣列格式（歷史資料）
         const latest = priceData[priceData.length - 1];
         latestPrice = latest.close || latest.price || latest[4]; // 適應不同資料格式
-        
+
         if (priceData.length > 1) {
             const previous = priceData[priceData.length - 2];
             const previousPrice = previous.close || previous.price || previous[4];
             change = latestPrice - previousPrice;
-            changePercent = ((change / previousPrice) * 100);
+            changePercent = (change / previousPrice) * 100;
         }
     } else if (typeof priceData === 'object') {
         // 如果是物件格式
@@ -222,7 +208,7 @@ export async function fetchAndUpdateStockPrice(stockCode, baseStockInfo) {
         change = priceData.change || 0;
         changePercent = priceData.changePercent || 0;
     }
-    
+
     // 組合最終的股票資料
     const updatedStock = {
         ...baseStockInfo,
@@ -232,9 +218,9 @@ export async function fetchAndUpdateStockPrice(stockCode, baseStockInfo) {
         lastUpdated: stockData.lastUpdated,
         // 可以添加更多技術指標
         weeklyKD: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
-        rsi: Math.floor(Math.random() * 100),      // 暫時用隨機數，待實際資料結構確定
+        rsi: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
     };
-    
+
     return updatedStock;
 }
 
@@ -246,10 +232,10 @@ export async function cleanExpiredCache(expireDays = 7) {
     try {
         const db = await getDB();
         const allData = await db.getAll('user-stock-data');
-        
+
         const cutoffDate = dayjs().subtract(expireDays, 'day').toISOString();
         let deletedCount = 0;
-        
+
         const tx = db.transaction('user-stock-data', 'readwrite');
         for (const item of allData) {
             if (item.lastUpdated && item.lastUpdated < cutoffDate) {
@@ -258,7 +244,7 @@ export async function cleanExpiredCache(expireDays = 7) {
             }
         }
         await tx.done;
-        
+
         console.log(`已清除 ${deletedCount} 筆過期快取資料`);
     } catch (error) {
         console.error('清除過期快取失敗:', error);
@@ -274,12 +260,10 @@ export async function getCacheStats() {
         const db = await getDB();
         const count = await db.count('user-stock-data');
         const allData = await db.getAll('user-stock-data');
-        
+
         const now = dayjs();
-        const validCache = allData.filter(item => 
-            !isCacheExpired(item.lastUpdated, 30)
-        ).length;
-        
+        const validCache = allData.filter(item => !isCacheExpired(item.lastUpdated, 30)).length;
+
         return {
             total: count,
             valid: validCache,
