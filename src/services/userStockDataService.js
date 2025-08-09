@@ -3,7 +3,7 @@
  * 負責抓取和快取股票價格資料到 IndexedDB
  */
 import axios from '@/lib/axios';
-import { initDB, putToStore, getAllFromStore, getDB } from '@/lib/idb';
+import { initDB, putToStore, getDB } from '@/lib/idb';
 import dayjs from 'dayjs';
 
 /**
@@ -84,7 +84,7 @@ async function saveStockDataToDB(stockData) {
  * @param {string} stockCode - 股票代碼
  * @returns {Promise<Object|null>} 快取的股票資料或 null
  */
-async function getStockDataFromDB(stockCode) {
+async function getUserStockDataById(stockCode) {
     try {
         const db = await getDB();
         const stockData = await db.get('user-stock-data', stockCode);
@@ -104,7 +104,7 @@ async function getStockDataFromDB(stockCode) {
 export async function getStockData(stockCode, forceRefresh = false) {
     // 檢查快取
     if (!forceRefresh) {
-        const cachedData = await getStockDataFromDB(stockCode);
+        const cachedData = await getUserStockDataById(stockCode);
         if (cachedData && !isCacheExpired(cachedData.lastUpdated)) {
             console.log(`使用快取資料: ${stockCode}`);
             return {
@@ -122,7 +122,7 @@ export async function getStockData(stockCode, forceRefresh = false) {
     }
 
     // 如果 API 失敗，嘗試使用舊的快取資料
-    const fallbackData = await getStockDataFromDB(stockCode);
+    const fallbackData = await getUserStockDataById(stockCode);
     if (fallbackData) {
         console.warn(`API 失敗，使用舊快取資料: ${stockCode}`);
         return fallbackData;

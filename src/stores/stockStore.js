@@ -6,12 +6,12 @@ import {
     getUserStockData,
 } from '@/services/userStockDataService';
 import {
-    getAllUserStockInfo,
-    clearAllUserStockInfo,
+    getUserStockInfo,
+    clearUserStockInfo,
     deleteUserStockInfo,
     putUserStockInfo,
 } from '@/services/userStockInfoService';
-import { getAllStockById } from '@/services/allStocksService';
+import { getAllStocksById, putAllStocks } from '@/services/allStocksService';
 
 export const useStockStore = defineStore('stock', () => {
     // 初始化一些測試資料
@@ -57,7 +57,7 @@ export const useStockStore = defineStore('stock', () => {
     async function loadUserStocks() {
         try {
             console.log('開始載入使用者股票清單...');
-            const stocks = await getAllUserStockInfo();
+            const stocks = await getUserStockInfo();
             console.log('從 IndexedDB 載入的股票:', stocks);
 
             // 如果 IndexedDB 中有資料，使用載入的資料；否則保持現有的測試資料
@@ -171,7 +171,7 @@ export const useStockStore = defineStore('stock', () => {
      */
     async function saveToIndexedDB() {
         try {
-            await clearAllUserStockInfo();
+            await clearUserStockInfo();
             for (const stock of userStocks.value) {
                 // 只存純資料欄位
                 const info = {
@@ -197,7 +197,7 @@ export const useStockStore = defineStore('stock', () => {
      * @param {string} id - 股票代碼
      */
     async function loadStock(id) {
-        const stock = await getAllStockById(id);
+        const stock = await getAllStocksById(id);
         if (stock) {
             const exists = userStocks.value.find(s => s.id === stock.id);
             if (!exists) {
@@ -213,7 +213,7 @@ export const useStockStore = defineStore('stock', () => {
     async function saveStock(id) {
         const stock = userStocks.value.find(s => s.id === id);
         if (stock) {
-            await putAllStock(stock);
+            await putAllStocks(stock);
         }
     }
 

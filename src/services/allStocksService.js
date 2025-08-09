@@ -28,13 +28,13 @@ export async function getAllStocks() {
  * @param {string} stockId - 股票代碼
  * @returns {Promise<Object|null>} 該股票的 all-stocks 資料
  */
-export async function getAllStockById(stockId) {
+export async function getAllStocksById(stockId) {
     return await getFromStore('all-stocks', stockId);
 }
 /**
  * 新增或更新單一 all-stocks 資料
  * @param {Object} stock
  */
-export async function putAllStock(stock) {
+export async function putAllStocks(stock) {
     return await putToStoreSimple('all-stocks', stock);
 }

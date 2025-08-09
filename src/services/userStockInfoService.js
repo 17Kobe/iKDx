@@ -2,19 +2,13 @@
  * user-stock-info 資料表專用 service
  * 集中所有 user-stock-info CRUD 操作
  */
-import {
-    getAllFromStore,
-    putToStoreSimple,
-    deleteFromStore,
-    getFromStore,
-    clearStore,
-} from '@/lib/idb';
+import { getAllFromStore, putToStoreSimple, deleteFromStore, clearStore } from '@/lib/idb';
 
 /**
  * 取得所有 user-stock-info 資料
  * @returns {Promise<Array>} 股票清單
  */
-export async function getAllUserStockInfo() {
+export async function getUserStockInfo() {
     return await getAllFromStore('user-stock-info');
 }
 
@@ -27,16 +21,16 @@ export async function putUserStockInfo(info) {
 }
 
 /**
- * 清空所有 user-stock-info
- */
-export async function clearAllUserStockInfo() {
-    return await clearStore('user-stock-info');
-}
-
-/**
  * 刪除單一 user-stock-info
  * @param {string} stockId
  */
 export async function deleteUserStockInfo(stockId) {
     return await deleteFromStore('user-stock-info', stockId);
+}
+
+/**
+ * 清空所有 user-stock-info
+ */
+export async function clearUserStockInfo() {
+    return await clearStore('user-stock-info');
 }
