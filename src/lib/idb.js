@@ -1,55 +1,59 @@
 import { openDB } from 'idb';
 import axios from './axios';
 
-let db;
+let db = null;
 
 // 初始化資料庫
+// 取得全域唯一 DB 實例
 export async function initDB() {
-    db = await openDB('ikdx-db', 1, {
-        upgrade(db, oldVersion, newVersion) {
-            // 第一版包含 all-stocks、user-stock-info、user-stock-data
-            if (oldVersion < 1) {
-                db.createObjectStore('all-stocks', { keyPath: 'id' });
-                db.createObjectStore('user-stock-info', { keyPath: 'id' });
-                db.createObjectStore('user-stock-data', { keyPath: 'id' });
-            }
-        },
-    });
+    if (!db) {
+        db = await openDB('ikdx-db', 1, {
+            upgrade(db, oldVersion, newVersion) {
+                // 第一版包含 all-stocks、user-stock-info、user-stock-data
+                if (oldVersion < 1) {
+                    db.createObjectStore('all-stocks', { keyPath: 'id' });
+                    db.createObjectStore('user-stock-info', { keyPath: 'id' });
+                    db.createObjectStore('user-stock-data', { keyPath: 'id' });
+                }
+            },
+        });
+    }
+    return db;
+}
+
+// 也可以導出 getDB()，就直接回傳 dbPromise
+export function getDB() {
+    return initDB();
 }
 
 // 確保指定的 Object Store 存在
 export async function ensureStoreExists(storeName) {
-    if (!db) {
-        throw new Error('Database is not initialized. Call initDB() first.');
-    }
+    const localDb = await getDB();
 
-    if (!db.objectStoreNames.contains(storeName)) {
+    if (!localDb.objectStoreNames.contains(storeName)) {
         console.warn(`${storeName} store 不存在，開始建立`);
-        const version = db.version + 1;
-        db.close();
-        db = await openDB('ikdx-db', version, {
+        const version = localDb.version + 1;
+        localDb.close();
+        const newDb = await openDB('ikdx-db', version, {
             upgrade(upgradeDb) {
                 upgradeDb.createObjectStore(storeName, { keyPath: 'id' });
             },
         });
+        db = newDb;
         console.log(`${storeName} store 已建立`);
     }
 }
 
 // 取得所有資料
 export async function getAllFromStore(storeName) {
-    if (!db) {
-        throw new Error('Database is not initialized. Call initDB() first.');
-    }
-    return db.getAll(storeName);
+    const localDb = await getDB();
+    return localDb.getAll(storeName);
 }
 
 // 新增或更新資料
 export async function putToStore(storeName, data) {
-    if (!db) {
-        throw new Error('Database is not initialized. Call initDB() first.');
-    }
-    const tx = db.transaction(storeName, 'readwrite');
+    const localDb = await getDB();
+    const tx = localDb.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     await store.put(data);
     await tx.done;
@@ -57,10 +61,8 @@ export async function putToStore(storeName, data) {
 
 // 清除資料
 export async function clearStore(storeName) {
-    if (!db) {
-        throw new Error('Database is not initialized. Call initDB() first.');
-    }
-    const tx = db.transaction(storeName, 'readwrite');
+    const localDb = await getDB();
+    const tx = localDb.transaction(storeName, 'readwrite');
     await tx.objectStore(storeName).clear();
     await tx.done;
 }
@@ -69,17 +71,15 @@ export async function clearStore(storeName) {
 export async function getStocksFromDB() {
     console.log('開始執行 getStocksFromDB');
 
-    if (!db) {
-        throw new Error('Database is not initialized. Call initDB() first.');
-    }
+    const localDb = await getDB();
 
     // 確認 all-stocks store 是否存在
-    if (!db.objectStoreNames.contains('all-stocks')) {
+    if (!localDb.objectStoreNames.contains('all-stocks')) {
         console.warn('all-stocks store 不存在，返回空陣列');
         return [];
     }
 
-    const count = await db.count('all-stocks');
+    const count = await localDb.count('all-stocks');
     console.log('all-stocks store 中的資料數量:', count);
     if (count > 0) {
         const stocks = await getAllFromStore('all-stocks');
@@ -99,46 +99,55 @@ export async function getStocksFromDB() {
 
 // all-stocks 操作
 export async function getStock(id) {
+    const db = await getDB();
     return db.get('all-stocks', id);
 }
 
 export async function setStock(stock) {
+    const db = await getDB();
     return db.put('all-stocks', stock);
 }
 
 export async function deleteStock(id) {
+    const db = await getDB();
     return db.delete('all-stocks', id);
 }
 
-
 // user-stock-info 操作
 export async function getUserStockInfo(id) {
+    const db = await getDB();
     return db.get('user-stock-info', id);
 }
 
 export async function setUserStockInfo(info) {
+    const db = await getDB();
     return db.put('user-stock-info', info);
 }
 
 export async function deleteUserStockInfo(id) {
+    const db = await getDB();
     return db.delete('user-stock-info', id);
 }
 
 // user-stock-data 操作
 export async function getUserStockData(id) {
+    const db = await getDB();
     return db.get('user-stock-data', id);
 }
 
 export async function setUserStockData(data) {
+    const db = await getDB();
     return db.put('user-stock-data', data);
 }
 
 export async function deleteUserStockData(id) {
+    const db = await getDB();
     return db.delete('user-stock-data', id);
 }
 
 // 清除整個 IndexedDB 所有資料
 export async function clearAllDB() {
+    const db = await getDB();
     if (db) {
         db.close();
     }
