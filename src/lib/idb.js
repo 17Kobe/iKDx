@@ -85,8 +85,8 @@ export async function getStocksFromDB() {
         console.log('從 IndexedDB 獲取的股票資料:', stocks);
         return stocks;
     } else {
-        console.log('all-stocks store 無資料，開始從 stocks.json 獲取');
-        const res = await axios.get('stocks/stocks.json');
+        console.log('all-stocks store 無資料，開始從 stock_list.json 獲取');
+        const res = await axios.get('stocks/stock_list.json');
         const stocks = res.data;
         for (const stock of stocks) {
             await putToStore('all-stocks', stock);

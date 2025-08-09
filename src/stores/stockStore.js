@@ -1,43 +1,50 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getAllFromStore, putToStore, clearStore, getStock, setStock, deleteUserStock } from '@/lib/idb';
+import {
+    getAllFromStore,
+    putToStore,
+    clearStore,
+    getStock,
+    setStock,
+    deleteUserStock,
+} from '@/lib/idb';
 
 export const useStockStore = defineStore('stock', () => {
     // 初始化一些測試資料
     const userStocks = ref([
-        {
-            id: '2330',
-            name: '台積電',
-            code: '2330',
-            price: 589,
-            change: 12,
-            changePercent: 2.08,
-            weeklyKD: 65,
-            rsi: 58,
-            addedAt: new Date().toISOString(),
-        },
-        {
-            id: '2317',
-            name: '鴻海',
-            code: '2317',
-            price: 102,
-            change: -2,
-            changePercent: -1.92,
-            weeklyKD: 34,
-            rsi: 42,
-            addedAt: new Date().toISOString(),
-        },
-        {
-            id: '2454',
-            name: '聯發科',
-            code: '2454',
-            price: 895,
-            change: 25,
-            changePercent: 2.87,
-            weeklyKD: 78,
-            rsi: 68,
-            addedAt: new Date().toISOString(),
-        },
+        // {
+        //     id: '2330',
+        //     name: '台積電',
+        //     code: '2330',
+        //     price: 589,
+        //     change: 12,
+        //     changePercent: 2.08,
+        //     weeklyKD: 65,
+        //     rsi: 58,
+        //     addedAt: new Date().toISOString(),
+        // },
+        // {
+        //     id: '2317',
+        //     name: '鴻海',
+        //     code: '2317',
+        //     price: 102,
+        //     change: -2,
+        //     changePercent: -1.92,
+        //     weeklyKD: 34,
+        //     rsi: 42,
+        //     addedAt: new Date().toISOString(),
+        // },
+        // {
+        //     id: '2454',
+        //     name: '聯發科',
+        //     code: '2454',
+        //     price: 895,
+        //     change: 25,
+        //     changePercent: 2.87,
+        //     weeklyKD: 78,
+        //     rsi: 68,
+        //     addedAt: new Date().toISOString(),
+        // },
     ]);
 
     /**
@@ -48,7 +55,7 @@ export const useStockStore = defineStore('stock', () => {
             console.log('開始載入使用者股票清單...');
             const stocks = await getAllFromStore('user-stocks');
             console.log('從 IndexedDB 載入的股票:', stocks);
-            
+
             // 如果 IndexedDB 中有資料，使用載入的資料；否則保持現有的測試資料
             if (stocks && stocks.length > 0) {
                 userStocks.value = stocks;
