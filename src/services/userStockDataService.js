@@ -224,56 +224,5 @@ export async function fetchAndUpdateStockPrice(stockCode, baseStockInfo) {
     return updatedStock;
 }
 
-/**
- * 清除過期的快取資料
- * @param {number} expireDays - 過期天數（預設 7 天）
- */
-export async function cleanExpiredCache(expireDays = 7) {
-    try {
-        const db = await getDB();
-        const allData = await db.getAll('user-stock-data');
-
-        const cutoffDate = dayjs().subtract(expireDays, 'day').toISOString();
-        let deletedCount = 0;
-
-        const tx = db.transaction('user-stock-data', 'readwrite');
-        for (const item of allData) {
-            if (item.lastUpdated && item.lastUpdated < cutoffDate) {
-                await tx.store.delete(item.id);
-                deletedCount++;
-            }
-        }
-        await tx.done;
-
-        console.log(`已清除 ${deletedCount} 筆過期快取資料`);
-    } catch (error) {
-        console.error('清除過期快取失敗:', error);
-    }
-}
-
-/**
- * 取得快取統計資訊
- * @returns {Promise<Object>} 快取統計
- */
-export async function getCacheStats() {
-    try {
-        const db = await getDB();
-        const count = await db.count('user-stock-data');
-        const allData = await db.getAll('user-stock-data');
-
-        const now = dayjs();
-        const validCache = allData.filter(item => !isCacheExpired(item.lastUpdated, 30)).length;
-
-        return {
-            total: count,
-            valid: validCache,
-            expired: count - validCache,
-        };
-    } catch (error) {
-        console.error('取得快取統計失敗:', error);
-        return { total: 0, valid: 0, expired: 0 };
-    }
-}
-
 // 初始化時確保資料庫已建立
 initDB().catch(console.error);

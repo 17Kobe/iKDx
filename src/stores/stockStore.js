@@ -8,7 +8,7 @@ import {
     putToStoreSimple,
     deleteFromStore,
 } from '@/lib/idb';
-import { batchFetchStockData, fetchAndUpdateStockPrice } from '@/services/stockPriceService';
+import { batchFetchStockData, fetchAndUpdateStockPrice } from '@/services/userStockDataService';
 
 export const useStockStore = defineStore('stock', () => {
     // 初始化一些測試資料
