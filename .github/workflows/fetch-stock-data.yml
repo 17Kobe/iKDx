@@ -20,7 +20,7 @@ jobs:
               run: npm install
 
             - name: Fetch Stock Data
-              run: node scripts/crawler/fetch-stocks-data.js
+              run: node crawler/fetch-stocks-data.js
 
             - name: Commit & Push Stock Data
               run: |
