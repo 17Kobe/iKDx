@@ -5,8 +5,8 @@ import axios from '@/lib/axios';
  * 取得 all-stocks 中的股票資料
  * 若 IndexedDB 無資料則自動從 stock_list.json 載入並快取
  */
-export async function getStocksFromDB() {
-    console.log('開始執行 getStocksFromDB');
+export async function getAllStocks() {
+    console.log('開始執行 getAllStocks');
     const localDb = await getAllFromStore('all-stocks');
     if (localDb && localDb.length > 0) {
         console.log('從 IndexedDB 獲取的股票資料:', localDb);

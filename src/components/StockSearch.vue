@@ -125,7 +125,7 @@
 <script setup>
     import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
     import { ShareSheet, Search, Button, showToast } from 'vant';
-    import { getStocksFromDB } from '@/services/allStocksService';
+    import { getAllStocks } from '@/services/allStocksService';
     import { useEventBus } from '@vueuse/core';
     import { useStockStore } from '@/stores/stockStore.js';
 
@@ -202,16 +202,16 @@
                 searchResults.value = [];
                 return;
             }
-            console.log('觸發 getStocksFromDB');
+            console.log('觸發 getAllStocks');
             try {
-                const allStocks = await getStocksFromDB();
-                console.log('getStocksFromDB 執行成功');
+                const allStocks = await getAllStocks();
+                console.log('getAllStocks 執行成功');
                 searchResults.value = allStocks.filter(
                     s => s.name.includes(val) || s.id.includes(val)
                 );
                 console.log('搜尋結果:', searchResults.value);
             } catch (error) {
-                console.error('getStocksFromDB 執行失敗:', error);
+                console.error('getAllStocks 執行失敗:', error);
             }
         }
     );
