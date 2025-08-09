@@ -4,14 +4,9 @@ import {
     getAllFromStore,
     putToStore,
     clearStore,
-    getStock,
-    setStock,
-    getUserStockInfo,
-    setUserStockInfo,
-    deleteUserStockInfo,
-    getUserStockData,
-    setUserStockData,
-    deleteUserStockData,
+    getFromStore,
+    putToStoreSimple,
+    deleteFromStore,
 } from '@/lib/idb';
 import { batchFetchStockData, fetchAndUpdateStockPrice } from '@/services/stockPriceService';
 
@@ -98,8 +93,8 @@ export const useStockStore = defineStore('stock', () => {
             industryCategory: Array.isArray(stock.industryCategory)
                 ? Array.from(stock.industryCategory)
                 : stock.industryCategory
-                    ? [stock.industryCategory]
-                    : [],
+                  ? [stock.industryCategory]
+                  : [],
             type: stock.type,
             addedAt: new Date().toISOString(),
         };
@@ -119,7 +114,7 @@ export const useStockStore = defineStore('stock', () => {
         // 儲存到 IndexedDB
         try {
             console.log('準備儲存股票到 user-stock-info:', info);
-            await setUserStockInfo(info);
+            await putToStoreSimple('user-stock-info', info);
             console.log('股票已成功儲存到 user-stock-info');
             // 背景抓取該股票的價格資料
             updateSingleStockPrice(stock.id).catch(error => {
@@ -141,7 +136,7 @@ export const useStockStore = defineStore('stock', () => {
     async function removeStock(stockId) {
         try {
             // 從 IndexedDB 移除
-            await deleteUserStockInfo(stockId);
+            await deleteFromStore('user-stock-info', stockId);
             // 從 Pinia store 移除
             userStocks.value = userStocks.value.filter(s => s.id !== stockId);
             return { success: true, message: '股票已從清單中移除' };
@@ -182,12 +177,12 @@ export const useStockStore = defineStore('stock', () => {
                     industryCategory: Array.isArray(stock.industryCategory)
                         ? Array.from(stock.industryCategory)
                         : stock.industryCategory
-                            ? [stock.industryCategory]
-                            : [],
+                          ? [stock.industryCategory]
+                          : [],
                     type: stock.type,
                     addedAt: stock.addedAt,
                 };
-                await setUserStockInfo(info);
+                await putToStoreSimple('user-stock-info', info);
             }
         } catch (error) {
             console.error('儲存股票排序失敗:', error);
@@ -199,7 +194,7 @@ export const useStockStore = defineStore('stock', () => {
      * @param {string} id - 股票代碼
      */
     async function loadStock(id) {
-        const stock = await getStock(id);
+        const stock = await getFromStore('all-stocks', id);
         if (stock) {
             const exists = userStocks.value.find(s => s.id === stock.id);
             if (!exists) {
@@ -215,7 +210,7 @@ export const useStockStore = defineStore('stock', () => {
     async function saveStock(id) {
         const stock = userStocks.value.find(s => s.id === id);
         if (stock) {
-            await setStock(stock);
+            await putToStoreSimple('all-stocks', stock);
         }
     }
 
@@ -309,7 +304,7 @@ export const useStockStore = defineStore('stock', () => {
                 let lastDate = null;
                 let lastValue = null;
                 try {
-                    const stockData = await getUserStockData(stockId);
+                    const stockData = await getFromStore('user-stock-data', stockId);
                     if (stockData && Array.isArray(stockData.daily) && stockData.daily.length > 0) {
                         const last = stockData.daily[stockData.daily.length - 1];
                         // 假設格式為 [date, value, ...] 或 {date, value}
@@ -332,15 +327,15 @@ export const useStockStore = defineStore('stock', () => {
                     industryCategory: Array.isArray(stock.industryCategory)
                         ? Array.from(stock.industryCategory)
                         : stock.industryCategory
-                            ? [stock.industryCategory]
-                            : [],
+                          ? [stock.industryCategory]
+                          : [],
                     type: stock.type,
                     addedAt: stock.addedAt,
                     lastDate,
                     lastValue,
                 };
                 console.log(`[user-stock-info] set`, info);
-                await setUserStockInfo(info);
+                await putToStoreSimple('user-stock-info', info);
                 console.log(`股票 ${stockId} 價格更新完成`);
             }
         } catch (error) {

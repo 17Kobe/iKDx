@@ -97,52 +97,20 @@ export async function getStocksFromDB() {
     }
 }
 
-// all-stocks 操作
-export async function getStock(id) {
+// 通用 CRUD
+export async function getFromStore(store, id) {
     const db = await getDB();
-    return db.get('all-stocks', id);
+    return db.get(store, id);
 }
 
-export async function setStock(stock) {
+export async function putToStoreSimple(store, data) {
     const db = await getDB();
-    return db.put('all-stocks', stock);
+    return db.put(store, data);
 }
 
-export async function deleteStock(id) {
+export async function deleteFromStore(store, id) {
     const db = await getDB();
-    return db.delete('all-stocks', id);
-}
-
-// user-stock-info 操作
-export async function getUserStockInfo(id) {
-    const db = await getDB();
-    return db.get('user-stock-info', id);
-}
-
-export async function setUserStockInfo(info) {
-    const db = await getDB();
-    return db.put('user-stock-info', info);
-}
-
-export async function deleteUserStockInfo(id) {
-    const db = await getDB();
-    return db.delete('user-stock-info', id);
-}
-
-// user-stock-data 操作
-export async function getUserStockData(id) {
-    const db = await getDB();
-    return db.get('user-stock-data', id);
-}
-
-export async function setUserStockData(data) {
-    const db = await getDB();
-    return db.put('user-stock-data', data);
-}
-
-export async function deleteUserStockData(id) {
-    const db = await getDB();
-    return db.delete('user-stock-data', id);
+    return db.delete(store, id);
 }
 
 // 清除整個 IndexedDB 所有資料
