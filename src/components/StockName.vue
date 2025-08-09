@@ -72,7 +72,7 @@
     .stock-name-left {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         flex: 1;
         min-width: 0;
     }
@@ -108,6 +108,7 @@
         text-overflow: ellipsis;
         display: inline-block;
         letter-spacing: 1px;
+        text-align: center;
     }
     .stock-name-left .code {
         font-size: 14px;
@@ -116,6 +117,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: center;
     }
     .stock-name-right .price {
         font-size: 18px;
