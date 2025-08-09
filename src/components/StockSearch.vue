@@ -100,14 +100,18 @@
                                     </div>
                                     <Button
                                         :type="
-                                            stockStore.isStockAdded(item.id) ? 'default' : 'primary'
+                                            userStockStore.isStockAdded(item.id)
+                                                ? 'default'
+                                                : 'primary'
                                         "
                                         size="small"
-                                        :disabled="stockStore.isStockAdded(item.id)"
+                                        :disabled="userStockStore.isStockAdded(item.id)"
                                         @click="onAddStock(item)"
                                         style="margin-left: 12px; min-width: 60px"
                                     >
-                                        {{ stockStore.isStockAdded(item.id) ? '已新增' : '新增' }}
+                                        {{
+                                            userStockStore.isStockAdded(item.id) ? '已新增' : '新增'
+                                        }}
                                     </Button>
                                 </div>
                             </div>
@@ -127,10 +131,10 @@
     import { ShareSheet, Search, Button, showToast } from 'vant';
     import { getAllStocks } from '@/services/allStocksService';
     import { useEventBus } from '@vueuse/core';
-    import { useStockStore } from '@/stores/stockStore.js';
+    import { useUserStockStore } from '@/stores/userStockStore.js';
 
     // 使用 Pinia store
-    const stockStore = useStockStore();
+    const userStockStore = useUserStockStore();
 
     // 事件總線：控制顯示狀態
     const bus = useEventBus('stock-search');
@@ -230,7 +234,7 @@
      * @param {Object} stock - 股票資料 { id, name }
      */
     async function onAddStock(stock) {
-        const result = await stockStore.addStock(stock);
+        const result = await userStockStore.addStock(stock);
         showToast({
             message: result.message,
             type: result.success ? 'success' : 'fail',

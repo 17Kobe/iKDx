@@ -10,83 +10,83 @@
             @start="onDragStart"
             @end="onDragEnd"
         >
-        <template #item="{ element: stock, index }">
-            <div class="stock-row" @contextmenu.prevent>
-                <SwipeCell :left-width="200" @click-left="onLeftAction">
-                    <template #left>
-                        <div class="action-buttons">
-                            <Button
-                                type="primary"
-                                size="small"
-                                class="action-btn buy-btn"
-                                @click="onBuyStock(stock)"
-                            >
-                                <div>交 易</div>
-                                <div>記 錄</div>
-                            </Button>
-                            <Button
-                                type="warning"
-                                size="small"
-                                class="action-btn strategy-btn"
-                                @click="onStrategyStock(stock)"
-                            >
-                                策 略
-                            </Button>
-                            <Button
-                                type="default"
-                                size="small"
-                                class="action-btn other-btn"
-                                @click="onOtherAction(stock)"
-                            >
-                                更 多
-                            </Button>
-                        </div>
-                    </template>
+            <template #item="{ element: stock, index }">
+                <div class="stock-row" @contextmenu.prevent>
+                    <SwipeCell :left-width="200" @click-left="onLeftAction">
+                        <template #left>
+                            <div class="action-buttons">
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    class="action-btn buy-btn"
+                                    @click="onBuyStock(stock)"
+                                >
+                                    <div>交 易</div>
+                                    <div>記 錄</div>
+                                </Button>
+                                <Button
+                                    type="warning"
+                                    size="small"
+                                    class="action-btn strategy-btn"
+                                    @click="onStrategyStock(stock)"
+                                >
+                                    策 略
+                                </Button>
+                                <Button
+                                    type="default"
+                                    size="small"
+                                    class="action-btn other-btn"
+                                    @click="onOtherAction(stock)"
+                                >
+                                    更 多
+                                </Button>
+                            </div>
+                        </template>
 
-                    <div class="stock-content">
-                        <StockName
-                            :name="stock.name"
-                            :code="stock.code"
-                            :price="stock.price"
-                            :change="stock.change"
-                            :change-percent="stock.changePercent"
-                            :price-class="getPriceClass(stock.change)"
-                            :progress="stock.progress"
-                            :progress-text="stock.progressText"
-                        />
+                        <div class="stock-content">
+                            <StockName
+                                :name="stock.name"
+                                :code="stock.code"
+                                :price="stock.price"
+                                :change="stock.change"
+                                :change-percent="stock.changePercent"
+                                :price-class="getPriceClass(stock.change)"
+                                :progress="stock.progress"
+                                :progress-text="stock.progressText"
+                            />
 
-                        <!-- K線圖 + 可滑動指標欄 -->
-                        <div class="stock-indicator">
-                            <Swipe
-                                :show-indicators="false"
-                                :loop="false"
-                                :autoplay="0"
-                                @change="current => onStockIndicatorChange(current, index)"
-                            >
-                                <SwipeItem class="indicator-content">
-                                    <div class="kd-indicator">
-                                        <KChart
-                                            :width="120"
-                                            :height="60"
-                                            :stock-data="stock"
-                                            :stock-index="index"
-                                        />
-                                    </div>
-                                </SwipeItem>
-                                <SwipeItem class="indicator-content">
-                                    <div class="rsi-indicator">
-                                        <div class="rsi-value">{{ stock.rsi }}</div>
-                                        <div class="rsi-trend" :class="getRSIClass(stock.rsi)">
-                                            {{ getRSIStatus(stock.rsi) }}
+                            <!-- K線圖 + 可滑動指標欄 -->
+                            <div class="stock-indicator">
+                                <Swipe
+                                    :show-indicators="false"
+                                    :loop="false"
+                                    :autoplay="0"
+                                    @change="current => onStockIndicatorChange(current, index)"
+                                >
+                                    <SwipeItem class="indicator-content">
+                                        <div class="kd-indicator">
+                                            <KChart
+                                                :width="120"
+                                                :height="60"
+                                                :stock-data="stock"
+                                                :stock-index="index"
+                                            />
                                         </div>
-                                    </div>
-                                </SwipeItem>
-                            </Swipe>
+                                    </SwipeItem>
+                                    <SwipeItem class="indicator-content">
+                                        <div class="rsi-indicator">
+                                            <div class="rsi-value">{{ stock.rsi }}</div>
+                                            <div class="rsi-trend" :class="getRSIClass(stock.rsi)">
+                                                {{ getRSIStatus(stock.rsi) }}
+                                            </div>
+                                        </div>
+                                    </SwipeItem>
+                                </Swipe>
+                            </div>
                         </div>
-                    </div>
-                </SwipeCell>
-            </div>
-        </template>
+                    </SwipeCell>
+                </div>
+            </template>
         </draggable>
 
         <!-- 浮動按鈕 -->
@@ -128,13 +128,13 @@
     import KChart from '@/components/KChart.vue';
     import StockName from '@/components/StockName.vue';
     import { useEventBus, useEventListener } from '@vueuse/core';
-    import { useStockStore } from '@/stores/stockStore.js';
+    import { useUserStockStore } from '@/stores/userStockStore.js';
     import draggable from 'vuedraggable/src/vuedraggable';
     // import { createChart } from 'lightweight-charts';
     // import { initDB, ensureStoreExists } from '@/lib/idb';
 
     // 使用 Pinia store
-    const stockStore = useStockStore();
+    const userStockStore = useUserStockStore();
 
     // 事件總線
     const bus = useEventBus('stock-search');
@@ -150,7 +150,7 @@
             // await initDB();
             // await ensureStoreExists('all-stocks');
             // await ensureStoreExists('user-stocks');
-            stockStore.loadUserStocks();
+            userStockStore.loadUserStocks();
         } catch (error) {
             console.error('初始化資料庫失敗:', error);
         }
@@ -159,11 +159,11 @@
     // 計算屬性：取得使用者股票清單
     const stockList = computed({
         get() {
-            return stockStore.userStocks;
+            return userStockStore.userStocks;
         },
         set(newList) {
             // 支援拖拽排序功能
-            stockStore.reorderStocks(newList);
+            userStockStore.reorderStocks(newList);
         },
     });
 
@@ -240,7 +240,7 @@
     }
 
     function onRemoveStock(stock) {
-        stockStore.removeStock(stock.id).then(result => {
+        userStockStore.removeStock(stock.id).then(result => {
             if (result.success) {
                 showToast(result.message);
             } else {
@@ -267,7 +267,7 @@
     // 使用 VueUse 的 useEventListener 監聽 visibilitychange
     useEventListener(document, 'visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            stockStore.loadUserStocks();
+            userStockStore.loadUserStocks();
         }
     });
 

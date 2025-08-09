@@ -13,7 +13,7 @@ import {
 } from '@/services/userStockInfoService';
 import { getAllStocksById, putAllStocks } from '@/services/allStocksService';
 
-export const useStockStore = defineStore('stock', () => {
+export const useUserStockStore = defineStore('userStock', () => {
     // 初始化一些測試資料
     const userStocks = ref([
         // {
