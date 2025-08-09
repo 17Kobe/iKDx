@@ -270,7 +270,7 @@
     .stock-page {
         /* padding: 16px; */
         background-color: #f5f5f5;
-        padding: 6px;
+        padding: 6px 6px 2px 6px;
         /* min-height: 100vh; */
         /* padding-bottom: 60px !important; */
         /* padding-bottom: 60px; */
