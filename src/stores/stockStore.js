@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import {
-    batchFetchStockData,
-    fetchAndUpdateStockPrice,
+    batchFetchUserStockData,
+    fetchAndUpdateUserStockDataPrice,
     getUserStockData,
 } from '@/services/userStockDataService';
 import {
@@ -236,7 +236,7 @@ export const useStockStore = defineStore('stock', () => {
             const updatedStockDataList = await Promise.all(
                 userStocks.value.map(async stock => {
                     try {
-                        const updatedData = await fetchAndUpdateStockPrice(
+                        const updatedData = await fetchAndUpdateUserStockDataPrice(
                             stock.id || stock.code,
                             stock
                         );
@@ -289,7 +289,7 @@ export const useStockStore = defineStore('stock', () => {
 
         try {
             const stock = userStocks.value[stockIndex];
-            const updatedData = await fetchAndUpdateStockPrice(stockId, stock);
+            const updatedData = await fetchAndUpdateUserStockDataPrice(stockId, stock);
 
             if (updatedData) {
                 // 更新股票資料
@@ -358,9 +358,9 @@ export const useStockStore = defineStore('stock', () => {
         }
 
         try {
-            // 使用 batchFetchStockData 強制重新抓取
+            // 使用 batchFetchUserStockData 強制重新抓取
             const stockCodes = userStocks.value.map(stock => stock.id || stock.code);
-            await batchFetchStockData(stockCodes, 3, true); // forceRefresh = true
+            await batchFetchUserStockData(stockCodes, 3, true); // forceRefresh = true
 
             // 重新載入價格資料
             await updateAllStockPrices();

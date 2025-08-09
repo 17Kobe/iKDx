@@ -63,7 +63,7 @@ async function fetchStockDataFromAPI(stockCode) {
  * 將股票資料儲存到 IndexedDB
  * @param {Object} stockData - 股票資料
  */
-async function saveStockDataToDB(stockData) {
+async function saveUserStockDataToDB(stockData) {
     try {
         // 將每日資料存入 daily key，id 為股票代碼
         const dataToSave = {
@@ -101,7 +101,7 @@ async function getUserStockDataById(stockCode) {
  * @param {boolean} forceRefresh - 是否強制重新抓取
  * @returns {Promise<Object|null>} 股票資料
  */
-export async function getStockData(stockCode, forceRefresh = false) {
+async function getUserStockDataByIdForce(stockCode, forceRefresh = false) {
     // 檢查快取
     if (!forceRefresh) {
         const cachedData = await getUserStockDataById(stockCode);
@@ -117,7 +117,7 @@ export async function getStockData(stockCode, forceRefresh = false) {
     // 從 API 抓取新資料
     const freshData = await fetchStockDataFromAPI(stockCode);
     if (freshData) {
-        await saveStockDataToDB(freshData);
+        await saveUserStockDataToDB(freshData);
         return freshData;
     }
 
@@ -138,7 +138,7 @@ export async function getStockData(stockCode, forceRefresh = false) {
  * @param {boolean} forceRefresh - 是否強制重新抓取
  * @returns {Promise<Object[]>} 股票資料陣列
  */
-export async function batchFetchStockData(stockCodes, concurrency = 5, forceRefresh = false) {
+export async function batchFetchUserStockData(stockCodes, concurrency = 5, forceRefresh = false) {
     if (!stockCodes || stockCodes.length === 0) {
         return [];
     }
@@ -155,7 +155,7 @@ export async function batchFetchStockData(stockCodes, concurrency = 5, forceRefr
 
     // 逐批並發處理
     for (const chunk of chunks) {
-        const promises = chunk.map(stockCode => getStockData(stockCode, forceRefresh));
+        const promises = chunk.map(stockCode => getUserStockDataByIdForce(stockCode, forceRefresh));
         const chunkResults = await Promise.allSettled(promises);
 
         chunkResults.forEach((result, index) => {
@@ -182,8 +182,8 @@ export async function batchFetchStockData(stockCodes, concurrency = 5, forceRefr
  * @param {Object} baseStockInfo - 基本股票資訊 { id, name, code }
  * @returns {Promise<Object|null>} 處理後的股票資料
  */
-export async function fetchAndUpdateStockPrice(stockCode, baseStockInfo) {
-    const stockData = await getStockData(stockCode);
+export async function fetchAndUpdateUserStockDataPrice(stockCode, baseStockInfo) {
+    const stockData = await getUserStockDataByIdForce(stockCode);
 
     if (!stockData || !stockData.data) {
         console.warn(`股票 ${stockCode} 無價格資料`);
