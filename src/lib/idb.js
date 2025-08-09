@@ -1,5 +1,4 @@
 import { openDB } from 'idb';
-import axios from './axios';
 
 let db = null;
 
@@ -15,7 +14,7 @@ export async function initDB() {
                     db.createObjectStore('user-stock-info', { keyPath: 'id' });
                     db.createObjectStore('user-stock-data', { keyPath: 'id' });
                 }
-            },
+            }
         });
     }
     return db;
@@ -65,36 +64,6 @@ export async function clearStore(storeName) {
     const tx = localDb.transaction(storeName, 'readwrite');
     await tx.objectStore(storeName).clear();
     await tx.done;
-}
-
-// 取得 all-stocks 中的股票資料
-export async function getStocksFromDB() {
-    console.log('開始執行 getStocksFromDB');
-
-    const localDb = await getDB();
-
-    // 確認 all-stocks store 是否存在
-    if (!localDb.objectStoreNames.contains('all-stocks')) {
-        console.warn('all-stocks store 不存在，返回空陣列');
-        return [];
-    }
-
-    const count = await localDb.count('all-stocks');
-    console.log('all-stocks store 中的資料數量:', count);
-    if (count > 0) {
-        const stocks = await getAllFromStore('all-stocks');
-        console.log('從 IndexedDB 獲取的股票資料:', stocks);
-        return stocks;
-    } else {
-        console.log('all-stocks store 無資料，開始從 stock_list.json 獲取');
-        const res = await axios.get('stocks/stock_list.json');
-        const stocks = res.data;
-        for (const stock of stocks) {
-            await putToStore('all-stocks', stock);
-        }
-        console.log('股票資料已快取到 IndexedDB:', stocks);
-        return stocks;
-    }
 }
 
 // 通用 CRUD

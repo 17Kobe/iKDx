@@ -125,7 +125,7 @@
 <script setup>
     import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
     import { ShareSheet, Search, Button, showToast } from 'vant';
-    import { getStocksFromDB } from '@/lib/idb';
+    import { getStocksFromDB } from '@/services/allStocksService';
     import { useEventBus } from '@vueuse/core';
     import { useStockStore } from '@/stores/stockStore.js';
 
