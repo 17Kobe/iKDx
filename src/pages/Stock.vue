@@ -46,15 +46,25 @@
                         <div class="stock-content">
                             <!-- 固定的名稱欄 -->
                             <div class="stock-name">
-                                <div class="name">{{ stock.name }}</div>
-                                <div class="code">{{ stock.code }}</div>
-                                <div class="price" :class="getPriceClass(stock.change)">
-                                    {{ stock.price }}
+                                <div class="stock-name-main">
+                                    <div class="stock-name-left">
+                                        <div class="name highlight">{{ stock.name }}</div>
+                                        <div class="code">{{ stock.code }}</div>
+                                        <div class="star-area">
+                                            <span class="star">★</span>
+                                        </div>
+                                    </div>
+                                    <div class="stock-name-right">
+                                        <div class="price" :class="getPriceClass(stock.change)">{{ stock.price }}</div>
+                                        <div class="change" :class="getPriceClass(stock.change)">
+                                            {{ stock.change > 0 ? '+' : '' }}{{ stock.change }} ({{ stock.changePercent }}%)
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="change" :class="getPriceClass(stock.change)">
-                                    {{ stock.change > 0 ? '+' : '' }}{{ stock.change }} ({{
-                                        stock.changePercent
-                                    }}%)
+                                <div class="stock-progress-bar">
+                                    <div class="stock-progress-inner" :style="{ width: (stock.progress || 0) + '%' }">
+                                        <span class="progress-text">{{ stock.progressText || ((stock.progress || 0) + '%') }}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -326,44 +336,133 @@
     .stock-content {
         display: flex;
         align-items: stretch; /* 等高關鍵 */
-        max-height: 105px; /* 新增最大高度限制 */
+        max-height: 94px; /* 新增最大高度限制 */
         min-height: 80px;
-        padding: 10px;
+        padding: 5px;
         width: 100%;
     }
 
     /* 股票名稱欄 - 固定不動 */
+
     .stock-name {
         width: 162px;
         min-width: 162px;
         max-width: 162px;
         flex: none;
-        display: flex; /* 讓內容垂直置中 */
+        display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: space-between;
+        height: 100%;
+        padding: 0 2px;
+        box-sizing: border-box;
     }
 
-    .stock-name .name {
+    .stock-name-main {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex: 1;
+        width: 100%;
+    }
+
+    .stock-name-left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .stock-name-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        flex: 1;
+        min-width: 0;
+    }
+
+
+    .stock-name-left .star-area {
+        margin-top: 2px;
+        margin-bottom: 0;
+        min-height: 18px;
+    }
+    .star {
+        color: #ffd700;
+        font-size: 16px;
+        margin-right: 2px;
+        vertical-align: middle;
+        display: inline-block;
+    }
+    .stock-name-left .name,
+    .stock-name-left .highlight {
         font-size: 16px;
         font-weight: bold;
-        color: #333;
+        background: #1976d2;
+        color: #fff;
+        border-radius: 4px;
+        padding: 0 8px;
         margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        letter-spacing: 1px;
     }
 
-    .stock-name .code {
+    .stock-name-left .code {
         font-size: 12px;
         color: #999;
         margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .stock-name .price {
+    .stock-name-right .price {
         font-size: 18px;
         font-weight: bold;
         margin-bottom: 2px;
     }
 
-    .stock-name .change {
+    .stock-name-right .change {
         font-size: 14px;
+    }
+
+    .stock-progress-bar {
+        width: 100%;
+        height: 18px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 2px;
+        margin-bottom: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .stock-progress-inner {
+        height: 100%;
+        background: linear-gradient(90deg, #ffe066 0%, #ffd700 100%);
+        border-radius: 4px;
+        transition: width 0.3s;
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding-left: 8px;
+    }
+    .progress-text {
+        color: #333;
+        font-size: 13px;
+        font-weight: bold;
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        pointer-events: none;
+        letter-spacing: 1px;
     }
 
     /* 價格顏色 */

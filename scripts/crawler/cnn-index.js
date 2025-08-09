@@ -27,6 +27,9 @@ export const fetchCNN = async () => {
             ? new Date(body.fear_and_greed.timestamp).toLocaleString('zh-TW', { hour12: false })
             : '';
     }
+    // 詳細 log 輸出
+    console.log('[CNN 指數資料]', { cnnIndex, cnnStatus, cnnUpdateTime });
+
     writeFileSync(
         resolve(__dirname, '../../public/data/global.json'),
         JSON.stringify({ cnnIndex, cnnStatus, cnnUpdateTime })
