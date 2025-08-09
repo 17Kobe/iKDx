@@ -8,7 +8,13 @@ import {
     putToStoreSimple,
     deleteFromStore,
 } from '@/lib/idb';
-import { batchFetchStockData, fetchAndUpdateStockPrice, getUserStockData } from '@/services/userStockDataService';
+import {
+    batchFetchStockData,
+    fetchAndUpdateStockPrice,
+    getUserStockData,
+} from '@/services/userStockDataService';
+import { getAllUserStockInfo, clearAllUserStockInfo, deleteUserStockInfo } from '@/services/userStockInfoService';
+import { getAllStockById } from '@/services/allStocksService';
 
 export const useStockStore = defineStore('stock', () => {
     // 初始化一些測試資料
@@ -54,7 +60,7 @@ export const useStockStore = defineStore('stock', () => {
     async function loadUserStocks() {
         try {
             console.log('開始載入使用者股票清單...');
-            const stocks = await getAllFromStore('user-stock-info');
+            const stocks = await getAllUserStockInfo();
             console.log('從 IndexedDB 載入的股票:', stocks);
 
             // 如果 IndexedDB 中有資料，使用載入的資料；否則保持現有的測試資料
@@ -136,7 +142,7 @@ export const useStockStore = defineStore('stock', () => {
     async function removeStock(stockId) {
         try {
             // 從 IndexedDB 移除
-            await deleteFromStore('user-stock-info', stockId);
+            await deleteUserStockInfo(stockId);
             // 從 Pinia store 移除
             userStocks.value = userStocks.value.filter(s => s.id !== stockId);
             return { success: true, message: '股票已從清單中移除' };
@@ -168,7 +174,7 @@ export const useStockStore = defineStore('stock', () => {
      */
     async function saveToIndexedDB() {
         try {
-            await clearStore('user-stock-info');
+            await clearAllUserStockInfo();
             for (const stock of userStocks.value) {
                 // 只存純資料欄位
                 const info = {
@@ -194,7 +200,7 @@ export const useStockStore = defineStore('stock', () => {
      * @param {string} id - 股票代碼
      */
     async function loadStock(id) {
-        const stock = await getFromStore('all-stocks', id);
+        const stock = await getAllStockById(id);
         if (stock) {
             const exists = userStocks.value.find(s => s.id === stock.id);
             if (!exists) {

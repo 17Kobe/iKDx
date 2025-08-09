@@ -22,3 +22,12 @@ export async function getStocksFromDB() {
         return stocks;
     }
 }
+
+/**
+ * 取得單一 all-stocks 資料
+ * @param {string} stockId - 股票代碼
+ * @returns {Promise<Object|null>} 該股票的 all-stocks 資料
+ */
+export async function getAllStockById(stockId) {
+    return await getFromStore('all-stocks', stockId);
+}
