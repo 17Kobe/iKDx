@@ -1,4 +1,5 @@
 // 全域 axios 設定，支援 GitHub Pages/Cloudflare Pages base 路徑
+// base: isGitHub ? '/iKDx/' : '/',
 import axios from 'axios';
 
 const base = import.meta.env.BASE_URL || '/';
