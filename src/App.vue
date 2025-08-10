@@ -70,14 +70,26 @@
     import { Tabbar, TabbarItem } from 'vant';
     import { useWindowSize } from '@vueuse/core';
     import TabbarProgress from '@/components/TabbarProgress.vue';
+    import { useGlobalStore } from '@/stores/globalStore.js';
+    import axios from '@/lib/axios';
+    // 取得 globalStore
+    const globalStore = useGlobalStore();
+
+    // 取得 CNN 指數資料
+    async function fetchGlobal() {
+        try {
+            const res = await axios.get('data/global.json');
+            globalStore.setGlobal(res.data);
+        } catch (e) {
+            globalStore.reset();
+        }
+    }
     // 移除 JS 動態高度，改用 CSS 100dvh
 
     // const { height } = useWindowSize();
-    // onMounted(() => {
-    //     watchEffect(() => {
-    //         document.documentElement.style.setProperty('--app-height', `${height.value}px`);
-    //     });
-    // });
+    onMounted(() => {
+        fetchGlobal();
+    });
     onMounted(() => {
         document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     });

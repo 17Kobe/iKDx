@@ -15,42 +15,21 @@
 
 <script setup>
     import { Progress as VanProgress, showToast, closeToast } from 'vant';
-    import { ref, onMounted } from 'vue';
-    import axios from '@/lib/axios';
+    import { ref, computed, onMounted } from 'vue';
+    import { useGlobalStore } from '@/stores/globalStore.js';
 
     /**
      * percent: CNN 指數百分比
      * label: CNN 指數標籤
      * toastVisible: Toast 顯示狀態
      */
-    const percent = ref(0);
-    const label = ref('');
+
+    // 取得 globalStore
+    const globalStore = useGlobalStore();
+    const percent = computed(() => globalStore.cnnIndex);
+    const label = computed(() => globalStore.cnnLabel || 'N/A');
     let toastInstance = null;
     const toastVisible = ref(false);
-
-    async function fetchGlobal() {
-        try {
-            const res = await axios.get('data/global.json');
-            const data = res.data;
-            percent.value = Math.round(Number(data.cnnIndex) || 0);
-            let fearLevel = '';
-            if (percent.value <= 24) {
-                fearLevel = '極恐慌';
-            } else if (percent.value <= 44) {
-                fearLevel = '恐懼';
-            } else if (percent.value <= 54) {
-                fearLevel = '中性';
-            } else if (percent.value <= 74) {
-                fearLevel = '貪婪';
-            } else {
-                fearLevel = '極貪婪';
-            }
-            label.value = `${percent.value}% ${fearLevel}`;
-        } catch (e) {
-            percent.value = 0;
-            label.value = 'N/A';
-        }
-    }
 
     /**
      * 點擊 progress 顯示/關閉 CNN 指數說明 Toast
@@ -64,7 +43,7 @@
         showToast({
             message:
                 'CNN 恐慌與貪婪指數說明\n' +
-                '更新時間：2025-08-05 15:29\n' +
+                `更新時間：${globalStore.cnnUpdateTimeLabel}\n` +
                 '--------------------------------------\n' +
                 '0～24　→　極恐慌：市場極度悲觀\n' +
                 '25～44　→　恐懼：市場偏向保守\n' +
@@ -85,9 +64,7 @@
         toastVisible.value = true;
     }
 
-    onMounted(() => {
-        fetchGlobal();
-    });
+    // 不再 fetchGlobal，資料由 App.vue 注入
 </script>
 
 <style scoped>
