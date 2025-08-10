@@ -41,15 +41,17 @@
             return;
         }
         showToast({
+            type: 'html',
             message:
-                'CNN 恐慌與貪婪指數說明\n' +
-                `更新時間：${globalStore.cnnUpdateTimeLabel}\n` +
-                '--------------------------------------\n' +
-                '0～24　→　極恐慌：市場極度悲觀\n' +
-                '25～44　→　恐懼：市場偏向保守\n' +
-                '45～54　→　中性：市場情緒均衡\n' +
-                '55～74　→　貪婪：市場較樂觀\n' +
-                '75～100　→　極貪婪：市場可能過熱',
+                '<div style="text-align:center;">CNN 恐慌與貪婪指數說明<br>更新時間：' +
+                globalStore.cnnUpdateTimeLabel +
+                '</div>' +
+                '<span class="cnn-toast-left">--------------------------------------<br>' +
+                '0～24　→　極恐慌：市場極度悲觀<br>' +
+                '25～44　→　恐懼：市場偏向保守<br>' +
+                '45～54　→　中性：市場情緒均衡<br>' +
+                '55～74　→　貪婪：市場較樂觀<br>' +
+                '75～100　→　極貪婪：市場可能過熱</span>',
             duration: 0,
             overlay: true,
             closeOnClick: true,
@@ -66,6 +68,14 @@
 
     // 不再 fetchGlobal，資料由 App.vue 注入
 </script>
+
+<style>
+    .cnn-toast .cnn-toast-left {
+        display: block;
+        text-align: left;
+        white-space: pre-line;
+    }
+</style>
 
 <style scoped>
     .tabbar-progress-wrap {
