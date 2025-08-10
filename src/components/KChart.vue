@@ -8,7 +8,6 @@
     import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
     import { Chart, registerables } from 'chart.js';
     import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
-    import 'chartjs-adapter-dayjs';
     Chart.register(...registerables, CandlestickController, CandlestickElement);
 
     // Props 定義

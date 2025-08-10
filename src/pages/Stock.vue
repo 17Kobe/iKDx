@@ -29,20 +29,17 @@
                                     size="small"
                                     class="action-btn strategy-btn"
                                     @click="onStrategyStock(stock)"
+                                    >策 略</Button
                                 >
-                                    策 略
-                                </Button>
                                 <Button
                                     type="default"
                                     size="small"
                                     class="action-btn other-btn"
                                     @click="onOtherAction(stock)"
+                                    >更 多</Button
                                 >
-                                    更 多
-                                </Button>
                             </div>
                         </template>
-
                         <div class="stock-content">
                             <StockName
                                 :name="stock.name"
@@ -54,8 +51,6 @@
                                 :progress="stock.progress"
                                 :progress-text="stock.progressText"
                             />
-
-                            <!-- K線圖 + 可滑動指標欄 -->
                             <div class="stock-indicator">
                                 <Swipe
                                     :show-indicators="false"
@@ -70,6 +65,7 @@
                                                 :height="60"
                                                 :stock-data="stock"
                                                 :stock-index="index"
+                                                :ref="'canvas-' + stock.id"
                                             />
                                         </div>
                                     </SwipeItem>
@@ -251,13 +247,26 @@
 
     // 拖拽事件
     function onDragStart(evt) {
-        console.log('開始拖曳', evt);
-        // debugger;
-
-        // 為拖曳元素添加特殊樣式類，讓 K 線圖知道正在拖曳
-        // if (evt.item) {
-        //     evt.item.classList.add('dragging-in-progress');
-        // }
+        // 拖曳開始時，複製原 canvas 內容到拖曳中的 clone canvas
+        setTimeout(() => {
+            // 找到所有拖曳中的列
+            const chosen = document.querySelector('.stock-row.sortable-chosen');
+            if (chosen) {
+                const origCanvas = chosen.querySelector('canvas');
+                // 拖曳中的 clone canvas 會有 .sortable-drag
+                const drag = document.querySelector('.stock-row.sortable-drag');
+                if (origCanvas && drag) {
+                    const dragCanvas = drag.querySelector('canvas');
+                    if (dragCanvas && origCanvas.width && origCanvas.height) {
+                        dragCanvas.width = origCanvas.width;
+                        dragCanvas.height = origCanvas.height;
+                        const ctx = dragCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, dragCanvas.width, dragCanvas.height);
+                        ctx.drawImage(origCanvas, 0, 0);
+                    }
+                }
+            }
+        }, 0);
     }
 
     function onDragEnd(evt) {
