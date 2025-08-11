@@ -25,6 +25,42 @@ export function getDB() {
     return initDB();
 }
 
+// 取得所有資料
+export async function getAllFromStore(storeName) {
+    const localDb = await getDB();
+    return localDb.getAll(storeName);
+}
+
+// 清除資料
+export async function clearStore(storeName) {
+    const db = await getDB();
+    return db.clear(storeName);
+}
+// 通用 CRUD
+export async function getFromStore(storeName, id) {
+    const db = await getDB();
+    return db.get(storeName, id);
+}
+
+export async function putToStore(storeName, data) {
+    const db = await getDB();
+    return db.put(storeName, data);
+}
+
+export async function deleteFromStore(storeName, id) {
+    const db = await getDB();
+    return db.delete(storeName, id);
+}
+
+// 清除整個 IndexedDB 所有資料
+export async function clearAllDB() {
+    const db = await getDB();
+    if (db) {
+        db.close();
+    }
+    await indexedDB.deleteDatabase('ikdx-db');
+}
+
 // 確保指定的 Object Store 存在
 export async function ensureStoreExists(storeName) {
     const localDb = await getDB();
@@ -41,52 +77,4 @@ export async function ensureStoreExists(storeName) {
         db = newDb;
         console.log(`${storeName} store 已建立`);
     }
-}
-
-// 取得所有資料
-export async function getAllFromStore(storeName) {
-    const localDb = await getDB();
-    return localDb.getAll(storeName);
-}
-
-// 新增或更新資料
-export async function putToStore(storeName, data) {
-    const localDb = await getDB();
-    const tx = localDb.transaction(storeName, 'readwrite');
-    const store = tx.objectStore(storeName);
-    await store.put(data);
-    await tx.done;
-}
-
-// 清除資料
-export async function clearStore(storeName) {
-    const localDb = await getDB();
-    const tx = localDb.transaction(storeName, 'readwrite');
-    await tx.objectStore(storeName).clear();
-    await tx.done;
-}
-
-// 通用 CRUD
-export async function getFromStore(store, id) {
-    const db = await getDB();
-    return db.get(store, id);
-}
-
-export async function putToStore(store, data) {
-    const db = await getDB();
-    return db.put(store, data);
-}
-
-export async function deleteFromStore(store, id) {
-    const db = await getDB();
-    return db.delete(store, id);
-}
-
-// 清除整個 IndexedDB 所有資料
-export async function clearAllDB() {
-    const db = await getDB();
-    if (db) {
-        db.close();
-    }
-    await indexedDB.deleteDatabase('ikdx-db');
 }
