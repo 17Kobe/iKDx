@@ -23,11 +23,6 @@ const routes = [
         component: () => import('./pages/My.vue'),
     },
     {
-        path: '/add',
-        name: 'add',
-        component: () => import('./pages/Add.vue'),
-    },
-    {
         path: '/clear',
         name: 'clear',
         beforeEnter: async (to, from, next) => {

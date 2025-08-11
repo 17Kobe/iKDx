@@ -1,4 +1,5 @@
 name: Fetch CNN Index
+# 每天 UTC+8 上午8點，抓 cnn 指標儲存至 public/data/global.json
 
 on:
     schedule:
