@@ -90,7 +90,7 @@ export const useUserStockStore = defineStore('userStock', () => {
             return { success: false, message: '股票已存在於清單中' };
         }
         
-        // Pinia 仍可存完整物件
+        // newStock，保留原本 stock 物件內容，但 industryCategory 要從 proxy(array) -> array，擴增 addedAt 欄位
         const newStock = {
             ...stock,
             industryCategory: Array.from(stock.industryCategory || []), // industryCategory 從 stock 取出，然後不支援響應
