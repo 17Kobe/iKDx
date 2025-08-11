@@ -23,6 +23,8 @@ export async function fetchStockList() {
     const stocks = Object.values(grouped).map(group => ({
         id: group[0].stock_id,
         name: group[0].stock_name,
+        // 如果 group 內所有物件的 industry_category 都是 null→ group.map(...) 得到 [null, null, null]
+        // 但應該不可能有這種資料
         industryCategory: _.uniq(group.map(i => i.industry_category)),
         type: group[0].type,
     }));

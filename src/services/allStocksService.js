@@ -36,5 +36,5 @@ export async function getAllStocksById(stockId) {
  * @param {Object} stock
  */
 export async function putAllStocks(stock) {
-    return await putToStoreSimple('all-stocks', stock);
+    return await putToStore('all-stocks', stock);
 }

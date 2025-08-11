@@ -209,7 +209,7 @@
             console.log('觸發 getAllStocks');
             try {
                 const allStocks = await getAllStocks();
-                console.log('getAllStocks 執行成功');
+                console.log('getAllStocks 執行成功', allStocks);
                 searchResults.value = allStocks.filter(
                     s => s.name.includes(val) || s.id.includes(val)
                 );

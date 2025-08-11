@@ -72,7 +72,7 @@ export async function getFromStore(store, id) {
     return db.get(store, id);
 }
 
-export async function putToStoreSimple(store, data) {
+export async function putToStore(store, data) {
     const db = await getDB();
     return db.put(store, data);
 }

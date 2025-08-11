@@ -80,6 +80,7 @@ export const useUserStockStore = defineStore('userStock', () => {
      * @param {Object} stock - 股票資料 { id, name }
      */
     async function addStock(stock) {
+        // Proxy(Object) {id: '2330', name: '台積電', industryCategory: Array(2), type: 'twse'}
         console.log('開始新增股票:', stock);
 
         // 檢查是否已存在
@@ -88,36 +89,21 @@ export const useUserStockStore = defineStore('userStock', () => {
             console.log('股票已存在，取消新增');
             return { success: false, message: '股票已存在於清單中' };
         }
-
-        // 只存基本資料到 user-stock-info
-        const info = {
-            id: stock.id,
-            name: stock.name,
-            industryCategory: Array.isArray(stock.industryCategory)
-                ? Array.from(stock.industryCategory)
-                : stock.industryCategory
-                  ? [stock.industryCategory]
-                  : [],
-            type: stock.type,
-            addedAt: new Date().toISOString(),
-        };
+        
         // Pinia 仍可存完整物件
         const newStock = {
             ...stock,
-            addedAt: info.addedAt,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            weeklyKD: 0,
-            rsi: 0,
+            industryCategory: Array.from(stock.industryCategory || []), // industryCategory 從 stock 取出，然後不支援響應
+            addedAt: new Date().toISOString(),
         };
+        
         console.log('新增股票到 Pinia store:', newStock);
         userStocks.value.push(newStock);
 
         // 儲存到 IndexedDB
         try {
-            console.log('準備儲存股票到 user-stock-info:', info);
-            await putUserStockInfo(info);
+            console.log('準備儲存股票到 user-stock-info:', newStock);
+            await putUserStockInfo(newStock);
             console.log('股票已成功儲存到 user-stock-info');
             // 背景抓取該股票的價格資料
             updateSingleStockPrice(stock.id).catch(error => {
@@ -177,11 +163,7 @@ export const useUserStockStore = defineStore('userStock', () => {
                 const info = {
                     id: stock.id,
                     name: stock.name,
-                    industryCategory: Array.isArray(stock.industryCategory)
-                        ? Array.from(stock.industryCategory)
-                        : stock.industryCategory
-                          ? [stock.industryCategory]
-                          : [],
+                    industryCategory: Array.from(stock.industryCategory || []),
                     type: stock.type,
                     addedAt: stock.addedAt,
                 };
@@ -327,11 +309,7 @@ export const useUserStockStore = defineStore('userStock', () => {
                 const info = {
                     id: stock.id,
                     name: stock.name,
-                    industryCategory: Array.isArray(stock.industryCategory)
-                        ? Array.from(stock.industryCategory)
-                        : stock.industryCategory
-                          ? [stock.industryCategory]
-                          : [],
+                    industryCategory: Array.from(stock.industryCategory || []),
                     type: stock.type,
                     addedAt: stock.addedAt,
                     lastDate,
