@@ -275,9 +275,9 @@
 
     // 使用 VueUse 的 useEventListener 監聽 visibilitychange
     useEventListener(document, 'visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            userStockStore.loadUserStocks();
-        }
+        // if (document.visibilityState === 'visible') {
+        //     userStockStore.loadUserStocks();
+        // }
     });
 
     onMounted(() => {

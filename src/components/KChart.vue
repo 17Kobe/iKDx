@@ -63,12 +63,13 @@
     // 創建 K 線圖表
     function createChart() {
         if (!chartCanvas.value) return;
-        // 銷毀舊圖表
+        const ctx = chartCanvas.value.getContext('2d');
+        if (!ctx) return;
         if (chartInstance.value) {
             chartInstance.value.destroy();
+            chartInstance.value = null;
         }
         const candleData = generateKLineData();
-        const ctx = chartCanvas.value.getContext('2d');
         chartInstance.value = new Chart(ctx, {
             type: 'candlestick',
             data: {
