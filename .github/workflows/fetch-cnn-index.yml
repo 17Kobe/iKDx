@@ -23,6 +23,6 @@ jobs:
               run: |
                   git config --global user.name 'github-actions'
                   git config --global user.email 'github-actions@github.com'
-                  git add public/data/*.json
+                  git add public/data/global.json
                   git commit -m 'Update all data'
                   git push

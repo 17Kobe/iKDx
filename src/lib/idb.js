@@ -34,7 +34,9 @@ export async function getAllFromStore(storeName) {
 // 清除資料
 export async function clearStore(storeName) {
     const db = await getDB();
-    return db.clear(storeName);
+    const tx = db.transaction(storeName, 'readwrite');
+    await tx.objectStore(storeName).clear();
+    await tx.done;
 }
 // 通用 CRUD
 export async function getFromStore(storeName, id) {
