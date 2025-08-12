@@ -37,12 +37,14 @@ export async function fetchStockPrice(stock) {
             const res = await axios.get(url, { params });
             if (res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
                 klineArr = res.data.data.map(item => [
-                    item.date,
+                    // 日期去 dash
+                    item.date.replace(/-/g, ''),
                     item.open,
                     item.max,
                     item.min,
                     item.close,
-                    item.Trading_Volume,
+                    // 股數轉張數（四捨五入）
+                    Math.round(Number(item.Trading_Volume) / 1000),
                 ]);
                 await fs.writeFile(allJsonPath, JSON.stringify(klineArr), 'utf8');
                 logs.push(`✓ ${stock.id} 歷史資料已儲存 (${klineArr.length} 筆記錄): ${allJsonPath}`);

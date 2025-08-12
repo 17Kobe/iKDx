@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import {
-    batchFetchUserStockData,
-    fetchAndUpdateUserStockDataPrice,
+    fetchUserStockPriceByBaseInfo,
     getUserStockData,
 } from '@/services/userStockDataService';
 import {
@@ -52,6 +51,19 @@ export const useUserStockStore = defineStore('userStock', () => {
     ]);
 
     /**
+     * 依據股票 id 取得 userStocks 中的股票物件與 index
+     * @param {string} stockId - 股票代碼
+     * @returns {{ stock: Object|null, index: number }}
+     */
+    function getStockStoreById(stockId) {
+        const foundStockIndex = userStocks.value.findIndex(s => s.id === stockId);
+        return {
+            foundStock: foundStockIndex !== -1 ? userStocks.value[foundStockIndex] : null,
+            foundStockIndex,
+        };
+    }
+
+    /**
      * 從 IndexedDB 載入使用者股票清單並更新價格資料
      */
     async function loadUserStocks() {
@@ -65,7 +77,7 @@ export const useUserStockStore = defineStore('userStock', () => {
                 userStocks.value = stocks;
 
                 // 批量更新所有股票的價格資料
-                await updateAllStockPrices();
+                // await updateAllStockPrices();
             }
             return userStocks.value;
         } catch (error) {
@@ -218,7 +230,7 @@ export const useUserStockStore = defineStore('userStock', () => {
             const updatedStockDataList = await Promise.all(
                 userStocks.value.map(async stock => {
                     try {
-                        const updatedData = await fetchAndUpdateUserStockDataPrice(
+                        const updatedData = await fetchUserStockPriceByBaseInfo(
                             stock.id || stock.code,
                             stock
                         );
@@ -261,8 +273,8 @@ export const useUserStockStore = defineStore('userStock', () => {
      * @param {string} stockId - 股票代碼
      */
     async function updateSingleStockPrice(stockId) {
-        const stockIndex = userStocks.value.findIndex(s => s.id === stockId);
-        if (stockIndex === -1) {
+        const { foundStock, foundStockIndex } = getStockStoreById(stockId);
+        if (!foundStock) {
             console.warn(`找不到股票 ${stockId}`);
             return;
         }
@@ -270,14 +282,13 @@ export const useUserStockStore = defineStore('userStock', () => {
         console.log(`開始更新股票 ${stockId} 價格...`);
 
         try {
-            const stock = userStocks.value[stockIndex];
-            const updatedData = await fetchAndUpdateUserStockDataPrice(stockId, stock);
+            const updatedData = await fetchUserStockPriceByBaseInfo(stockId, foundStock);
 
             if (updatedData) {
                 // 更新股票資料
-                userStocks.value[stockIndex] = {
-                    ...stock,
-                    price: updatedData.price,
+                userStocks.value[foundStockIndex] = {
+                    ...foundStock,
+                    latestPrice: updatedData.price,
                     change: updatedData.change,
                     changePercent: updatedData.changePercent,
                     weeklyKD: updatedData.weeklyKD,
@@ -324,32 +335,6 @@ export const useUserStockStore = defineStore('userStock', () => {
         }
     }
 
-    /**
-     * 手動重新整理所有股票價格（強制重新抓取）
-     */
-    async function refreshAllStockPrices() {
-        console.log('手動重新整理所有股票價格...');
-
-        if (userStocks.value.length === 0) {
-            console.log('無股票需要重新整理');
-            return { success: true, message: '無股票需要更新' };
-        }
-
-        try {
-            // 使用 batchFetchUserStockData 強制重新抓取
-            const stockCodes = userStocks.value.map(stock => stock.id || stock.code);
-            await batchFetchUserStockData(stockCodes, 3, true); // forceRefresh = true
-
-            // 重新載入價格資料
-            await updateAllStockPrices();
-
-            return { success: true, message: `已更新 ${userStocks.value.length} 支股票價格` };
-        } catch (error) {
-            console.error('手動重新整理股票價格失敗:', error);
-            return { success: false, message: '重新整理失敗，請稍後再試' };
-        }
-    }
-
     return {
         userStocks,
         loadUserStocks,
@@ -361,6 +346,5 @@ export const useUserStockStore = defineStore('userStock', () => {
         saveStock,
         updateAllStockPrices,
         updateSingleStockPrice,
-        refreshAllStockPrices,
     };
 });
