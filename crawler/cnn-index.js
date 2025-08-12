@@ -1,14 +1,12 @@
 import axios from 'axios';
 import { writeFile, mkdir } from 'fs/promises';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 
 /**
  * 取得 CNN 貪婪與恐懼指數，並寫入 public/data/global.json。
  */
 export const fetchCNN = async () => {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const rootDir = resolve(__dirname, '../../');
+    const rootDir = process.cwd();
     const outDir = resolve(rootDir, 'public/data');
     const outPath = resolve(outDir, 'global.json');
 
