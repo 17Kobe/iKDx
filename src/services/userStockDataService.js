@@ -17,7 +17,6 @@ export async function getUserStockData(stockId) {
     return db.get('user-stock-data', stockId);
 }
 
-
 /**
  * 將股票資料儲存到 IndexedDB
  * @param {Object} stockData - 股票資料
@@ -66,10 +65,29 @@ async function fetchUserStockPriceByLatestPriceDate(stockId, latestPriceDate) {
         const response = await axios.get(`stocks/${stockId}/all.json`);
 
         if (response.data) {
+            // 過濾日期大於 latestPriceDate 的資料
+            let filteredData = response.data;
+            if (latestPriceDate) {
+                filteredData = response.data.filter(item => {
+                    // 假設 item.date 為日期欄位，格式為 'YYYY-MM-DD' 或 'YYYY-MM-DD HH:mm:ss'
+                    return dayjs(item.date, 'YYYYMMDD').isAfter(dayjs(latestPriceDate));
+                });
+            }
+            // 取得最後一筆資料的日期與價格
+            let lastDate = null;
+            let lastPrice = null;
+            if (filteredData && filteredData.length > 0) {
+                const last = filteredData[filteredData.length - 1];
+                lastDate = last.date;
+                lastPrice = last.close ?? last.price ?? null;
+            }
             const stockData = {
                 stockId,
-                data: response.data,
+                data: filteredData,
+                count: Array.isArray(filteredData) ? filteredData.length : 0,
                 fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                lastDate,
+                lastPrice,
             };
 
             console.log(`成功抓取股票 ${stockId} 資料`, stockData);
