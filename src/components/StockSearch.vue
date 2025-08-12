@@ -77,7 +77,7 @@
                                         background: #fff;
                                         border-radius: 12px;
                                         box-shadow: 0 2px 8px #0001;
-                                        padding: 16px 20px;
+                                        padding: 10px;
                                         margin-bottom: 12px;
                                         display: flex;
                                         align-items: center;
@@ -99,19 +99,29 @@
                                         {{ item.name }}
                                     </div>
                                     <Button
-                                        :type="
-                                            userStockStore.isStockAdded(item.id)
-                                                ? 'default'
-                                                : 'primary'
-                                        "
+                                        :type="userStockStore.isStockAdded(item.id) ? 'default' : 'primary'"
                                         size="small"
                                         :disabled="userStockStore.isStockAdded(item.id)"
                                         @click="onAddStock(item)"
-                                        style="margin-left: 12px; min-width: 60px"
+                                        style="
+                                            margin-left: 12px;
+                                            min-width: 60px;
+                                            height: 40px;
+                                            background: #ffe066;
+                                            color: #222;
+                                            font-weight: bold;
+                                            font-size: 16px;
+                                            border: none;
+                                            border-radius: 8px;
+                                            width: 64px;
+                                            padding: 0;
+                                            box-shadow: none;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        "
                                     >
-                                        {{
-                                            userStockStore.isStockAdded(item.id) ? '已新增' : '新增'
-                                        }}
+                                        {{ userStockStore.isStockAdded(item.id) ? '已新增' : '新增' }}
                                     </Button>
                                 </div>
                             </div>
