@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { promises as fs } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import dayjs from 'dayjs';
 
 /**
@@ -10,9 +9,8 @@ import dayjs from 'dayjs';
  * @param {Object} stock - 股票物件，需有 id, name
  */
 export async function fetchStockPrice(stock) {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
     const logs = [];
-    const rootDir = resolve(__dirname, '../../');
+    const rootDir = process.cwd();
     const stockDir = resolve(rootDir, 'public/stocks', stock.id);
     const allJsonPath = resolve(stockDir, 'all.json');
 
