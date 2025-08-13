@@ -80,7 +80,7 @@ export async function fetchUserStockPriceByBaseInfo(stockId, baseStockInfo) {
             let lastPrice = null;
             if (filteredData && filteredData.length > 0) {
                 const last = filteredData[filteredData.length - 1];
-                fetchedAt =  dayjs().format('YYYY-MM-DD HH:mm:ss');
+                fetchedAt = dayjs().format('YYYY-MM-DD HH:mm:ss');
                 lastDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
                 lastPrice = last[4];
             }

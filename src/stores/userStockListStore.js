@@ -3,14 +3,17 @@ import { ref } from 'vue';
 import _ from 'lodash';
 import dayjs from 'dayjs';
 import { wrap } from 'comlink';
-import { fetchUserStockPriceByBaseInfo, getUserStockData } from '@/services/userStockDataService';
+import {
+    fetchUserStockPriceByBaseInfo,
+    getUserStockData,
+} from '@/services/user-stock-data-service';
 import {
     getUserStockInfo,
     clearUserStockInfo,
     deleteUserStockInfo,
     putUserStockInfo,
-} from '@/services/userStockInfoService';
-import { getAllStocksById, putAllStocks } from '@/services/allStocksService';
+} from '@/services/user-stock-info-service';
+import { getAllStocksById, putAllStocks } from '@/services/all-stocks-service';
 
 // 初始化 Workers (使用 module 模式支援 import)
 const worker1 = new Worker(new URL('@/workers/worker1.js', import.meta.url), { type: 'module' });
