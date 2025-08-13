@@ -124,7 +124,7 @@
     import KChart from '@/components/KChart.vue';
     import StockName from '@/components/StockName.vue';
     import { useEventBus, useEventListener } from '@vueuse/core';
-    import { useUserStockListStore } from '@/stores/userStockListStore.js';
+    import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
     import draggable from 'vuedraggable/src/vuedraggable';
     // import { createChart } from 'lightweight-charts';
     // import { initDB, ensureStoreExists } from '@/lib/idb';

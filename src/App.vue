@@ -70,7 +70,7 @@
     import { Tabbar, TabbarItem } from 'vant';
     import { useWindowSize } from '@vueuse/core';
     import TabbarProgress from '@/components/TabbarProgress.vue';
-    import { useGlobalStore } from '@/stores/globalStore.js';
+    import { useGlobalStore } from '@/stores/global-store.js';
     import axios from '@/lib/axios';
     // 取得 globalStore
     const globalStore = useGlobalStore();

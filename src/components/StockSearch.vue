@@ -149,7 +149,7 @@
     import { ShareSheet, Search, Button, showToast } from 'vant';
     import { getAllStocks } from '@/services/all-stocks-service';
     import { useEventBus } from '@vueuse/core';
-    import { useUserStockListStore } from '@/stores/userStockListStore.js';
+    import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
 
     // 使用 Pinia store
     const userStockListStore = useUserStockListStore();

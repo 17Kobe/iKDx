@@ -16,7 +16,7 @@
 <script setup>
     import { Progress as VanProgress, showToast, closeToast } from 'vant';
     import { ref, computed, onMounted } from 'vue';
-    import { useGlobalStore } from '@/stores/globalStore.js';
+    import { useGlobalStore } from '@/stores/global-store.js';
 
     /**
      * percent: CNN 指數百分比
