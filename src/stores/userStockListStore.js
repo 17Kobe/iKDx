@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import _ from 'lodash';
 import dayjs from 'dayjs';
+import { wrap } from 'comlink';
 import { fetchUserStockPriceByBaseInfo, getUserStockData } from '@/services/userStockDataService';
 import {
     getUserStockInfo,
@@ -10,6 +11,15 @@ import {
     putUserStockInfo,
 } from '@/services/userStockInfoService';
 import { getAllStocksById, putAllStocks } from '@/services/allStocksService';
+
+// 初始化 Workers (使用 module 模式支援 import)
+const worker1 = new Worker(new URL('@/workers/worker1.js', import.meta.url), { type: 'module' });
+const worker2 = new Worker(new URL('@/workers/worker2.js', import.meta.url), { type: 'module' });
+const worker3 = new Worker(new URL('@/workers/worker3.js', import.meta.url), { type: 'module' });
+
+const w1API = wrap(worker1);
+const w2API = wrap(worker2);
+const w3API = wrap(worker3);
 
 export const useUserStockListStore = defineStore('userStockList', () => {
     // 初始化一些測試資料
@@ -60,6 +70,87 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             foundStock: foundStockIndex !== -1 ? userStockList.value[foundStockIndex] : null,
             foundStockIndex,
         };
+    }
+
+    /**
+     * 計算週K線資料
+     * @param {Array} dailyData - 日線資料
+     * @returns {Array} 週K線資料
+     */
+    function calculateWeeklyK(dailyData) {
+        // TODO: 實際的週K計算邏輯
+        return dailyData;
+    }
+
+    /**
+     * 處理單支股票的 Worker 計算
+     * @param {Object} stock - 股票資料
+     * @param {Function} onProgress - 進度回調
+     * @param {Object} progressTracker - 整體進度追蹤
+     */
+    async function processSingleStock(stock, onProgress, progressTracker) {
+        const totalSteps = 3;
+        let step = 0;
+
+        const updateProgress = () => {
+            // 單檔股票進度
+            onProgress({
+                symbol: stock.id,
+                step,
+                totalSteps,
+                percent: (step / totalSteps) * 100,
+                overallPercent: (progressTracker.completed / progressTracker.total) * 100,
+            });
+        };
+
+        try {
+            // --- Step 1: 技術指標計算 ---
+            const weeklyData = calculateWeeklyK(stock.dailyData || []);
+            const indicators = await w1API.processIndicators(weeklyData);
+            step++;
+            progressTracker.completed++;
+            updateProgress();
+
+            // --- Step 2: 報酬率計算 ---
+            const profit = await w2API.processProfit(indicators);
+            step++;
+            progressTracker.completed++;
+            updateProgress();
+
+            // --- Step 3: 訊號位置計算 ---
+            const signals = await w3API.processSignal(profit);
+            step++;
+            progressTracker.completed++;
+            updateProgress();
+
+            return {
+                stockId: stock.id,
+                signals,
+                indicators: indicators.indicators,
+                profit: profit.profit,
+            };
+        } catch (error) {
+            console.error(`股票 ${stock.id} Worker 計算失敗:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * 批量處理多支股票的 Worker 計算
+     * @param {Array} stockList - 股票清單
+     * @param {Function} onProgress - 進度回調
+     */
+    async function processMultipleStocks(stockList, onProgress) {
+        const progressTracker = {
+            total: stockList.length * 3, // 每檔股票 3 個步驟
+            completed: 0,
+        };
+
+        const promises = stockList.map(stock =>
+            processSingleStock(stock, onProgress, progressTracker)
+        );
+
+        return Promise.all(promises);
     }
 
     /**
@@ -160,7 +251,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
      */
     async function reorderStockList(newOrder) {
         userStockList.value = newOrder;
-        await saveToIndexedDB();
+        await saveStockListToIndexedDB();
     }
 
     /**
@@ -304,9 +395,46 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                 }
             });
 
+            // Worker 計算（只在批量更新時執行）
+            if (typeof stockIds !== 'string' && targetStocks.length > 0) {
+                console.log('開始 Worker 計算...');
+
+                try {
+                    const workerResults = await processMultipleStocks(
+                        targetStocks,
+                        ({ symbol, step, totalSteps, percent, overallPercent }) => {
+                            console.log(
+                                `股票 ${symbol} Worker 進度: ${percent.toFixed(1)}% (${step}/${totalSteps})`
+                            );
+                            console.log(`整體 Worker 進度: ${overallPercent.toFixed(1)}%`);
+                        }
+                    );
+
+                    // 將 Worker 計算結果合併到 userStockList
+                    workerResults.forEach((workerResult, index) => {
+                        if (workerResult) {
+                            const targetIndex = targetIndices[index];
+                            userStockList.value[targetIndex] = {
+                                ...userStockList.value[targetIndex],
+                                weeklyKD: workerResult.indicators?.kd,
+                                rsi: workerResult.indicators?.rsi,
+                                ma: workerResult.indicators?.ma,
+                                profit: workerResult.profit,
+                                signals: workerResult.signals,
+                                calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                            };
+                        }
+                    });
+
+                    console.log('Worker 計算完成');
+                } catch (error) {
+                    console.error('Worker 計算失敗:', error);
+                }
+            }
+
             // 批量更新時才統一更新 IndexedDB
             if (typeof stockIds !== 'string' && updateIndexedDB) {
-                await saveToIndexedDB();
+                await saveStockListToIndexedDB();
             }
 
             console.log(`${targetStocks.length} 支股票價格更新完成`);
