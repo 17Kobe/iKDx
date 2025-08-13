@@ -45,7 +45,9 @@ export async function fetchStockPrice(stock) {
                     Math.round(Number(item.Trading_Volume) / 1000),
                 ]);
                 await fs.writeFile(allJsonPath, JSON.stringify(klineArr), 'utf8');
-                logs.push(`✓ ${stock.id} 歷史資料已儲存 (${klineArr.length} 筆記錄): ${allJsonPath}`);
+                logs.push(
+                    `✓ ${stock.id} 歷史資料已儲存 (${klineArr.length} 筆記錄): ${allJsonPath}`
+                );
             } else {
                 logs.push(`⚠ ${stock.id} 無歷史資料`);
             }

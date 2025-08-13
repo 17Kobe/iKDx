@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import _ from 'lodash';
+import dayjs from 'dayjs';
 import { fetchUserStockPriceByBaseInfo, getUserStockData } from '@/services/userStockDataService';
 import {
     getUserStockInfo,
@@ -104,7 +105,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         const newStock = {
             ...stock,
             industryCategory: Array.from(stock.industryCategory || []), // industryCategory 從 stock 取出，然後不支援響應
-            addedAt: new Date().toISOString(),
+            addedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         };
 
         console.log('新增股票到 Pinia store:', newStock);
