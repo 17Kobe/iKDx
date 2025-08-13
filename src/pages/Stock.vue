@@ -124,13 +124,13 @@
     import KChart from '@/components/KChart.vue';
     import StockName from '@/components/StockName.vue';
     import { useEventBus, useEventListener } from '@vueuse/core';
-    import { useUserStockStore } from '@/stores/userStockStore.js';
+    import { useUserStockListStore } from '@/stores/userStockListStore.js';
     import draggable from 'vuedraggable/src/vuedraggable';
     // import { createChart } from 'lightweight-charts';
     // import { initDB, ensureStoreExists } from '@/lib/idb';
 
     // 使用 Pinia store
-    const userStockStore = useUserStockStore();
+    const userStockListStore = useUserStockListStore();
 
     // 事件總線
     const bus = useEventBus('stock-search');
@@ -146,7 +146,7 @@
             // await initDB();
             // await ensureStoreExists('all-stocks');
             // await ensureStoreExists('user-stocks');
-            userStockStore.loadUserStocks();
+            userStockListStore.loadUserStockList();
         } catch (error) {
             console.error('初始化資料庫失敗:', error);
         }
@@ -155,11 +155,11 @@
     // 計算屬性：取得使用者股票清單
     const stockList = computed({
         get() {
-            return userStockStore.userStocks;
+            return userStockListStore.userStockList;
         },
         set(newList) {
             // 支援拖拽排序功能
-            userStockStore.reorderStocks(newList);
+            userStockListStore.reorderStocks(newList);
         },
     });
 
@@ -236,7 +236,7 @@
     }
 
     function onRemoveStock(stock) {
-        userStockStore.removeStock(stock.id).then(result => {
+        userStockListStore.removeStock(stock.id).then(result => {
             if (result.success) {
                 showToast(result.message);
             } else {
@@ -276,7 +276,7 @@
     // 使用 VueUse 的 useEventListener 監聽 visibilitychange
     useEventListener(document, 'visibilitychange', () => {
         // if (document.visibilityState === 'visible') {
-        //     userStockStore.loadUserStocks();
+        //     userStockListStore.loadUserStockList();
         // }
     });
 

@@ -10,9 +10,9 @@ import {
 } from '@/services/userStockInfoService';
 import { getAllStocksById, putAllStocks } from '@/services/allStocksService';
 
-export const useUserStockStore = defineStore('userStock', () => {
+export const useUserStockListStore = defineStore('userStockList', () => {
     // 初始化一些測試資料
-    const userStocks = ref([
+    const userStockList = ref([
         // {
         //     id: '2330',
         //     name: '台積電',
@@ -49,14 +49,14 @@ export const useUserStockStore = defineStore('userStock', () => {
     ]);
 
     /**
-     * 依據股票 id 取得 userStocks 中的股票物件與 index
+     * 依據股票 id 取得 userStockList 中的股票物件與 index
      * @param {string} stockId - 股票代碼
      * @returns {{ stock: Object|null, index: number }}
      */
-    function getStockStoreById(stockId) {
-        const foundStockIndex = userStocks.value.findIndex(s => s.id === stockId);
+    function getStockListStoreById(stockId) {
+        const foundStockIndex = userStockList.value.findIndex(s => s.id === stockId);
         return {
-            foundStock: foundStockIndex !== -1 ? userStocks.value[foundStockIndex] : null,
+            foundStock: foundStockIndex !== -1 ? userStockList.value[foundStockIndex] : null,
             foundStockIndex,
         };
     }
@@ -64,7 +64,7 @@ export const useUserStockStore = defineStore('userStock', () => {
     /**
      * 從 IndexedDB 載入使用者股票清單並更新價格資料
      */
-    async function loadUserStocks() {
+    async function loadUserStockList() {
         try {
             console.log('開始載入使用者股票清單...');
             const stocks = await getUserStockInfo();
@@ -72,16 +72,16 @@ export const useUserStockStore = defineStore('userStock', () => {
 
             // 如果 IndexedDB 中有資料，使用載入的資料；否則保持現有的測試資料
             if (stocks && stocks.length > 0) {
-                userStocks.value = stocks;
+                userStockList.value = stocks;
 
                 // 批量更新所有股票的價格資料
                 // await updateStockPrices();
             }
-            return userStocks.value;
+            return userStockList.value;
         } catch (error) {
             console.error('載入使用者股票清單失敗:', error);
             // 發生錯誤時保持現有資料，不要清空
-            return userStocks.value;
+            return userStockList.value;
         }
     }
 
@@ -89,12 +89,12 @@ export const useUserStockStore = defineStore('userStock', () => {
      * 新增股票到使用者清單並抓取價格資料
      * @param {Object} stock - 股票資料 { id, name }
      */
-    async function addStock(stock) {
+    async function addStockToList(stock) {
         // Proxy(Object) {id: '2330', name: '台積電', industryCategory: Array(2), type: 'twse'}
         console.log('開始新增股票:', stock);
 
         // 檢查是否已存在
-        const exists = userStocks.value.find(s => s.id === stock.id);
+        const exists = userStockList.value.find(s => s.id === stock.id);
         if (exists) {
             console.log('股票已存在，取消新增');
             return { success: false, message: '股票已存在於清單中' };
@@ -108,7 +108,7 @@ export const useUserStockStore = defineStore('userStock', () => {
         };
 
         console.log('新增股票到 Pinia store:', newStock);
-        userStocks.value.push(newStock);
+        userStockList.value.push(newStock);
 
         // 儲存到 IndexedDB
         try {
@@ -116,14 +116,14 @@ export const useUserStockStore = defineStore('userStock', () => {
             await putUserStockInfo(newStock);
             console.log('股票已成功儲存到 user-stock-info');
             // 背景抓取該股票的價格資料
-            updateStockPrices(stock.id).catch(error => {
+            updateStockListPrices(stock.id).catch(error => {
                 console.error(`背景更新股票 ${stock.id} 價格失敗:`, error);
             });
             return { success: true, message: '股票已新增至清單' };
         } catch (error) {
             console.error('儲存股票失敗:', error);
             // 如果 IndexedDB 失敗，從 Pinia 中移除
-            userStocks.value = userStocks.value.filter(s => s.id !== stock.id);
+            userStockList.value = userStockList.value.filter(s => s.id !== stock.id);
             return { success: false, message: '新增失敗，請稍後再試' };
         }
     }
@@ -132,12 +132,12 @@ export const useUserStockStore = defineStore('userStock', () => {
      * 從使用者清單移除股票
      * @param {string} stockId - 股票代碼
      */
-    async function removeStock(stockId) {
+    async function removeStockFromList(stockId) {
         try {
             // 從 IndexedDB 移除
             await deleteUserStockInfo(stockId);
             // 從 Pinia store 移除
-            userStocks.value = userStocks.value.filter(s => s.id !== stockId);
+            userStockList.value = userStockList.value.filter(s => s.id !== stockId);
             return { success: true, message: '股票已從清單中移除' };
         } catch (error) {
             console.error('移除股票失敗:', error);
@@ -149,26 +149,26 @@ export const useUserStockStore = defineStore('userStock', () => {
      * 檢查股票是否已在使用者清單中
      * @param {string} stockId - 股票代碼
      */
-    function isStockAdded(stockId) {
-        return userStocks.value.some(s => s.id === stockId);
+    function isStockInList(stockId) {
+        return userStockList.value.some(s => s.id === stockId);
     }
 
     /**
      * 重新排序股票列表（支援拖拽排序）
      * @param {Array} newOrder - 重新排序後的股票陣列
      */
-    async function reorderStocks(newOrder) {
-        userStocks.value = newOrder;
+    async function reorderStockList(newOrder) {
+        userStockList.value = newOrder;
         await saveToIndexedDB();
     }
 
     /**
      * 將所有股票資料儲存到 IndexedDB
      */
-    async function saveToIndexedDB() {
+    async function saveStockListToIndexedDB() {
         try {
             await clearUserStockInfo();
-            for (const stock of userStocks.value) {
+            for (const stock of userStockList.value) {
                 // 只存純資料欄位
                 const info = {
                     id: stock.id,
@@ -188,12 +188,12 @@ export const useUserStockStore = defineStore('userStock', () => {
      * 根據 ID 從 IndexedDB 獲取單一股票資料
      * @param {string} id - 股票代碼
      */
-    async function loadStock(id) {
+    async function loadStockToList(id) {
         const stock = await getAllStocksById(id);
         if (stock) {
-            const exists = userStocks.value.find(s => s.id === stock.id);
+            const exists = userStockList.value.find(s => s.id === stock.id);
             if (!exists) {
-                userStocks.value.push(stock);
+                userStockList.value.push(stock);
             }
         }
     }
@@ -202,8 +202,8 @@ export const useUserStockStore = defineStore('userStock', () => {
      * 將單一股票資料儲存至 IndexedDB
      * @param {string} id - 股票代碼
      */
-    async function saveStock(id) {
-        const stock = userStocks.value.find(s => s.id === id);
+    async function saveStockToList(id) {
+        const stock = userStockList.value.find(s => s.id === id);
         if (stock) {
             await putAllStocks(stock);
         }
@@ -216,7 +216,7 @@ export const useUserStockStore = defineStore('userStock', () => {
      * @param {number} options.concurrency - 批量更新時的併發數（預設 3）
      * @param {boolean} options.updateIndexedDB - 是否同步更新 IndexedDB（預設 true）
      */
-    async function updateStockPrices(stockIds = null, options = {}) {
+    async function updateStockListPrices(stockIds = null, options = {}) {
         const { concurrency = 3, updateIndexedDB = true } = options;
 
         // 決定要更新的股票清單
@@ -225,11 +225,11 @@ export const useUserStockStore = defineStore('userStock', () => {
 
         if (stockIds === null) {
             // 更新所有股票
-            targetStocks = userStocks.value;
-            targetIndices = userStocks.value.map((_, index) => index);
+            targetStocks = userStockList.value;
+            targetIndices = userStockList.value.map((_, index) => index);
         } else if (typeof stockIds === 'string') {
             // 更新單一股票
-            const { foundStock, foundStockIndex } = getStockStoreById(stockIds);
+            const { foundStock, foundStockIndex } = getStockListStoreById(stockIds);
             if (!foundStock) {
                 console.warn(`找不到股票 ${stockIds}`);
                 return;
@@ -241,7 +241,7 @@ export const useUserStockStore = defineStore('userStock', () => {
             targetStocks = [];
             targetIndices = [];
             stockIds.forEach(stockId => {
-                const { foundStock, foundStockIndex } = getStockStoreById(stockId);
+                const { foundStock, foundStockIndex } = getStockListStoreById(stockId);
                 if (foundStock) {
                     targetStocks.push(foundStock);
                     targetIndices.push(foundStockIndex);
@@ -276,16 +276,16 @@ export const useUserStockStore = defineStore('userStock', () => {
                 })
             );
 
-            // 更新 userStocks 中的價格資料
+            // 更新 userStockList 中的價格資料
             updatedStockDataList.forEach((updatedData, index) => {
                 if (updatedData) {
                     console.log('updatedData', updatedData);
 
                     const targetIndex = targetIndices[index];
-                    const originalStock = userStocks.value[targetIndex];
+                    const originalStock = userStockList.value[targetIndex];
 
                     // 更新 pinia 股票資料
-                    userStocks.value[targetIndex] = {
+                    userStockList.value[targetIndex] = {
                         ...originalStock,
                         fetchedAt: updatedData.fetchedAt,
                         lastPrice: updatedData.lastPrice,
@@ -295,11 +295,6 @@ export const useUserStockStore = defineStore('userStock', () => {
                     // 如果是單筆更新，直接儲存到 IndexedDB
                     if (typeof stockIds === 'string' && updateIndexedDB) {
                         // 確保所有 Proxy Array 轉換為純陣列，避免 IndexedDB DataCloneError
-                        // const dataToSave = {
-                        //     ...updatedData,
-                        //     industryCategory: Array.from(updatedData.industryCategory || []),
-                        // };
-                        // const dataToSave = _.cloneDeep(updatedData);
                         const dataToSave = JSON.parse(JSON.stringify(updatedData));
                         putUserStockInfo(dataToSave).catch(error => {
                             console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
@@ -320,14 +315,14 @@ export const useUserStockStore = defineStore('userStock', () => {
     }
 
     return {
-        userStocks,
-        loadUserStocks,
-        addStock,
-        removeStock,
-        isStockAdded,
-        reorderStocks,
-        loadStock,
-        saveStock,
-        updateStockPrices,
+        userStockList,
+        loadUserStockList,
+        addStockToList,
+        removeStockFromList,
+        isStockInList,
+        reorderStockList,
+        loadStockToList,
+        saveStockToList,
+        updateStockListPrices,
     };
 });

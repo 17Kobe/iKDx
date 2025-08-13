@@ -14,7 +14,7 @@ export async function initDB() {
                     db.createObjectStore('user-stock-info', { keyPath: 'id' });
                     db.createObjectStore('user-stock-data', { keyPath: 'id' });
                 }
-            }
+            },
         });
     }
     return db;

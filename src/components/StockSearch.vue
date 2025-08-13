@@ -99,9 +99,13 @@
                                         {{ item.name }}
                                     </div>
                                     <Button
-                                        :type="userStockStore.isStockAdded(item.id) ? 'default' : 'primary'"
+                                        :type="
+                                            userStockListStore.isStockInList(item.id)
+                                                ? 'default'
+                                                : 'primary'
+                                        "
                                         size="small"
-                                        :disabled="userStockStore.isStockAdded(item.id)"
+                                        :disabled="userStockListStore.isStockInList(item.id)"
                                         @click="onAddStock(item)"
                                         style="
                                             margin-left: 12px;
@@ -121,7 +125,11 @@
                                             justify-content: center;
                                         "
                                     >
-                                        {{ userStockStore.isStockAdded(item.id) ? '已新增' : '新增' }}
+                                        {{
+                                            userStockListStore.isStockInList(item.id)
+                                                ? '已新增'
+                                                : '新增'
+                                        }}
                                     </Button>
                                 </div>
                             </div>
@@ -141,10 +149,10 @@
     import { ShareSheet, Search, Button, showToast } from 'vant';
     import { getAllStocks } from '@/services/allStocksService';
     import { useEventBus } from '@vueuse/core';
-    import { useUserStockStore } from '@/stores/userStockStore.js';
+    import { useUserStockListStore } from '@/stores/userStockListStore.js';
 
     // 使用 Pinia store
-    const userStockStore = useUserStockStore();
+    const userStockListStore = useUserStockListStore();
 
     // 事件總線：控制顯示狀態
     const bus = useEventBus('stock-search');
@@ -244,7 +252,7 @@
      * @param {Object} stock - 股票資料 { id, name }
      */
     async function onAddStock(stock) {
-        const result = await userStockStore.addStock(stock);
+        const result = await userStockListStore.addStockToList(stock);
         showToast({
             message: result.message,
             type: result.success ? 'success' : 'fail',
