@@ -26,3 +26,15 @@ jobs:
                   git add public/data/global.json
                   git commit -m 'Update all data'
                   git push
+
+            # 因為 上面的 git push 不會觸發 CI/CD，所以這裡需要手動觸發
+            - name: Build project (set base for GitHub Pages)
+              run: |
+                  export DEPLOY_TARGET=github
+                  npm run build
+
+            - name: Deploy to GitHub Pages
+              uses: peaceiris/actions-gh-pages@v4
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./dist
