@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import {
-    fetchUserStockPriceByBaseInfo,
-    getUserStockData,
-} from '@/services/userStockDataService';
+import _ from 'lodash';
+import { fetchUserStockPriceByBaseInfo, getUserStockData } from '@/services/userStockDataService';
 import {
     getUserStockInfo,
     clearUserStockInfo,
@@ -101,14 +99,14 @@ export const useUserStockStore = defineStore('userStock', () => {
             console.log('股票已存在，取消新增');
             return { success: false, message: '股票已存在於清單中' };
         }
-        
+
         // newStock，保留原本 stock 物件內容，但 industryCategory 要從 proxy(array) -> array，擴增 addedAt 欄位
         const newStock = {
             ...stock,
             industryCategory: Array.from(stock.industryCategory || []), // industryCategory 從 stock 取出，然後不支援響應
             addedAt: new Date().toISOString(),
         };
-        
+
         console.log('新增股票到 Pinia store:', newStock);
         userStocks.value.push(newStock);
 
@@ -220,11 +218,11 @@ export const useUserStockStore = defineStore('userStock', () => {
      */
     async function updateStockPrices(stockIds = null, options = {}) {
         const { concurrency = 3, updateIndexedDB = true } = options;
-        
+
         // 決定要更新的股票清單
         let targetStocks;
         let targetIndices;
-        
+
         if (stockIds === null) {
             // 更新所有股票
             targetStocks = userStocks.value;
@@ -253,14 +251,14 @@ export const useUserStockStore = defineStore('userStock', () => {
             console.warn('stockIds 參數格式錯誤');
             return;
         }
-        
+
         if (targetStocks.length === 0) {
             console.log('無股票需要更新價格');
             return;
         }
-        
+
         console.log(`開始更新 ${targetStocks.length} 支股票價格...`);
-        
+
         try {
             // 批量抓取股票資料
             const updatedStockDataList = await Promise.all(
@@ -281,11 +279,11 @@ export const useUserStockStore = defineStore('userStock', () => {
             // 更新 userStocks 中的價格資料
             updatedStockDataList.forEach((updatedData, index) => {
                 if (updatedData) {
-                    console.log("updatedData", updatedData);
-                    
+                    console.log('updatedData', updatedData);
+
                     const targetIndex = targetIndices[index];
                     const originalStock = userStocks.value[targetIndex];
-                    
+
                     // 更新 pinia 股票資料
                     userStocks.value[targetIndex] = {
                         ...originalStock,
@@ -293,14 +291,16 @@ export const useUserStockStore = defineStore('userStock', () => {
                         lastPrice: updatedData.lastPrice,
                         lastDate: updatedData.lastDate,
                     };
-                    
+
                     // 如果是單筆更新，直接儲存到 IndexedDB
                     if (typeof stockIds === 'string' && updateIndexedDB) {
                         // 確保所有 Proxy Array 轉換為純陣列，避免 IndexedDB DataCloneError
-                        const dataToSave = {
-                            ...updatedData,
-                            industryCategory: Array.from(updatedData.industryCategory || []),
-                        };
+                        // const dataToSave = {
+                        //     ...updatedData,
+                        //     industryCategory: Array.from(updatedData.industryCategory || []),
+                        // };
+                        // const dataToSave = _.cloneDeep(updatedData);
+                        const dataToSave = JSON.parse(JSON.stringify(updatedData));
                         putUserStockInfo(dataToSave).catch(error => {
                             console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
                         });
