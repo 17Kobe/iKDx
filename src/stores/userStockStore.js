@@ -77,7 +77,7 @@ export const useUserStockStore = defineStore('userStock', () => {
                 userStocks.value = stocks;
 
                 // 批量更新所有股票的價格資料
-                // await updateAllStockPrices();
+                // await updateStockPrices();
             }
             return userStocks.value;
         } catch (error) {
@@ -118,7 +118,7 @@ export const useUserStockStore = defineStore('userStock', () => {
             await putUserStockInfo(newStock);
             console.log('股票已成功儲存到 user-stock-info');
             // 背景抓取該股票的價格資料
-            updateSingleStockPrice(stock.id).catch(error => {
+            updateStockPrices(stock.id).catch(error => {
                 console.error(`背景更新股票 ${stock.id} 價格失敗:`, error);
             });
             return { success: true, message: '股票已新增至清單' };
@@ -212,23 +212,59 @@ export const useUserStockStore = defineStore('userStock', () => {
     }
 
     /**
-     * 批量更新所有使用者股票的價格資料
+     * 更新股票價格資料（支援單筆或批量）
+     * @param {string|string[]|null} stockIds - 股票代碼，null 表示更新所有股票
+     * @param {Object} options - 選項設定
+     * @param {number} options.concurrency - 批量更新時的併發數（預設 3）
+     * @param {boolean} options.updateIndexedDB - 是否同步更新 IndexedDB（預設 true）
      */
-    async function updateAllStockPrices() {
-        if (userStocks.value.length === 0) {
+    async function updateStockPrices(stockIds = null, options = {}) {
+        const { concurrency = 3, updateIndexedDB = true } = options;
+        
+        // 決定要更新的股票清單
+        let targetStocks;
+        let targetIndices;
+        
+        if (stockIds === null) {
+            // 更新所有股票
+            targetStocks = userStocks.value;
+            targetIndices = userStocks.value.map((_, index) => index);
+        } else if (typeof stockIds === 'string') {
+            // 更新單一股票
+            const { foundStock, foundStockIndex } = getStockStoreById(stockIds);
+            if (!foundStock) {
+                console.warn(`找不到股票 ${stockIds}`);
+                return;
+            }
+            targetStocks = [foundStock];
+            targetIndices = [foundStockIndex];
+        } else if (Array.isArray(stockIds)) {
+            // 更新指定股票清單
+            targetStocks = [];
+            targetIndices = [];
+            stockIds.forEach(stockId => {
+                const { foundStock, foundStockIndex } = getStockStoreById(stockId);
+                if (foundStock) {
+                    targetStocks.push(foundStock);
+                    targetIndices.push(foundStockIndex);
+                }
+            });
+        } else {
+            console.warn('stockIds 參數格式錯誤');
+            return;
+        }
+        
+        if (targetStocks.length === 0) {
             console.log('無股票需要更新價格');
             return;
         }
-
-        console.log(`開始批量更新 ${userStocks.value.length} 支股票價格...`);
-
+        
+        console.log(`開始更新 ${targetStocks.length} 支股票價格...`);
+        
         try {
-            // 提取所有股票代碼
-            const stockCodes = userStocks.value.map(stock => stock.id || stock.code);
-
-            // 批量抓取股票資料（併發數設為 3，避免過多請求）
+            // 批量抓取股票資料
             const updatedStockDataList = await Promise.all(
-                userStocks.value.map(async stock => {
+                targetStocks.map(async stock => {
                     try {
                         const updatedData = await fetchUserStockPriceByBaseInfo(
                             stock.id || stock.code,
@@ -245,93 +281,41 @@ export const useUserStockStore = defineStore('userStock', () => {
             // 更新 userStocks 中的價格資料
             updatedStockDataList.forEach((updatedData, index) => {
                 if (updatedData) {
-                    // 保留原有資料，只更新價格相關欄位
-                    const originalStock = userStocks.value[index];
-                    userStocks.value[index] = {
+                    console.log("updatedData", updatedData);
+                    
+                    const targetIndex = targetIndices[index];
+                    const originalStock = userStocks.value[targetIndex];
+                    
+                    // 更新 pinia 股票資料
+                    userStocks.value[targetIndex] = {
                         ...originalStock,
-                        price: updatedData.price,
-                        change: updatedData.change,
-                        changePercent: updatedData.changePercent,
-                        weeklyKD: updatedData.weeklyKD,
-                        rsi: updatedData.rsi,
-                        lastUpdated: updatedData.lastUpdated,
+                        fetchedAt: updatedData.fetchedAt,
+                        lastPrice: updatedData.lastPrice,
+                        lastDate: updatedData.lastDate,
                     };
+                    
+                    // 如果是單筆更新，直接儲存到 IndexedDB
+                    if (typeof stockIds === 'string' && updateIndexedDB) {
+                        // 確保所有 Proxy Array 轉換為純陣列，避免 IndexedDB DataCloneError
+                        const dataToSave = {
+                            ...updatedData,
+                            industryCategory: Array.from(updatedData.industryCategory || []),
+                        };
+                        putUserStockInfo(dataToSave).catch(error => {
+                            console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
+                        });
+                    }
                 }
             });
 
-            // 批量更新到 IndexedDB
-            await saveToIndexedDB();
-
-            console.log('所有股票價格更新完成');
-        } catch (error) {
-            console.error('批量更新股票價格失敗:', error);
-        }
-    }
-
-    /**
-     * 更新單一股票的價格資料
-     * @param {string} stockId - 股票代碼
-     */
-    async function updateSingleStockPrice(stockId) {
-        const { foundStock, foundStockIndex } = getStockStoreById(stockId);
-        if (!foundStock) {
-            console.warn(`找不到股票 ${stockId}`);
-            return;
-        }
-
-        console.log(`開始更新股票 ${stockId} 價格...`);
-
-        try {
-            const updatedData = await fetchUserStockPriceByBaseInfo(stockId, foundStock);
-
-            if (updatedData) {
-                // 更新股票資料
-                userStocks.value[foundStockIndex] = {
-                    ...foundStock,
-                    latestPrice: updatedData.price,
-                    change: updatedData.change,
-                    changePercent: updatedData.changePercent,
-                    weeklyKD: updatedData.weeklyKD,
-                    rsi: updatedData.rsi,
-                    lastUpdated: updatedData.lastUpdated,
-                };
-
-                // 取得 user-stock-data 的最後一筆 daily 資料
-                let lastDate = null;
-                let lastValue = null;
-                try {
-                    const stockData = await getUserStockData(stockId);
-                    if (stockData && Array.isArray(stockData.daily) && stockData.daily.length > 0) {
-                        const last = stockData.daily[stockData.daily.length - 1];
-                        // 假設格式為 [date, value, ...] 或 {date, value}
-                        if (Array.isArray(last)) {
-                            lastDate = last[0];
-                            lastValue = last[1];
-                        } else if (typeof last === 'object') {
-                            lastDate = last.date || last.Date || last.日期 || null;
-                            lastValue = last.value || last.close || last.price || null;
-                        }
-                    }
-                } catch (e) {
-                    console.warn('取得 user-stock-data 最後一筆失敗', e);
-                }
-
-                // 只存純資料欄位，並加上 lastDate, lastValue
-                const info = {
-                    id: stock.id,
-                    name: stock.name,
-                    industryCategory: Array.from(stock.industryCategory || []),
-                    type: stock.type,
-                    addedAt: stock.addedAt,
-                    lastDate,
-                    lastValue,
-                };
-                console.log(`[user-stock-info] set`, info);
-                await putUserStockInfo(info);
-                console.log(`股票 ${stockId} 價格更新完成`);
+            // 批量更新時才統一更新 IndexedDB
+            if (typeof stockIds !== 'string' && updateIndexedDB) {
+                await saveToIndexedDB();
             }
+
+            console.log(`${targetStocks.length} 支股票價格更新完成`);
         } catch (error) {
-            console.error(`更新股票 ${stockId} 價格失敗:`, error);
+            console.error('更新股票價格失敗:', error);
         }
     }
 
@@ -344,7 +328,6 @@ export const useUserStockStore = defineStore('userStock', () => {
         reorderStocks,
         loadStock,
         saveStock,
-        updateAllStockPrices,
-        updateSingleStockPrice,
+        updateStockPrices,
     };
 });

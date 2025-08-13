@@ -54,12 +54,13 @@ async function getUserStockDataById(stockCode) {
 }
 
 /**
- * 取得股票資料（優先使用快取）
+ * 更新單一股票的價格資料並回傳處理後的資料
  * @param {string} stockId - 股票代碼
- * @returns {Promise<Object|null>} 股票資料
+ * @param {Object} baseStockInfo - 基本股票資訊 { id, name, code }
+ * @returns {Promise<Object|null>} 處理後的股票資料
  */
-async function fetchUserStockPriceByLatestPriceDate(stockId, latestPriceDate) {
-    // 從 靜態檔案 抓取新資料
+export async function fetchUserStockPriceByBaseInfo(stockId, baseStockInfo) {
+    const latestPriceDate = _.get(baseStockInfo, 'latestPriceDate', null);
     try {
         console.log(`開始抓取股票 ${stockId} 的資料...`);
         const response = await axios.get(`stocks/${stockId}/all.json`);
@@ -69,29 +70,31 @@ async function fetchUserStockPriceByLatestPriceDate(stockId, latestPriceDate) {
             let filteredData = response.data;
             if (latestPriceDate) {
                 filteredData = response.data.filter(item => {
-                    // 假設 item.date 為日期欄位，格式為 'YYYY-MM-DD' 或 'YYYY-MM-DD HH:mm:ss'
+                    // 假設 item.date 為日期欄位，格式為 'YYYYMMDD'
                     return dayjs(item.date, 'YYYYMMDD').isAfter(dayjs(latestPriceDate));
                 });
             }
             // 取得最後一筆資料的日期與價格
+            let fetchedAt = null;
             let lastDate = null;
             let lastPrice = null;
             if (filteredData && filteredData.length > 0) {
                 const last = filteredData[filteredData.length - 1];
-                lastDate = last.date;
-                lastPrice = last.close ?? last.price ?? null;
+                fetchedAt =  dayjs().format('YYYY-MM-DD HH:mm:ss');
+                lastDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
+                lastPrice = last[4];
             }
-            const stockData = {
-                stockId,
-                data: filteredData,
-                count: Array.isArray(filteredData) ? filteredData.length : 0,
-                fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                lastDate,
+            const updatedStock = {
+                ...baseStockInfo,
+                fetchedAt,
                 lastPrice,
+                lastDate,
+                // 可以添加更多技術指標
+                // weeklyKD: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
+                // rsi: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
             };
-
-            console.log(`成功抓取股票 ${stockId} 資料`, stockData);
-            return stockData;
+            console.log(`成功抓取股票 ${stockId} 資料`, updatedStock);
+            return updatedStock;
         }
 
         console.warn(`股票 ${stockId} 無資料回傳`);
@@ -100,39 +103,6 @@ async function fetchUserStockPriceByLatestPriceDate(stockId, latestPriceDate) {
         console.error(`抓取股票 ${stockId} 失敗:`, error);
         return null;
     }
-}
-
-/**
- * 更新單一股票的價格資料並回傳處理後的資料
- * @param {string} stockId - 股票代碼
- * @param {Object} baseStockInfo - 基本股票資訊 { id, name, code }
- * @returns {Promise<Object|null>} 處理後的股票資料
- */
-export async function fetchUserStockPriceByBaseInfo(stockId, baseStockInfo) {
-    const latestPriceDate = _.get(baseStockInfo, 'latestPriceDate', null);
-    const stockData = await fetchUserStockPriceByLatestPriceDate(stockId, latestPriceDate);
-
-    if (!stockData || !stockData.data) {
-        console.warn(`股票 ${stockId} 無價格資料`);
-        return null;
-    }
-
-    // 處理股票資料，提取最新價格資訊
-    const priceData = stockData.data;
-
-    // 假設 all.json 包含歷史價格資料，取最新一筆
-    let latestPrice = null;
-
-    // 組合最終的股票資料
-    const updatedStock = {
-        ...baseStockInfo,
-        latestPrice: latestPrice || 0,
-        // 可以添加更多技術指標
-        // weeklyKD: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
-        // rsi: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
-    };
-
-    return updatedStock;
 }
 
 // 初始化時確保資料庫已建立
