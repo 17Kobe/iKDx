@@ -395,13 +395,31 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                 }
             });
 
-            // Worker 計算（只在批量更新時執行）
-            if (typeof stockIds !== 'string' && targetStocks.length > 0) {
-                console.log('開始 Worker 計算...');
+            // Worker 計算（只計算有成功更新資料的股票）
+            const stocksWithUpdatedData = [];
+            const updatedIndices = [];
+
+            console.log('Debug: 檢查 updatedStockDataList:', updatedStockDataList);
+
+            updatedStockDataList.forEach((updatedData, index) => {
+                console.log(`Debug: index ${index}, updatedData:`, updatedData);
+                if (updatedData) {
+                    const targetIndex = targetIndices[index];
+                    stocksWithUpdatedData.push(userStockList.value[targetIndex]);
+                    updatedIndices.push(targetIndex);
+                }
+            });
+
+            console.log('Debug: stocksWithUpdatedData length:', stocksWithUpdatedData.length);
+
+            if (stocksWithUpdatedData.length > 0) {
+                console.log(
+                    `開始對 ${stocksWithUpdatedData.length} 支有更新資料的股票進行 Worker 計算...`
+                );
 
                 try {
                     const workerResults = await processMultipleStocks(
-                        targetStocks,
+                        stocksWithUpdatedData,
                         ({ symbol, step, totalSteps, percent, overallPercent }) => {
                             console.log(
                                 `股票 ${symbol} Worker 進度: ${percent.toFixed(1)}% (${step}/${totalSteps})`
@@ -413,7 +431,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                     // 將 Worker 計算結果合併到 userStockList
                     workerResults.forEach((workerResult, index) => {
                         if (workerResult) {
-                            const targetIndex = targetIndices[index];
+                            const targetIndex = updatedIndices[index];
                             userStockList.value[targetIndex] = {
                                 ...userStockList.value[targetIndex],
                                 weeklyKD: workerResult.indicators?.kd,

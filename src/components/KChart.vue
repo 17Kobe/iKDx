@@ -63,41 +63,60 @@
     // 創建 K 線圖表
     function createChart() {
         if (!chartCanvas.value) return;
+        
+        // 檢查 canvas 是否還在 DOM 中
+        if (!chartCanvas.value.parentElement) {
+            console.warn('Chart canvas 已從 DOM 中移除');
+            return;
+        }
+        
         const ctx = chartCanvas.value.getContext('2d');
         if (!ctx) return;
+        
+        // 清理現有圖表實例
         if (chartInstance.value) {
-            chartInstance.value.destroy();
+            try {
+                chartInstance.value.destroy();
+            } catch (error) {
+                console.warn('清理現有圖表失敗:', error);
+            }
             chartInstance.value = null;
         }
-        const candleData = generateKLineData();
-        chartInstance.value = new Chart(ctx, {
-            type: 'candlestick',
-            data: {
-                datasets: [
-                    {
-                        label: 'K 線圖',
-                        data: candleData,
-                        color: {
-                            up: '#ef5350',
-                            down: '#26a69a',
-                            unchanged: '#999',
+        
+        try {
+            const candleData = generateKLineData();
+            chartInstance.value = new Chart(ctx, {
+                type: 'candlestick',
+                data: {
+                    datasets: [
+                        {
+                            label: 'K 線圖',
+                            data: candleData,
+                            color: {
+                                up: '#ef5350',
+                                down: '#26a69a',
+                                unchanged: '#999',
+                            },
+                            borderColor: '#888',
+                            borderWidth: 1,
                         },
-                        borderColor: '#888',
-                        borderWidth: 1,
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
                     },
-                ],
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
+                    scales: {
+                        x: { type: 'linear', display: false },
+                        y: { display: false },
+                    },
                 },
-                scales: {
-                    x: { type: 'linear', display: false },
-                    y: { display: false },
-                },
-            },
-        });
+            });
+        } catch (error) {
+            console.error('創建 Chart.js 圖表失敗:', error);
+            showErrorPlaceholder();
+        }
     }
 
     // 生成 K 線資料
@@ -161,7 +180,11 @@
     // 組件卸載前清理
     onBeforeUnmount(() => {
         if (chartInstance.value) {
-            chartInstance.value.destroy();
+            try {
+                chartInstance.value.destroy();
+            } catch (error) {
+                console.warn('Chart.js 清理失敗:', error);
+            }
         }
         chartInstance.value = null;
     });
