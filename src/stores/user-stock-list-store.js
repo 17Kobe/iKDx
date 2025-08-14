@@ -94,21 +94,29 @@ export const useUserStockListStore = defineStore('userStockList', () => {
      */
     async function processSingleStock(stock, onProgress = () => {}) {
         try {
-            onProgress({ symbol: stock.id, step: 1, totalSteps: 3, message: '計算週線與技術指標...' });
-            
+            onProgress({
+                symbol: stock.id,
+                step: 1,
+                totalSteps: 3,
+                message: '計算週線與技術指標...',
+            });
+
             // Step 1: 週線與技術指標計算（丟進 pool）
-            const weeklyResult = await weeklyPool.execute('processWeeklyCalculation', stock.dailyData || []);
-            
+            const weeklyResult = await weeklyPool.execute(
+                'processWeeklyCalculation',
+                stock.dailyData || []
+            );
+
             onProgress({ symbol: stock.id, step: 2, totalSteps: 3, message: '計算報酬率...' });
-            
+
             // Step 2: 報酬率計算（丟進 pool）
             const profitResult = await profitPool.execute('processProfit', weeklyResult);
-            
+
             onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算訊號位置...' });
-            
+
             // Step 3: 訊號位置計算（丟進 pool）
             const signalResult = await signalPool.execute('processSignal', profitResult);
-            
+
             onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算完成' });
 
             return {
@@ -179,7 +187,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
                 if (updatedData) {
                     const targetIndex = targetIndices[i];
-                    
+
                     // 2. 立即更新價格資料到 Pinia
                     const originalStock = userStockList.value[targetIndex];
                     userStockList.value[targetIndex] = {
@@ -211,7 +219,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                     }
 
                     // 5. 單筆更新時直接儲存 IndexedDB
-                    if (typeof stockIds === 'string' && updateIndexedDB) {
+                    if (updateIndexedDB) {
                         const dataToSave = JSON.parse(JSON.stringify(updatedData));
                         putUserStockInfo(dataToSave).catch(error => {
                             console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
