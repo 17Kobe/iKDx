@@ -16,11 +16,11 @@ import {
 import { getAllStocksById, putAllStocks } from '@/services/all-stocks-service';
 
 // 初始化 Workers (使用 module 模式支援 import)
-const worker1 = new Worker(new URL('@/workers/worker1.js', import.meta.url), { type: 'module' });
+const calcWeeklyWorker = new Worker(new URL('@/workers/calc-weekly-worker.js', import.meta.url), { type: 'module' });
 const worker2 = new Worker(new URL('@/workers/worker2.js', import.meta.url), { type: 'module' });
 const worker3 = new Worker(new URL('@/workers/worker3.js', import.meta.url), { type: 'module' });
 
-const w1API = wrap(worker1);
+const calcWeeklyAPI = wrap(calcWeeklyWorker);
 const w2API = wrap(worker2);
 const w3API = wrap(worker3);
 
@@ -76,16 +76,6 @@ export const useUserStockListStore = defineStore('userStockList', () => {
     }
 
     /**
-     * 計算週K線資料
-     * @param {Array} dailyData - 日線資料
-     * @returns {Array} 週K線資料
-     */
-    function calculateWeeklyK(dailyData) {
-        // TODO: 實際的週K計算邏輯
-        return dailyData;
-    }
-
-    /**
      * 處理單支股票的 Worker 計算
      * @param {Object} stock - 股票資料
      * @param {Function} onProgress - 進度回調
@@ -107,15 +97,14 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         };
 
         try {
-            // --- Step 1: 技術指標計算 ---
-            const weeklyData = calculateWeeklyK(stock.dailyData || []);
-            const indicators = await w1API.processIndicators(weeklyData);
+            // --- Step 1: 週線計算與技術指標計算 ---
+            const weeklyResult = await calcWeeklyAPI.processWeeklyCalculation(stock.dailyData || []);
             step++;
             progressTracker.completed++;
             updateProgress();
 
             // --- Step 2: 報酬率計算 ---
-            const profit = await w2API.processProfit(indicators);
+            const profit = await w2API.processProfit(weeklyResult);
             step++;
             progressTracker.completed++;
             updateProgress();
@@ -129,7 +118,8 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             return {
                 stockId: stock.id,
                 signals,
-                indicators: indicators.indicators,
+                indicators: weeklyResult.indicators,
+                weeklyData: weeklyResult.weeklyData,
                 profit: profit.profit,
             };
         } catch (error) {
@@ -311,19 +301,21 @@ export const useUserStockListStore = defineStore('userStockList', () => {
      * @param {number} options.concurrency - 批量更新時的併發數（預設 3）
      * @param {boolean} options.updateIndexedDB - 是否同步更新 IndexedDB（預設 true）
      */
+    /**
+     * 更新股票價格資料（每支股票 fetch 完就立即更新與 worker 計算，不互等）
+     * @param {string|string[]|null} stockIds - 股票代碼，null 表示全部
+     * @param {Object} options - 設定
+     */
     async function updateStockListPrices(stockIds = null, options = {}) {
         const { concurrency = 3, updateIndexedDB = true } = options;
+        let targetStocks = [];
+        let targetIndices = [];
 
-        // 決定要更新的股票清單
-        let targetStocks;
-        let targetIndices;
-
+        // 決定 targetStocks, targetIndices（同原本邏輯）
         if (stockIds === null) {
-            // 更新所有股票
             targetStocks = userStockList.value;
             targetIndices = userStockList.value.map((_, index) => index);
         } else if (typeof stockIds === 'string') {
-            // 更新單一股票
             const { foundStock, foundStockIndex } = getStockListStoreById(stockIds);
             if (!foundStock) {
                 console.warn(`找不到股票 ${stockIds}`);
@@ -332,7 +324,6 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             targetStocks = [foundStock];
             targetIndices = [foundStockIndex];
         } else if (Array.isArray(stockIds)) {
-            // 更新指定股票清單
             targetStocks = [];
             targetIndices = [];
             stockIds.forEach(stockId => {
@@ -354,113 +345,86 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
         console.log(`開始更新 ${targetStocks.length} 支股票價格...`);
 
-        try {
-            // 批量抓取股票資料
-            const updatedStockDataList = await Promise.all(
-                targetStocks.map(async stock => {
+        // 控制同時併發數量
+        let running = 0;
+        let idx = 0;
+
+        function next() {
+            while (running < concurrency && idx < targetStocks.length) {
+                const i = idx++;
+                running++;
+                (async () => {
                     try {
+                        // 1. fetch 資料
                         const updatedData = await fetchUserStockPriceByBaseInfo(
-                            stock.id || stock.code,
-                            stock
+                            targetStocks[i].id || targetStocks[i].code,
+                            targetStocks[i]
                         );
-                        return updatedData;
-                    } catch (error) {
-                        console.error(`更新股票 ${stock.id} 價格失敗:`, error);
-                        return null;
-                    }
-                })
-            );
-
-            // 更新 userStockList 中的價格資料
-            updatedStockDataList.forEach((updatedData, index) => {
-                if (updatedData) {
-                    console.log('updatedData', updatedData);
-
-                    const targetIndex = targetIndices[index];
-                    const originalStock = userStockList.value[targetIndex];
-
-                    // 更新 pinia 股票資料
-                    userStockList.value[targetIndex] = {
-                        ...originalStock,
-                        fetchedAt: updatedData.fetchedAt,
-                        lastPrice: updatedData.lastPrice,
-                        lastDate: updatedData.lastDate,
-                    };
-
-                    // 如果是單筆更新，直接儲存到 IndexedDB
-                    if (typeof stockIds === 'string' && updateIndexedDB) {
-                        // 確保所有 Proxy Array 轉換為純陣列，避免 IndexedDB DataCloneError
-                        const dataToSave = JSON.parse(JSON.stringify(updatedData));
-                        putUserStockInfo(dataToSave).catch(error => {
-                            console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
-                        });
-                    }
-                }
-            });
-
-            // Worker 計算（只計算有成功更新資料的股票）
-            const stocksWithUpdatedData = [];
-            const updatedIndices = [];
-
-            console.log('Debug: 檢查 updatedStockDataList:', updatedStockDataList);
-
-            updatedStockDataList.forEach((updatedData, index) => {
-                console.log(`Debug: index ${index}, updatedData:`, updatedData);
-                if (updatedData) {
-                    const targetIndex = targetIndices[index];
-                    stocksWithUpdatedData.push(userStockList.value[targetIndex]);
-                    updatedIndices.push(targetIndex);
-                }
-            });
-
-            console.log('Debug: stocksWithUpdatedData length:', stocksWithUpdatedData.length);
-
-            if (stocksWithUpdatedData.length > 0) {
-                console.log(
-                    `開始對 ${stocksWithUpdatedData.length} 支有更新資料的股票進行 Worker 計算...`
-                );
-
-                try {
-                    const workerResults = await processMultipleStocks(
-                        stocksWithUpdatedData,
-                        ({ symbol, step, totalSteps, percent, overallPercent }) => {
-                            console.log(
-                                `股票 ${symbol} Worker 進度: ${percent.toFixed(1)}% (${step}/${totalSteps})`
-                            );
-                            console.log(`整體 Worker 進度: ${overallPercent.toFixed(1)}%`);
-                        }
-                    );
-
-                    // 將 Worker 計算結果合併到 userStockList
-                    workerResults.forEach((workerResult, index) => {
-                        if (workerResult) {
-                            const targetIndex = updatedIndices[index];
+                        if (updatedData) {
+                            // 2. 立即更新 userStockList
+                            const targetIndex = targetIndices[i];
+                            const originalStock = userStockList.value[targetIndex];
                             userStockList.value[targetIndex] = {
-                                ...userStockList.value[targetIndex],
-                                weeklyKD: workerResult.indicators?.kd,
-                                rsi: workerResult.indicators?.rsi,
-                                ma: workerResult.indicators?.ma,
-                                profit: workerResult.profit,
-                                signals: workerResult.signals,
-                                calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                                ...originalStock,
+                                fetchedAt: updatedData.fetchedAt,
+                                lastPrice: updatedData.lastPrice,
+                                lastDate: updatedData.lastDate,
                             };
+                            // 3. 立即啟動 worker 計算
+                            // 單支股票獨立 progressTracker
+                            const progressTracker = {
+                                total: 3,
+                                completed: 0,
+                            };
+                            const workerResult = await processSingleStock(
+                                userStockList.value[targetIndex],
+                                ({ symbol, step, totalSteps, percent, overallPercent }) => {
+                                    // 進度回報：可在這裡更新 UI 或 Pinia 狀態
+                                    console.log(
+                                        `股票 ${symbol} Worker 進度: ${percent.toFixed(1)}% (${step}/${totalSteps})`
+                                    );
+                                    console.log(`整體 Worker 進度: ${overallPercent.toFixed(1)}%`);
+                                },
+                                progressTracker
+                            );
+                            if (workerResult) {
+                                userStockList.value[targetIndex] = {
+                                    ...userStockList.value[targetIndex],
+                                    weeklyKD: workerResult.indicators?.kd,
+                                    rsi: workerResult.indicators?.rsi,
+                                    ma: workerResult.indicators?.ma,
+                                    profit: workerResult.profit,
+                                    signals: workerResult.signals,
+                                    calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                                };
+                            }
+                            // 4. 單筆更新 IndexedDB
+                            if (typeof stockIds === 'string' && updateIndexedDB) {
+                                const dataToSave = JSON.parse(JSON.stringify(updatedData));
+                                putUserStockInfo(dataToSave).catch(error => {
+                                    console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
+                                });
+                            }
                         }
-                    });
-
-                    console.log('Worker 計算完成');
-                } catch (error) {
-                    console.error('Worker 計算失敗:', error);
-                }
+                    } catch (error) {
+                        console.error(`股票 ${targetStocks[i].id} 更新失敗:`, error);
+                    } finally {
+                        running--;
+                        next(); // 啟動下一個任務
+                    }
+                })();
             }
+        }
+        next();
 
-            // 批量更新時才統一更新 IndexedDB
-            if (typeof stockIds !== 'string' && updateIndexedDB) {
-                await saveStockListToIndexedDB();
-            }
+        // 等待全部任務結束
+        while (running > 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
-            console.log(`${targetStocks.length} 支股票價格更新完成`);
-        } catch (error) {
-            console.error('更新股票價格失敗:', error);
+        // 批量更新 IndexedDB
+        if (typeof stockIds !== 'string' && updateIndexedDB) {
+            await saveStockListToIndexedDB();
         }
     }
 
