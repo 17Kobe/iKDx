@@ -12,6 +12,7 @@ export class WorkerPool {
         this.availableWorkers = [];
         this.queue = [];
         this.activeJobs = 0;
+        this.statusCallbacks = new Set(); // 狀態變更回調
 
         // 初始化 Worker Pool
         for (let i = 0; i < maxWorkers; i++) {
@@ -23,6 +24,53 @@ export class WorkerPool {
     }
 
     /**
+     * 訂閱狀態變更通知
+     * @param {Function} callback - 狀態變更回調函式
+     */
+    onStatusChange(callback) {
+        this.statusCallbacks.add(callback);
+        // 立即回傳目前狀態
+        callback(this.getStatus());
+    }
+
+    /**
+     * 取消訂閱狀態變更通知
+     * @param {Function} callback - 要移除的回調函式
+     */
+    offStatusChange(callback) {
+        this.statusCallbacks.delete(callback);
+    }
+
+    /**
+     * 取得目前 Pool 狀態
+     * @returns {Object} 狀態資訊
+     */
+    getStatus() {
+        return {
+            totalWorkers: this.maxWorkers,
+            availableWorkers: this.availableWorkers.length,
+            busyWorkers: this.maxWorkers - this.availableWorkers.length,
+            queuedTasks: this.queue.length,
+            activeJobs: this.activeJobs,
+            utilization: ((this.maxWorkers - this.availableWorkers.length) / this.maxWorkers * 100).toFixed(1),
+        };
+    }
+
+    /**
+     * 通知狀態變更
+     */
+    notifyStatusChange() {
+        const status = this.getStatus();
+        this.statusCallbacks.forEach(callback => {
+            try {
+                callback(status);
+            } catch (error) {
+                console.error('Worker Pool 狀態回調錯誤:', error);
+            }
+        });
+    }
+
+    /**
      * 執行 Worker 任務
      * @param {string} method - 要呼叫的方法名稱
      * @param {...any} args - 方法參數
@@ -31,6 +79,7 @@ export class WorkerPool {
     async execute(method, ...args) {
         return new Promise((resolve, reject) => {
             this.queue.push({ method, args, resolve, reject });
+            this.notifyStatusChange(); // 通知狀態變更
             this.processQueue();
         });
     }
@@ -49,6 +98,7 @@ export class WorkerPool {
 
         workerInfo.busy = true;
         this.activeJobs++;
+        this.notifyStatusChange(); // 通知狀態變更
 
         workerInfo.api[method](...args)
             .then(result => {
@@ -61,6 +111,7 @@ export class WorkerPool {
                 workerInfo.busy = false;
                 this.availableWorkers.push(workerIndex);
                 this.activeJobs--;
+                this.notifyStatusChange(); // 通知狀態變更
                 this.processQueue(); // 繼續處理下一個任務
             });
     }
@@ -78,12 +129,14 @@ export class WorkerPool {
      * 銷毀所有 Worker
      */
     destroy() {
+        this.statusCallbacks.clear(); // 清除所有回調
         this.workers.forEach(({ worker }) => {
             worker.terminate();
         });
         this.workers = [];
         this.availableWorkers = [];
         this.queue = [];
+        this.activeJobs = 0;
     }
 }
 
@@ -106,6 +159,40 @@ class GlobalWorkerPoolManager {
             this.pools.set(name, new WorkerPool(workerUrl, maxWorkers));
         }
         return this.pools.get(name);
+    }
+
+    /**
+     * 取得所有 Pool 的狀態
+     * @returns {Object} 所有 Pool 的狀態資訊
+     */
+    getAllStatus() {
+        const status = {};
+        this.pools.forEach((pool, name) => {
+            status[name] = pool.getStatus();
+        });
+        return status;
+    }
+
+    /**
+     * 訂閱所有 Pool 的狀態變更
+     * @param {Function} callback - 狀態變更回調函式
+     */
+    onAllStatusChange(callback) {
+        this.pools.forEach((pool, name) => {
+            pool.onStatusChange((poolStatus) => {
+                callback(name, poolStatus, this.getAllStatus());
+            });
+        });
+    }
+
+    /**
+     * 取得特定 Pool 的狀態
+     * @param {string} name - Pool 名稱
+     * @returns {Object|null} Pool 狀態或 null
+     */
+    getPoolStatus(name) {
+        const pool = this.pools.get(name);
+        return pool ? pool.getStatus() : null;
     }
 
     /**

@@ -8,14 +8,19 @@
                 <Radio :name="2">暗</Radio>
             </RadioGroup>
         </div>
-        <div>
+        <div style="margin-bottom: 24px">
             目前主題：<b>{{ themeStore.isDark ? '暗' : '亮' }}</b>
         </div>
+        
+        <!-- Worker Pool 監控組件 -->
+        <WorkerMonitor />
     </div>
 </template>
 
 <script setup>
     import { useThemeStore } from '../stores/theme';
     import { RadioGroup, Radio } from 'vant';
+    import WorkerMonitor from '../components/WorkerMonitor.vue';
+    
     const themeStore = useThemeStore();
 </script>

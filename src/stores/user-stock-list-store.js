@@ -29,6 +29,13 @@ const signalPool = workerPoolManager.getPool(
     new URL('@/workers/worker3.js', import.meta.url)
 );
 
+// 開啟 Worker Pool 狀態監控（開發時使用）
+if (import.meta.env.DEV) {
+    workerPoolManager.onAllStatusChange((poolName, status, allStatus) => {
+        console.log(`[Worker Pool] ${poolName}:`, status);
+    });
+}
+
 export const useUserStockListStore = defineStore('userStockList', () => {
     // 初始化一些測試資料
     const userStockList = ref([
