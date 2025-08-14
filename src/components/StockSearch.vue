@@ -70,68 +70,91 @@
                         <!-- 搜尋結果卡片區塊 -->
                         <div v-if="localSearch && localSearch.length >= 1" style="margin-top: 12px">
                             <div v-if="searchResults.length">
-                                <div
-                                    v-for="item in searchResults"
-                                    :key="item.id"
-                                    style="
-                                        background: #fff;
-                                        border-radius: 12px;
-                                        box-shadow: 0 2px 8px #0001;
-                                        padding: 10px;
-                                        margin-bottom: 12px;
-                                        display: flex;
-                                        align-items: center;
-                                        min-height: 56px;
-                                    "
-                                >
+                                <template v-for="item in searchResults" :key="item.id">
+                                    <!-- 已新增的股票 - 保持原樣 -->
                                     <div
+                                        v-if="userStockListStore.isStockInList(item.id)"
                                         style="
-                                            font-size: 17px;
-                                            font-weight: bold;
-                                            color: #222;
-                                            margin-right: 16px;
-                                            min-width: 60px;
-                                        "
-                                    >
-                                        {{ item.id }}
-                                    </div>
-                                    <div style="font-size: 16px; color: #333; flex: 1">
-                                        {{ item.name }}
-                                    </div>
-                                    <Button
-                                        :type="
-                                            userStockListStore.isStockInList(item.id)
-                                                ? 'default'
-                                                : 'primary'
-                                        "
-                                        size="small"
-                                        :disabled="userStockListStore.isStockInList(item.id)"
-                                        @click="onAddStock(item)"
-                                        style="
-                                            margin-left: 12px;
-                                            min-width: 60px;
-                                            height: 40px;
-                                            background: #ffe066;
-                                            color: #222;
-                                            font-weight: bold;
-                                            font-size: 16px;
-                                            border: none;
-                                            border-radius: 8px;
-                                            width: 64px;
-                                            padding: 0;
-                                            box-shadow: none;
+                                            background: #f8f9fa;
+                                            border-radius: 12px;
+                                            box-shadow: 0 2px 8px #0001;
+                                            padding: 10px;
+                                            margin-bottom: 12px;
                                             display: flex;
                                             align-items: center;
-                                            justify-content: center;
+                                            min-height: 56px;
+                                            opacity: 0.6;
                                         "
                                     >
-                                        {{
-                                            userStockListStore.isStockInList(item.id)
-                                                ? '已新增'
-                                                : '新增'
-                                        }}
-                                    </Button>
-                                </div>
+                                        <div
+                                            style="
+                                                font-size: 17px;
+                                                font-weight: bold;
+                                                color: #222;
+                                                margin-right: 16px;
+                                                min-width: 60px;
+                                            "
+                                        >
+                                            {{ item.id }}
+                                        </div>
+                                        <div style="font-size: 16px; color: #333; flex: 1">
+                                            {{ item.name }}
+                                        </div>
+                                        <div
+                                            style="
+                                                margin-left: 12px;
+                                                min-width: 60px;
+                                                height: 40px;
+                                                background: #e0e0e0;
+                                                color: #666;
+                                                font-weight: bold;
+                                                font-size: 16px;
+                                                border-radius: 8px;
+                                                width: 64px;
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                            "
+                                        >
+                                            已新增
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 未新增的股票 - 整列可點擊 -->
+                                    <div
+                                        v-else
+                                        @click="onAddStock(item)"
+                                        style="
+                                            background: #fff;
+                                            border-radius: 12px;
+                                            box-shadow: 0 2px 8px #0001;
+                                            padding: 10px;
+                                            margin-bottom: 12px;
+                                            display: flex;
+                                            align-items: center;
+                                            min-height: 56px;
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                        "
+                                        @mouseenter="($event) => $event.target.style.background = '#f8f9fa'"
+                                        @mouseleave="($event) => $event.target.style.background = '#fff'"
+                                    >
+                                        <div
+                                            style="
+                                                font-size: 17px;
+                                                font-weight: bold;
+                                                color: #222;
+                                                margin-right: 16px;
+                                                min-width: 60px;
+                                            "
+                                        >
+                                            {{ item.id }}
+                                        </div>
+                                        <div style="font-size: 16px; color: #333; flex: 1">
+                                            {{ item.name }}
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                             <div v-else style="color: #999; text-align: center; margin-top: 16px">
                                 查無資料
