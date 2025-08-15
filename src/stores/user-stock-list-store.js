@@ -183,10 +183,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         const promises = targetStocks.map(async (stock, i) => {
             try {
                 // 1. 抓取價格資料
-                const updatedData = await fetchUserStockPriceByBaseInfo(
-                    stock.id || stock.code,
-                    stock
-                );
+                const updatedData = await fetchUserStockPriceByBaseInfo(stock.id, stock);
 
                 if (updatedData) {
                     const targetIndex = targetIndices[i];
@@ -208,24 +205,24 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                         }
                     );
 
-                    // 4. 合併計算結果
-                    if (workerResult) {
-                        userStockList.value[targetIndex] = {
-                            ...userStockList.value[targetIndex],
-                            policyKD: workerResult.indicators?.kd,
-                            rsi: workerResult.indicators?.rsi,
-                            ma: workerResult.indicators?.ma,
-                            trade: workerResult.trade,
-                            signals: workerResult.signals,
-                            calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                        };
-                    }
+                    // // 4. 合併計算結果
+                    // if (workerResult) {
+                    //     userStockList.value[targetIndex] = {
+                    //         ...userStockList.value[targetIndex],
+                    //         policyKD: workerResult.indicators?.kd,
+                    //         rsi: workerResult.indicators?.rsi,
+                    //         ma: workerResult.indicators?.ma,
+                    //         trade: workerResult.trade,
+                    //         signals: workerResult.signals,
+                    //         calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                    //     };
+                    // }
 
                     // 5. 單筆更新時直接儲存 IndexedDB
-                    if (updateIndexedDB) {
-                        const dataToSave = JSON.parse(JSON.stringify(updatedData));
-                        putUserStockInfo(dataToSave).catch(error => {
-                            console.error(`儲存股票 ${updatedData.id} 到 IndexedDB 失敗:`, error);
+                    if (typeof stockIds === 'string' && updateIndexedDB) {
+                        const d = JSON.parse(JSON.stringify(userStockList.value[targetIndex]));
+                        putUserStockInfo(d).catch(error => {
+                            console.error(`儲存股票 ${stock.id} 到 IndexedDB 失敗:`, error);
                         });
                     }
                 }
@@ -354,14 +351,15 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             await clearUserStockInfo();
             for (const stock of userStockList.value) {
                 // 只存純資料欄位
-                const info = {
-                    id: stock.id,
-                    name: stock.name,
-                    industryCategory: Array.from(stock.industryCategory || []),
-                    type: stock.type,
-                    addedAt: stock.addedAt,
-                };
-                await putUserStockInfo(info);
+                const d = JSON.parse(JSON.stringify(stock));
+                // const info = {
+                //     id: stock.id,
+                //     name: stock.name,
+                //     industryCategory: Array.from(stock.industryCategory || []),
+                //     type: stock.type,
+                //     addedAt: stock.addedAt,
+                // };
+                await putUserStockInfo(d);
             }
         } catch (error) {
             console.error('儲存股票排序失敗:', error);
