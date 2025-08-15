@@ -24,9 +24,9 @@ const tradePool = workerPoolManager.getPool(
     'trade',
     new URL('@/workers/calc-trade-worker.js', import.meta.url)
 );
-const signalPool = workerPoolManager.getPool(
-    'signal',
-    new URL('@/workers/worker3.js', import.meta.url)
+const trendPool = workerPoolManager.getPool(
+    'trend',
+    new URL('@/workers/calc-trend-chart-worker.js', import.meta.url)
 );
 
 // 開啟 Worker Pool 狀態監控（開發時使用）
@@ -115,7 +115,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             });
 
             // Step 3: 使用前兩步的結果計算訊號位置
-            const signalResult = await signalPool.execute('processSignal', {
+            const signalResult = await trendPool.execute('processSignal', {
                 policyResult,
                 tradeResult,
             });
