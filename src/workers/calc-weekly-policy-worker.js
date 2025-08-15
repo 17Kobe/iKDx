@@ -75,7 +75,7 @@ function calcMA(weeklyData) {
  * @param {Array} dailyData - 日線資料
  * @returns {Object} 包含週線資料和技術指標的物件
  */
-async function processWeeklyCalculation(dailyData) {
+async function processPolicy(dailyData) {
     try {
         // 計算週線
         const weeklyData = calculateWeeklyFromDaily(dailyData);
@@ -95,4 +95,4 @@ async function processWeeklyCalculation(dailyData) {
     }
 }
 
-expose({ processWeeklyCalculation });
+expose({ processPolicy });

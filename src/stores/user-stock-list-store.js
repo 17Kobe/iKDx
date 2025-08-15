@@ -20,9 +20,9 @@ const policyPool = workerPoolManager.getPool(
     'policy',
     new URL('@/workers/calc-weekly-policy-worker.js', import.meta.url)
 );
-const profitPool = workerPoolManager.getPool(
-    'profit',
-    new URL('@/workers/worker2.js', import.meta.url)
+const tradePool = workerPoolManager.getPool(
+    'trade',
+    new URL('@/workers/calc-trade-worker.js', import.meta.url)
 );
 const signalPool = workerPoolManager.getPool(
     'signal',
@@ -102,29 +102,31 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             });
 
             // Step 1: 週線與技術指標計算（丟進 pool）
-            const policyResult = await policyPool.execute(
-                'processPolicyCalculation',
-                stock.dailyData || []
-            );
+            const policyResult = await policyPool.execute('processPolicy', stock.dailyData || []);
 
-            onProgress({ symbol: stock.id, step: 2, totalSteps: 3, message: '計算報酬率...' });
+            onProgress({ symbol: stock.id, step: 2, totalSteps: 3, message: '計算政策報酬率...' });
 
             // Step 2: 報酬率計算（丟進 pool）
-            const profitResult = await profitPool.execute('processProfit', policyResult);
+            const tradeResult = await tradePool.execute('processTrade', policyResult);
 
-            onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算訊號位置...' });
+            onProgress({
+                symbol: stock.id,
+                step: 3,
+                totalSteps: 3,
+                message: '計算交易記錄報酬率...',
+            });
 
             // Step 3: 訊號位置計算（丟進 pool）
-            const signalResult = await signalPool.execute('processSignal', profitResult);
+            const signalResult = await signalPool.execute('processSignal', tradeResult);
 
             onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算完成' });
 
             return {
                 stockId: stock.id,
                 signals: signalResult.signal,
-                indicators: policyResult.indicators,
-                policyData: policyResult.policyData,
-                profit: profitResult.profit,
+                // indicators: policyResult.indicators,
+                // policyData: policyResult.policyData,
+                // trade: tradeResult.trade,
             };
         } catch (error) {
             console.error(`股票 ${stock.id} Worker 計算失敗:`, error);
@@ -212,7 +214,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                             policyKD: workerResult.indicators?.kd,
                             rsi: workerResult.indicators?.rsi,
                             ma: workerResult.indicators?.ma,
-                            profit: workerResult.profit,
+                            trade: workerResult.trade,
                             signals: workerResult.signals,
                             calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         };
