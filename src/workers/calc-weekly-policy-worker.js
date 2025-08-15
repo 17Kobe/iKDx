@@ -11,7 +11,7 @@ dayjs.extend(isoWeek);
  * @param {Array} dailyData - 日線資料 [[date, open, high, low, close, volume], ...]
  * @returns {Array} 週線資料 [[date, open, high, low, close, tradingVolume], ...]
  */
-function calculateWeeklyFromDaily(dailyData) {
+function calcWeeklyFromDaily(dailyData) {
     if (!dailyData || dailyData.length === 0) {
         return [];
     }
@@ -78,7 +78,7 @@ function calcMA(weeklyData) {
 async function processPolicy(dailyData) {
     try {
         // 計算週線
-        const weeklyData = calculateWeeklyFromDaily(dailyData);
+        const weeklyData = calcWeeklyFromDaily(dailyData);
 
         // 計算技術指標
         const kd = calcKD(weeklyData);
