@@ -159,7 +159,7 @@
         },
         set(newList) {
             // 支援拖拽排序功能
-            userStockListStore.reorderStocks(newList);
+            userStockListStore.reorderStockList(newList);
         },
     });
 
