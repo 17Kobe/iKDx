@@ -16,9 +16,9 @@ import {
 import { getAllStocksById, putAllStocks } from '@/services/all-stocks-service';
 
 // 初始化 Worker Pools (使用 CPU 核心數控制併發)
-const weeklyPool = workerPoolManager.getPool(
-    'weekly',
-    new URL('@/workers/calc-weekly-worker.js', import.meta.url)
+const policyPool = workerPoolManager.getPool(
+    'policy',
+    new URL('@/workers/calc-weekly-policy-worker.js', import.meta.url)
 );
 const profitPool = workerPoolManager.getPool(
     'profit',
@@ -102,15 +102,15 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             });
 
             // Step 1: 週線與技術指標計算（丟進 pool）
-            const weeklyResult = await weeklyPool.execute(
-                'processWeeklyCalculation',
+            const policyResult = await policyPool.execute(
+                'processPolicyCalculation',
                 stock.dailyData || []
             );
 
             onProgress({ symbol: stock.id, step: 2, totalSteps: 3, message: '計算報酬率...' });
 
             // Step 2: 報酬率計算（丟進 pool）
-            const profitResult = await profitPool.execute('processProfit', weeklyResult);
+            const profitResult = await profitPool.execute('processProfit', policyResult);
 
             onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算訊號位置...' });
 
@@ -122,8 +122,8 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             return {
                 stockId: stock.id,
                 signals: signalResult.signal,
-                indicators: weeklyResult.indicators,
-                weeklyData: weeklyResult.weeklyData,
+                indicators: policyResult.indicators,
+                policyData: policyResult.policyData,
                 profit: profitResult.profit,
             };
         } catch (error) {
@@ -209,7 +209,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                     if (workerResult) {
                         userStockList.value[targetIndex] = {
                             ...userStockList.value[targetIndex],
-                            weeklyKD: workerResult.indicators?.kd,
+                            policyKD: workerResult.indicators?.kd,
                             rsi: workerResult.indicators?.rsi,
                             ma: workerResult.indicators?.ma,
                             profit: workerResult.profit,

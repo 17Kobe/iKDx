@@ -27,9 +27,9 @@ function calculateWeeklyFromDaily(dailyData) {
             const startIndex = i + 1; // 因為是找到前一個才算後面1個
             const endIndex = j; // 因為外層array 是從日期最現在，往以前日期去掃。endIndex應該是最現在日期. i比n大
             const range2dArray = _.slice(dailyData, startIndex, endIndex + 1);
-            const rangeHighArray = _.map(range2dArray, (v) => v[2]);
-            const rangeLowArray = _.map(range2dArray, (v) => v[3]);
-            const rangeTradingVolumeArray = _.map(range2dArray, (v) => (v.length >= 6 ? v[5] : 0));
+            const rangeHighArray = _.map(range2dArray, v => v[2]);
+            const rangeLowArray = _.map(range2dArray, v => v[3]);
+            const rangeTradingVolumeArray = _.map(range2dArray, v => (v.length >= 6 ? v[5] : 0));
 
             const date = dailyData[endIndex][0];
             const open = dailyData[startIndex][1]; // 上一個n的意思， 也許有 bug n+1應該要<這迴圈數量，若只有1個就有問題
@@ -79,12 +79,12 @@ async function processWeeklyCalculation(dailyData) {
     try {
         // 計算週線
         const weeklyData = calculateWeeklyFromDaily(dailyData);
-        
+
         // 計算技術指標
         const kd = calcKD(weeklyData);
         const rsi = calcRSI(weeklyData);
         const ma = calcMA(weeklyData);
-        
+
         return {
             weeklyData,
             indicators: { ...kd, ...rsi, ...ma },
