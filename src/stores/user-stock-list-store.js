@@ -101,23 +101,24 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                 message: '計算週線與技術指標...',
             });
 
-            // Step 1: 週線與技術指標計算（丟進 pool）
-            const policyResult = await policyPool.execute('processPolicy', stock.dailyData || []);
-
-            onProgress({ symbol: stock.id, step: 2, totalSteps: 3, message: '計算政策報酬率...' });
-
-            // Step 2: 報酬率計算（丟進 pool）
-            const tradeResult = await tradePool.execute('processTrade', policyResult);
+            // Step 1 & 2: 週線技術指標和政策報酬率平行計算
+            const [policyResult, tradeResult] = await Promise.all([
+                policyPool.execute('processPolicy', stock.dailyData || []),
+                tradePool.execute('processTrade', stock.dailyData || []),
+            ]);
 
             onProgress({
                 symbol: stock.id,
-                step: 3,
+                step: 2,
                 totalSteps: 3,
-                message: '計算交易記錄報酬率...',
+                message: '平行計算完成，開始計算訊號...',
             });
 
-            // Step 3: 訊號位置計算（丟進 pool）
-            const signalResult = await signalPool.execute('processSignal', tradeResult);
+            // Step 3: 使用前兩步的結果計算訊號位置
+            const signalResult = await signalPool.execute('processSignal', {
+                policyResult,
+                tradeResult,
+            });
 
             onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算完成' });
 
