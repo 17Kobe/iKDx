@@ -26,7 +26,7 @@
 
     // 取得 globalStore
     const globalStore = useGlobalStore();
-    const percent = computed(() => globalStore.cnnIndex);
+    const percent = computed(() => Math.round(globalStore.cnnIndex));
     const label = computed(() => globalStore.cnnLabel || 'N/A');
     let toastInstance = null;
     const toastVisible = ref(false);
@@ -43,7 +43,9 @@
         showToast({
             type: 'html',
             message:
-                '<div style="text-align:center;">CNN 恐慌與貪婪指數說明<br>更新時間：' +
+                '<div style="text-align:center;">CNN 恐慌與貪婪指數：' +
+                globalStore.cnnIndex +
+                '<br>更新時間：' +
                 globalStore.cnnUpdateTimeLabel +
                 '</div>' +
                 '<span class="cnn-toast-left">--------------------------------------<br>' +

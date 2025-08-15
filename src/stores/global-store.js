@@ -10,11 +10,12 @@ export const useGlobalStore = defineStore('global', {
         cnnIndex: 0,
         cnnLabel: '',
         cnnUpdateTimeLabel: '',
-        raw: null,
+        // raw: null,
     }),
     actions: {
         setGlobal(data) {
-            this.cnnIndex = Math.round(Number(data.cnnIndex) || 0);
+            this.cnnIndex = Number(data.cnnIndex) || 0;
+
             let fearLevel = '';
             if (this.cnnIndex <= 24) {
                 fearLevel = '極恐慌';
@@ -27,7 +28,7 @@ export const useGlobalStore = defineStore('global', {
             } else {
                 fearLevel = '極貪婪';
             }
-            this.cnnLabel = `${this.cnnIndex}% ${fearLevel}`;
+            this.cnnLabel = `${Math.round(this.cnnIndex)}% ${fearLevel}`;
             // 轉換 cnnUpdateTimeLabel
             if (data.cnnUpdateTime) {
                 const d = dayjs(data.cnnUpdateTime.replace(/\//g, '-'));
@@ -37,13 +38,13 @@ export const useGlobalStore = defineStore('global', {
             } else {
                 this.cnnUpdateTimeLabel = '';
             }
-            this.raw = data;
+            // this.raw = data;
         },
         reset() {
             this.cnnIndex = 0;
             this.cnnLabel = '';
             this.cnnUpdateTimeLabel = '';
-            this.raw = null;
+            // this.raw = null;
         },
     },
 });

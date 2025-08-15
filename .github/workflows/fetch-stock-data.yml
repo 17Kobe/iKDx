@@ -22,12 +22,16 @@ jobs:
             - name: Fetch Stock Data
               run: node crawler/fetch-stocks-data.js
 
+            - name: Fetch CNN Index
+              run: node crawler/fetch-global-data.js
+
             - name: Commit & Push Stock Data
               run: |
                   git config --global user.name 'github-actions'
                   git config --global user.email 'github-actions@github.com'
                   git add public/stocks/stock_list.json
                   git add public/stocks/*/*.json
+                  git add public/data/global.json
                   git commit -m 'Update stock data - $(date +"%Y-%m-%d %H:%M")' || echo "No changes to commit"
                   git push
 
