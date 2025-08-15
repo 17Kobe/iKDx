@@ -88,54 +88,6 @@ export const useUserStockListStore = defineStore('userStockList', () => {
     }
 
     /**
-     * 處理單支股票的 Worker 計算（使用 Worker Pool）
-     * @param {Object} stock - 股票資料
-     * @param {Function} onProgress - 進度回調
-     */
-    async function processSingleStock(stock, onProgress = () => {}) {
-        try {
-            onProgress({
-                symbol: stock.id,
-                step: 1,
-                totalSteps: 3,
-                message: '計算週線與技術指標...',
-            });
-
-            // Step 1 & 2: 週線技術指標和政策報酬率平行計算
-            const [policyResult, tradeResult] = await Promise.all([
-                policyPool.execute('processPolicy', stock.dailyData || []),
-                tradePool.execute('processTrade', stock.dailyData || []),
-            ]);
-
-            onProgress({
-                symbol: stock.id,
-                step: 2,
-                totalSteps: 3,
-                message: '平行計算完成，開始計算訊號...',
-            });
-
-            // Step 3: 使用前兩步的結果計算訊號位置
-            const signalResult = await trendPool.execute('processSignal', {
-                policyResult,
-                tradeResult,
-            });
-
-            onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算完成' });
-
-            return {
-                stockId: stock.id,
-                signals: signalResult.signal,
-                // indicators: policyResult.indicators,
-                // policyData: policyResult.policyData,
-                // trade: tradeResult.trade,
-            };
-        } catch (error) {
-            console.error(`股票 ${stock.id} Worker 計算失敗:`, error);
-            return null;
-        }
-    }
-
-    /**
      * 更新股票價格資料（使用 Worker Pool 自動管理併發）
      * @param {string|string[]|null} stockIds - 股票代碼，null 表示全部
      * @param {Object} options - 設定
@@ -183,7 +135,10 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         const promises = targetStocks.map(async (stock, i) => {
             try {
                 // 1. 抓取價格資料
-                const updatedData = await fetchUserStockPriceByBaseInfo(stock.id, stock);
+                const updatedData = await fetchUserStockPriceByBaseInfo(
+                    stock.id,
+                    stock.lastPriceDate
+                );
 
                 if (updatedData) {
                     const targetIndex = targetIndices[i];
@@ -194,7 +149,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                         ...originalStock,
                         fetchedAt: updatedData.fetchedAt,
                         lastPrice: updatedData.lastPrice,
-                        lastDate: updatedData.lastDate,
+                        lastPriceDate: updatedData.lastPriceDate,
                     };
 
                     // 3. 使用 Worker Pool 進行計算（自動排隊）
@@ -240,6 +195,54 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         }
 
         console.log(`${targetStocks.length} 支股票更新完成`);
+    }
+
+    /**
+     * 處理單支股票的 Worker 計算（使用 Worker Pool）
+     * @param {Object} stock - 股票資料
+     * @param {Function} onProgress - 進度回調
+     */
+    async function processSingleStock(stock, onProgress = () => {}) {
+        try {
+            onProgress({
+                symbol: stock.id,
+                step: 1,
+                totalSteps: 3,
+                message: '計算週線與技術指標...',
+            });
+
+            // Step 1 & 2: 週線技術指標和政策報酬率平行計算
+            const [policyResult, tradeResult] = await Promise.all([
+                policyPool.execute('processPolicy', stock.dailyData || []),
+                tradePool.execute('processTrade', stock.dailyData || []),
+            ]);
+
+            onProgress({
+                symbol: stock.id,
+                step: 2,
+                totalSteps: 3,
+                message: '平行計算完成，開始計算訊號...',
+            });
+
+            // Step 3: 使用前兩步的結果計算訊號位置
+            const signalResult = await trendPool.execute('processSignal', {
+                policyResult,
+                tradeResult,
+            });
+
+            onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算完成' });
+
+            return {
+                stockId: stock.id,
+                signals: signalResult.signal,
+                // indicators: policyResult.indicators,
+                // policyData: policyResult.policyData,
+                // trade: tradeResult.trade,
+            };
+        } catch (error) {
+            console.error(`股票 ${stock.id} Worker 計算失敗:`, error);
+            return null;
+        }
     }
 
     /**

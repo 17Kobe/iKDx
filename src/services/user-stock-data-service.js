@@ -59,36 +59,34 @@ async function getUserStockDataById(stockCode) {
  * @param {Object} baseStockInfo - 基本股票資訊 { id, name, code }
  * @returns {Promise<Object|null>} 處理後的股票資料
  */
-export async function fetchUserStockPriceByBaseInfo(stockId, baseStockInfo) {
-    const latestPriceDate = _.get(baseStockInfo, 'latestPriceDate', null);
+export async function fetchUserStockPriceByBaseInfo(stockId, prevLastPriceDate) {
     try {
         console.log(`開始抓取股票 ${stockId} 的資料...`);
         const response = await axios.get(`stocks/${stockId}/all.json`);
 
         if (response.data) {
-            // 過濾日期大於 latestPriceDate 的資料
+            // 過濾日期大於 prevLastPriceDate 的資料
             let filteredData = response.data;
-            if (latestPriceDate) {
+            if (prevLastPriceDate) {
                 filteredData = response.data.filter(item => {
                     // 假設 item.date 為日期欄位，格式為 'YYYYMMDD'
-                    return dayjs(item.date, 'YYYYMMDD').isAfter(dayjs(latestPriceDate));
+                    return dayjs(item.date, 'YYYYMMDD').isAfter(dayjs(prevLastPriceDate));
                 });
             }
             // 取得最後一筆資料的日期與價格
             let fetchedAt = null;
-            let lastDate = null;
+            let lastPriceDate = null;
             let lastPrice = null;
             if (filteredData && filteredData.length > 0) {
                 const last = filteredData[filteredData.length - 1];
                 fetchedAt = dayjs().format('YYYY-MM-DD HH:mm:ss');
-                lastDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
+                lastPriceDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
                 lastPrice = last[4];
             }
             const updatedStock = {
-                ...baseStockInfo,
                 fetchedAt,
                 lastPrice,
-                lastDate,
+                lastPriceDate,
                 // 可以添加更多技術指標
                 // weeklyKD: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
                 // rsi: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
