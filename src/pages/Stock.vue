@@ -63,9 +63,7 @@
                                             <KChart
                                                 :width="120"
                                                 :height="60"
-                                                :stock-data="stock"
-                                                :stock-index="index"
-                                                :ref="'canvas-' + stock.id"
+                                                :stock-id="stock.id"
                                             />
                                         </div>
                                     </SwipeItem>

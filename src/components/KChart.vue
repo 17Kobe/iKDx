@@ -1,17 +1,24 @@
 <template>
-    <div ref="chartContainer" class="mini-k-chart" :style="{ width: '100%', height: '100%' }">
+    <div ref="chartContainer" class="kdj-chart" :style="{ width: '100%', height: '100%' }">
         <canvas ref="chartCanvas" :style="{ width: '100%', height: '100%' }"></canvas>
     </div>
 </template>
 
 <script setup>
-    import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+    import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue';
     import { Chart, registerables } from 'chart.js';
-    import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
-    Chart.register(...registerables, CandlestickController, CandlestickElement);
+    import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
+    import { useUserStockListStore } from '@/stores/user-stock-list-store';
+    import dayjs from 'dayjs';
+
+    Chart.register(...registerables);
 
     // Props 定義
     const props = defineProps({
+        stockId: {
+            type: String,
+            required: true,
+        },
         width: {
             type: Number,
             default: 200,
@@ -20,59 +27,42 @@
             type: Number,
             default: 100,
         },
-        stockData: {
-            type: Object,
-            required: true,
-        },
-        stockIndex: {
-            type: Number,
-            default: 0,
-        },
     });
 
-    onMounted(() => {
-        nextTick(() => {
-            // resizeCanvas();
-            // ...繪圖邏輯
-        });
-        // window.addEventListener('resize', resizeCanvas);
-    });
-
-    // function resizeCanvas() {
-    //     const canvas = chartCanvas.value;
-    //     if (!canvas) return;
-    //     const dpr = window.devicePixelRatio || 1;
-    //     // 取得父容器實際顯示尺寸
-    //     const rect = canvas.parentElement.getBoundingClientRect();
-    //     canvas.width = rect.width * dpr;
-    //     canvas.height = rect.height * dpr;
-    //     canvas.style.width = rect.width + 'px';
-    //     canvas.style.height = rect.height + 'px';
-    //     const ctx = canvas.getContext('2d');
-    //     ctx.setTransform(1, 0, 0, 1, 0, 0); // 重設
-    //     ctx.scale(dpr, dpr);
-    // }
+    // Store
+    const userStockListStore = useUserStockListStore();
 
     // 響應式變數
     const chartContainer = ref(null);
     const chartCanvas = ref(null);
     const chartInstance = ref(null);
 
-    // 使用 Intersection Observer 監控元素是否進入視窗
+    // 計算 KDJ 資料
+    const kdjData = computed(() => {
+        const stock = userStockListStore.userStockList.find(s => s.id === props.stockId);
+        if (!stock?.data?.weeklyKdj) return [];
 
-    // 創建 K 線圖表
+        return stock.data.weeklyKdj.map(item => ({
+            x: dayjs(item[0], 'YYYYMMDD').toDate(), // 使用 Date 物件for時間軸
+            k: item[1],
+            d: item[2],
+            j: item[3],
+        }));
+    });
+
+    onMounted(() => {
+        nextTick(() => {
+            createChart();
+        });
+    });
+
+    // 創建 KDJ 線圖表
     function createChart() {
-        if (!chartCanvas.value) return;
-        
-        // 檢查 canvas 是否還在 DOM 中
-        if (!chartCanvas.value.parentElement) {
-            console.warn('Chart canvas 已從 DOM 中移除');
-            return;
-        }
-        
+        if (!chartCanvas.value || kdjData.value.length === 0) return;
+
         const ctx = chartCanvas.value.getContext('2d');
         if (!ctx) return;
-        
+
         // 清理現有圖表實例
         if (chartInstance.value) {
             try {
@@ -82,69 +72,88 @@
             }
             chartInstance.value = null;
         }
-        
+
         try {
-            const candleData = generateKLineData();
+            const kValues = kdjData.value.map(item => ({ x: item.x, y: item.k }));
+            const dValues = kdjData.value.map(item => ({ x: item.x, y: item.d }));
+
             chartInstance.value = new Chart(ctx, {
-                type: 'candlestick',
+                type: 'line',
                 data: {
                     datasets: [
                         {
-                            label: 'K 線圖',
-                            data: candleData,
-                            color: {
-                                up: '#ef5350',
-                                down: '#26a69a',
-                                unchanged: '#999',
-                            },
-                            borderColor: '#888',
-                            borderWidth: 1,
+                            label: 'K',
+                            data: kValues,
+                            borderColor: '#2196F3', // 更鮮明的藍色
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 0, // 移除圓點
+                            pointHoverRadius: 0, // 移除 hover 圓點
+                        },
+                        {
+                            label: 'D',
+                            data: dValues,
+                            borderColor: '#F44336', // 更鮮明的紅色
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 0, // 移除圓點
+                            pointHoverRadius: 0, // 移除 hover 圓點
                         },
                     ],
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: false, // 移除圖例
+                        },
                     },
                     scales: {
-                        x: { type: 'linear', display: false },
-                        y: { display: false },
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'week',
+                                displayFormats: {
+                                    week: 'MM/DD'
+                                }
+                            },
+                            display: true,
+                            grid: { 
+                                display: false, // 移除 X 軸網格線
+                            },
+                            ticks: {
+                                display: true, // 顯示 X 軸刻度標籤
+                                maxTicksLimit: 6,
+                                font: { size: 9 },
+                                color: '#666',
+                            },
+                        },
+                        y: {
+                            display: true,
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0,0,0,0.1)',
+                            },
+                            ticks: {
+                                font: { size: 9 },
+                                stepSize: 20,
+                            },
+                        },
                     },
                 },
             });
         } catch (error) {
-            console.error('創建 Chart.js 圖表失敗:', error);
+            console.error('創建 KDJ 圖表失敗:', error);
             showErrorPlaceholder();
         }
     }
-
-    // 生成 K 線資料
-    function generateKLineData() {
-        const candleCount = 6;
-        const data = [];
-        const basePrice = 30 + props.stockIndex * 2;
-        const volatility = 8 + (props.stockIndex % 3) * 2;
-        let currentPrice = basePrice;
-        for (let i = 0; i < candleCount; i++) {
-            const open = currentPrice;
-            const priceChange = (Math.random() - 0.5) * volatility;
-            const close = open + priceChange;
-            const high = Math.max(open, close) + Math.random() * (volatility * 0.3);
-            const low = Math.min(open, close) - Math.random() * (volatility * 0.3);
-            data.push({
-                x: i,
-                o: open,
-                h: high,
-                l: low,
-                c: close,
-            });
-            currentPrice = close;
-        }
-        return data;
-    }
-
-    // 使用 Canvas 繪製 K 線圖
 
     // 顯示錯誤佔位符
     function showErrorPlaceholder() {
@@ -160,15 +169,15 @@
                     font-size: 12px;
                     border-radius: 6px;
                 ">
-                    圖表暫不可用
+                    KDJ 圖表暫不可用
                 </div>
             `;
         }
     }
 
-    // 監聽股票資料變化，重新渲染圖表
+    // 監聽 KDJ 資料變化，重新渲染圖表
     watch(
-        () => props.stockData,
+        kdjData,
         () => {
             nextTick(() => {
                 createChart();
@@ -191,27 +200,12 @@
 </script>
 
 <style scoped>
-    .mini-k-chart {
-        /* background: #fff; */
+    .kdj-chart {
+        background: #fff;
         border-radius: 6px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         overflow: hidden;
         position: relative;
-    }
-
-    .chart-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        border-radius: 6px;
-    }
-
-    .placeholder-content {
-        color: #999;
-        font-size: 12px;
-        text-align: center;
+        padding: 8px;
     }
 </style>
