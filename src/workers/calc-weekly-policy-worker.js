@@ -2,6 +2,7 @@ import { expose } from 'comlink';
 import _ from 'lodash';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import { initDB, putToStore, getDB } from '@/lib/idb';
 
 // 擴展 dayjs 支援 ISO 週
 dayjs.extend(isoWeek);
@@ -71,26 +72,62 @@ function calcMA(weeklyData) {
 }
 
 /**
- * 主要處理函式：從 daily 資料計算週線並計算技術指標
- * @param {Array} dailyData - 日線資料
+ * 主要處理函式：從 IndexedDB 讀取日線資料，合併新資料，計算週線並儲存
+ * @param {string} stockId - 股票代碼
+ * @param {Array} newDailyData - 新增的日線資料
  * @returns {Object} 包含週線資料和技術指標的物件
  */
-async function processPolicy(dailyData) {
+async function processPolicy(stockId, newDailyData) {
     try {
+        // 初始化 IndexedDB
+        await initDB();
+        const db = await getDB();
+
+        // 從 IndexedDB 讀取現有的股票資料
+        let existingData = await db.get('user-stock-data', stockId);
+        let allDailyData = [];
+
+        if (existingData && existingData.daily) {
+            allDailyData = [...existingData.daily];
+        }
+
+        // 合併新的日線資料
+        if (newDailyData && newDailyData.length > 0) {
+            allDailyData = [...allDailyData, ...newDailyData];
+        }
+
         // 計算週線
-        const weeklyData = calcWeeklyFromDaily(dailyData);
+        const weeklyData = calcWeeklyFromDaily(allDailyData);
 
         // 計算技術指標
         const kd = calcKD(weeklyData);
         const rsi = calcRSI(weeklyData);
         const ma = calcMA(weeklyData);
 
+        // 更新資料到 IndexedDB
+        const dataToSave = {
+            id: stockId,
+            daily: allDailyData,
+            weekly: weeklyData,
+            lastUpdated: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        };
+
+        // 如果原本有其他資料，保留它們
+        if (existingData) {
+            Object.assign(dataToSave, existingData, dataToSave);
+        }
+
+        await putToStore('user-stock-data', dataToSave);
+        console.log(`股票 ${stockId} 週線計算完成並已儲存到 IndexedDB`);
+
         return {
+            stockId,
             weeklyData,
             indicators: { ...kd, ...rsi, ...ma },
         };
     } catch (error) {
-        console.error('週線計算失敗:', error);
+        console.error(`股票 ${stockId} 週線計算失敗:`, error);
         throw error;
     }
 }

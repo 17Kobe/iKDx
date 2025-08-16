@@ -132,6 +132,12 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         const promises = targetStocks.map(async (stock, i) => {
             try {
                 // 1. 抓取價格資料
+                // newPriceData = {
+                //     fetchedAt,
+                //     lastPrice,
+                //     lastPriceDate,
+                //     newDailyData: filteredData,
+                // };
                 const newPriceData = await fetchStockPriceByLastDate(stock.id, stock.lastPriceDate);
 
                 if (newPriceData) {
@@ -139,6 +145,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
                     // 2. 使用 Worker Pool 進行計算（自動排隊）
                     const workerResult = await processStockWorker(
+                        stock.id,
                         newPriceData,
                         ({ symbol, step, totalSteps, message }) => {
                             console.log(`股票 ${symbol}: ${message} (${step}/${totalSteps})`);
@@ -193,13 +200,14 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
     /**
      * 處理單支股票的 Worker 計算（使用 Worker Pool）
-     * @param {Object} stock - 股票資料
+     * @param {string} stockId - 股票代碼
+     * @param {Object} newPriceData - 股票新價格資料
      * @param {Function} onProgress - 進度回調
      */
-    async function processStockWorker(newPriceData, onProgress = () => {}) {
+    async function processStockWorker(stockId, newPriceData, onProgress = () => {}) {
         try {
             onProgress({
-                symbol: newPriceData.id,
+                symbol: stockId,
                 step: 1,
                 totalSteps: 3,
                 message: '計算週線與技術指標...',
@@ -207,12 +215,12 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
             // Step 1 & 2: 週線技術指標和政策報酬率平行計算
             const [policyResult, tradeResult] = await Promise.all([
-                policyPool.execute('processPolicy', newPriceData.newDailyData || []),
+                policyPool.execute('processPolicy', stockId, newPriceData.newDailyData || []),
                 tradePool.execute('processTrade', newPriceData.newDailyData || []),
             ]);
 
             onProgress({
-                symbol: newPriceData.id,
+                symbol: stockId,
                 step: 2,
                 totalSteps: 3,
                 message: '平行計算完成，開始計算訊號...',
@@ -224,17 +232,17 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                 tradeResult,
             });
 
-            onProgress({ symbol: newPriceData.id, step: 3, totalSteps: 3, message: '計算完成' });
+            onProgress({ symbol: stockId, step: 3, totalSteps: 3, message: '計算完成' });
 
             return {
-                stockId: newPriceData.id,
+                stockId,
                 signals: signalResult.signal,
                 // indicators: policyResult.indicators,
                 // policyData: policyResult.policyData,
                 // trade: tradeResult.trade,
             };
         } catch (error) {
-            console.error(`股票 ${newPriceData.id} Worker 計算失敗:`, error);
+            console.error(`股票 ${stockId} Worker 計算失敗:`, error);
             return null;
         }
     }

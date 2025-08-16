@@ -87,7 +87,6 @@ export async function fetchStockPriceByLastDate(stockId, prevLastPriceDate) {
             lastPriceDate = dayjs(last.date, 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
             lastPrice = last.close ?? last.price ?? last[4];
             const updatedStock = {
-                id: stockId, // 因為要先送到 worker 去算才會儲存到 pinia
                 fetchedAt,
                 lastPrice,
                 lastPriceDate,
