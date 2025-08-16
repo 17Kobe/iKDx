@@ -3,10 +3,7 @@ import { ref } from 'vue';
 import _ from 'lodash';
 import dayjs from 'dayjs';
 import { workerPoolManager } from '@/workers/worker-pool';
-import {
-    fetchUserStockPriceByBaseInfo,
-    getUserStockData,
-} from '@/services/user-stock-data-service';
+import { fetchStockPriceByLastDate, getUserStockData } from '@/services/user-stock-data-service';
 import {
     getUserStockInfo,
     clearUserStockInfo,
@@ -135,32 +132,20 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         const promises = targetStocks.map(async (stock, i) => {
             try {
                 // 1. 抓取價格資料
-                const updatedData = await fetchUserStockPriceByBaseInfo(
-                    stock.id,
-                    stock.lastPriceDate
-                );
+                const newPriceData = await fetchStockPriceByLastDate(stock.id, stock.lastPriceDate);
 
-                if (updatedData) {
+                if (newPriceData) {
                     const targetIndex = targetIndices[i];
 
-                    // 2. 立即更新價格資料到 Pinia
-                    const originalStock = userStockList.value[targetIndex];
-                    userStockList.value[targetIndex] = {
-                        ...originalStock,
-                        fetchedAt: updatedData.fetchedAt,
-                        lastPrice: updatedData.lastPrice,
-                        lastPriceDate: updatedData.lastPriceDate,
-                    };
-
-                    // 3. 使用 Worker Pool 進行計算（自動排隊）
-                    const workerResult = await processSingleStock(
-                        userStockList.value[targetIndex],
+                    // 2. 使用 Worker Pool 進行計算（自動排隊）
+                    const workerResult = await processStockWorker(
+                        newPriceData,
                         ({ symbol, step, totalSteps, message }) => {
                             console.log(`股票 ${symbol}: ${message} (${step}/${totalSteps})`);
                         }
                     );
 
-                    // // 4. 合併計算結果
+                    // // 3. 合併計算結果
                     // if (workerResult) {
                     //     userStockList.value[targetIndex] = {
                     //         ...userStockList.value[targetIndex],
@@ -173,13 +158,22 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                     //     };
                     // }
 
-                    // 5. 單筆更新時直接儲存 IndexedDB
+                    // 4. 單筆更新時直接儲存 IndexedDB
                     if (typeof stockIds === 'string' && updateIndexedDB) {
                         const d = JSON.parse(JSON.stringify(userStockList.value[targetIndex]));
                         putUserStockInfo(d).catch(error => {
                             console.error(`儲存股票 ${stock.id} 到 IndexedDB 失敗:`, error);
                         });
                     }
+
+                    // 5. 立即更新價格資料到 Pinia
+                    const originalStock = userStockList.value[targetIndex];
+                    userStockList.value[targetIndex] = {
+                        ...originalStock,
+                        fetchedAt: newPriceData.fetchedAt,
+                        lastPrice: newPriceData.lastPrice,
+                        lastPriceDate: newPriceData.lastPriceDate,
+                    };
                 }
             } catch (error) {
                 console.error(`股票 ${stock.id} 更新失敗:`, error);
@@ -202,10 +196,10 @@ export const useUserStockListStore = defineStore('userStockList', () => {
      * @param {Object} stock - 股票資料
      * @param {Function} onProgress - 進度回調
      */
-    async function processSingleStock(stock, onProgress = () => {}) {
+    async function processStockWorker(newPriceData, onProgress = () => {}) {
         try {
             onProgress({
-                symbol: stock.id,
+                symbol: newPriceData.id,
                 step: 1,
                 totalSteps: 3,
                 message: '計算週線與技術指標...',
@@ -213,12 +207,12 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
             // Step 1 & 2: 週線技術指標和政策報酬率平行計算
             const [policyResult, tradeResult] = await Promise.all([
-                policyPool.execute('processPolicy', stock.dailyData || []),
-                tradePool.execute('processTrade', stock.dailyData || []),
+                policyPool.execute('processPolicy', newPriceData.newDailyData || []),
+                tradePool.execute('processTrade', newPriceData.newDailyData || []),
             ]);
 
             onProgress({
-                symbol: stock.id,
+                symbol: newPriceData.id,
                 step: 2,
                 totalSteps: 3,
                 message: '平行計算完成，開始計算訊號...',
@@ -230,17 +224,17 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                 tradeResult,
             });
 
-            onProgress({ symbol: stock.id, step: 3, totalSteps: 3, message: '計算完成' });
+            onProgress({ symbol: newPriceData.id, step: 3, totalSteps: 3, message: '計算完成' });
 
             return {
-                stockId: stock.id,
+                stockId: newPriceData.id,
                 signals: signalResult.signal,
                 // indicators: policyResult.indicators,
                 // policyData: policyResult.policyData,
                 // trade: tradeResult.trade,
             };
         } catch (error) {
-            console.error(`股票 ${stock.id} Worker 計算失敗:`, error);
+            console.error(`股票 ${newPriceData.id} Worker 計算失敗:`, error);
             return null;
         }
     }

@@ -59,7 +59,7 @@ async function getUserStockDataById(stockCode) {
  * @param {Object} baseStockInfo - 基本股票資訊 { id, name, code }
  * @returns {Promise<Object|null>} 處理後的股票資料
  */
-export async function fetchUserStockPriceByBaseInfo(stockId, prevLastPriceDate) {
+export async function fetchStockPriceByLastDate(stockId, prevLastPriceDate) {
     try {
         console.log(`開始抓取股票 ${stockId} 的資料...`);
         const response = await axios.get(`stocks/${stockId}/all.json`);
@@ -73,23 +73,25 @@ export async function fetchUserStockPriceByBaseInfo(stockId, prevLastPriceDate) 
                     return dayjs(item.date, 'YYYYMMDD').isAfter(dayjs(prevLastPriceDate));
                 });
             }
+            // filteredData 長度為 0 則回傳 null
+            if (!filteredData || filteredData.length === 0) {
+                console.warn(`股票 ${stockId} 無新資料`);
+                return null;
+            }
+
             // 取得最後一筆資料的日期與價格
-            let fetchedAt = null;
+            let fetchedAt = dayjs().format('YYYY-MM-DD HH:mm:ss');
             let lastPriceDate = null;
             let lastPrice = null;
-            if (filteredData && filteredData.length > 0) {
-                const last = filteredData[filteredData.length - 1];
-                fetchedAt = dayjs().format('YYYY-MM-DD HH:mm:ss');
-                lastPriceDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
-                lastPrice = last[4];
-            }
+            const last = filteredData[filteredData.length - 1];
+            lastPriceDate = dayjs(last.date, 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
+            lastPrice = last.close ?? last.price ?? last[4];
             const updatedStock = {
+                id: stockId, // 因為要先送到 worker 去算才會儲存到 pinia
                 fetchedAt,
                 lastPrice,
                 lastPriceDate,
-                // 可以添加更多技術指標
-                // weeklyKD: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
-                // rsi: Math.floor(Math.random() * 100), // 暫時用隨機數，待實際資料結構確定
+                newDailyData: filteredData,
             };
             console.log(`成功抓取股票 ${stockId} 資料`, updatedStock);
             return updatedStock;
