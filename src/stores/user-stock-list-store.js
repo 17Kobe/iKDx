@@ -215,7 +215,12 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
             // Step 1 & 2: 週線技術指標和政策報酬率平行計算
             const [policyResult, tradeResult] = await Promise.all([
-                policyPool.execute('processPolicy', stockId, newPriceData.newDailyData || []),
+                policyPool.execute(
+                    'processPolicy',
+                    stockId,
+                    'priceChange',
+                    newPriceData.newDailyData || []
+                ),
                 tradePool.execute('processTrade', newPriceData.newDailyData || []),
             ]);
 

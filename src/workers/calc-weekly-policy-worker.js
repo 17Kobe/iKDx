@@ -77,7 +77,7 @@ function calcMA(weeklyData) {
  * @param {Array} newDailyData - 新增的日線資料
  * @returns {Object} 包含週線資料和技術指標的物件
  */
-async function processPolicy(stockId, newDailyData) {
+async function processPolicy(stockId, type, newDailyData) {
     try {
         // 初始化 IndexedDB
         await initDB();
@@ -123,8 +123,8 @@ async function processPolicy(stockId, newDailyData) {
 
         return {
             stockId,
-            weeklyData,
-            indicators: { ...kd, ...rsi, ...ma },
+            // weeklyData,
+            // indicators: { ...kd, ...rsi, ...ma },
         };
     } catch (error) {
         console.error(`股票 ${stockId} 週線計算失敗:`, error);

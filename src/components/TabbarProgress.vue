@@ -43,9 +43,9 @@
         showToast({
             type: 'html',
             message:
-                '<div style="text-align:center;">CNN 恐慌與貪婪指數：' +
+                '<div style="text-align:center;">CNN 恐慌與貪婪指數：<span style="color: rgb(255, 105, 105);">' +
                 globalStore.cnnIndex +
-                '<br>更新時間：' +
+                '</span><br>更新時間：' +
                 globalStore.cnnUpdateTimeLabel +
                 '</div>' +
                 '<span class="cnn-toast-left">--------------------------------------<br>' +
