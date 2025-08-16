@@ -75,7 +75,7 @@
                                     <div
                                         v-if="userStockListStore.isStockInList(item.id)"
                                         style="
-                                            background: #f8f9fa;
+                                            background: #fff783;
                                             border-radius: 12px;
                                             box-shadow: 0 2px 8px #0001;
                                             padding: 10px;
@@ -119,7 +119,7 @@
                                             已新增
                                         </div>
                                     </div>
-                                    
+
                                     <!-- 未新增的股票 - 整列可點擊 -->
                                     <div
                                         v-else
@@ -136,8 +136,12 @@
                                             cursor: pointer;
                                             transition: all 0.2s ease;
                                         "
-                                        @mouseenter="($event) => $event.target.style.background = '#f8f9fa'"
-                                        @mouseleave="($event) => $event.target.style.background = '#fff'"
+                                        @mouseenter="
+                                            $event => ($event.target.style.background = '#f8f9fa')
+                                        "
+                                        @mouseleave="
+                                            $event => ($event.target.style.background = '#fff')
+                                        "
                                     >
                                         <div
                                             style="

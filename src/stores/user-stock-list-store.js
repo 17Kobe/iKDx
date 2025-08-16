@@ -152,35 +152,40 @@ export const useUserStockListStore = defineStore('userStockList', () => {
                         }
                     );
 
-                    // // 3. 合併計算結果
-                    // if (workerResult) {
-                    //     userStockList.value[targetIndex] = {
-                    //         ...userStockList.value[targetIndex],
-                    //         policyKD: workerResult.indicators?.kd,
-                    //         rsi: workerResult.indicators?.rsi,
-                    //         ma: workerResult.indicators?.ma,
-                    //         trade: workerResult.trade,
-                    //         signals: workerResult.signals,
-                    //         calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                    //     };
-                    // }
+                    // 3. 合併計算結果到暫存變數
+                    let updatedStock = {
+                        ...userStockList.value[targetIndex],
+                        fetchedAt: newPriceData.fetchedAt,
+                        lastPrice: newPriceData.lastPrice,
+                        lastPriceDate: newPriceData.lastPriceDate,
+                    };
+                    if (workerResult) {
+                        updatedStock = {
+                            ...updatedStock,
+                            data: {
+                                weekly: workerResult.policyResult?.weekly || [],
+                                weeklyKdj: workerResult.policyResult?.weeklyKdj || [],
+                                weeklyRsi: workerResult.policyResult?.weeklyRsi || [],
+                            },
+                            // policyKD: workerResult.indicators?.kd,
+                            // rsi: workerResult.indicators?.rsi,
+                            // ma: workerResult.indicators?.ma,
+                            // trade: workerResult.trade,
+                            // signals: workerResult.signals,
+                            // calculatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                        };
+                    }
 
                     // 4. 單筆更新時直接儲存 IndexedDB
                     if (typeof stockIds === 'string' && updateIndexedDB) {
-                        const d = JSON.parse(JSON.stringify(userStockList.value[targetIndex]));
+                        const d = JSON.parse(JSON.stringify(updatedStock));
                         putUserStockInfo(d).catch(error => {
                             console.error(`儲存股票 ${stock.id} 到 IndexedDB 失敗:`, error);
                         });
                     }
 
                     // 5. 立即更新價格資料到 Pinia
-                    const originalStock = userStockList.value[targetIndex];
-                    userStockList.value[targetIndex] = {
-                        ...originalStock,
-                        fetchedAt: newPriceData.fetchedAt,
-                        lastPrice: newPriceData.lastPrice,
-                        lastPriceDate: newPriceData.lastPriceDate,
-                    };
+                    userStockList.value[targetIndex] = updatedStock;
                 }
             } catch (error) {
                 console.error(`股票 ${stock.id} 更新失敗:`, error);
@@ -241,7 +246,8 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
             return {
                 stockId,
-                signals: signalResult.signal,
+                policyResult: policyResult,
+                // signals: signalResult.signal,
                 // indicators: policyResult.indicators,
                 // policyData: policyResult.policyData,
                 // trade: tradeResult.trade,
