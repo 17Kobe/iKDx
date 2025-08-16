@@ -8,20 +8,6 @@ import { initDB, putToStore, getDB } from '@/lib/idb';
 dayjs.extend(isoWeek);
 
 /**
- * Worker 健康檢查方法
- */
-function ping() {
-    return {
-        status: 'ok',
-        timestamp: Date.now(),
-        workerType: 'calc-weekly-policy-worker',
-        platform: {
-            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-        }
-    };
-}
-
-/**
  * 從 daily 資料計算週線 OHLC
  * @param {Array} dailyData - 日線資料 [[date, open, high, low, close, volume], ...]
  * @returns {Array} 週線資料 [[date, open, high, low, close, tradingVolume], ...]
@@ -244,4 +230,4 @@ async function processPolicy(stockId, type, newDailyData) {
     }
 }
 
-expose({ processPolicy, ping });
+expose({ processPolicy });
