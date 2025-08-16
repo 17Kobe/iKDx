@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import _ from 'lodash';
 import dayjs from 'dayjs';
+// 使用原生 Worker Pool 管理器
 import { workerPoolManager } from '@/workers/worker-pool';
 import { fetchStockPriceByLastDate, getUserStockData } from '@/services/user-stock-data-service';
 import {
@@ -12,24 +13,31 @@ import {
 } from '@/services/user-stock-info-service';
 import { getAllStocksById, putAllStocks } from '@/services/all-stocks-service';
 
-// 初始化 Worker Pools (使用 CPU 核心數控制併發)
-const policyPool = workerPoolManager.getPool(
-    'policy',
-    new URL('@/workers/calc-weekly-policy-worker.js', import.meta.url)
-);
-const tradePool = workerPoolManager.getPool(
-    'trade',
-    new URL('@/workers/calc-trade-worker.js', import.meta.url)
-);
-const trendPool = workerPoolManager.getPool(
-    'trend',
-    new URL('@/workers/calc-trend-chart-worker.js', import.meta.url)
-);
+// Worker 工廠函數 - 使用 JS 引用而非字串路徑
+const createPolicyWorker = () =>
+    new Worker(new URL('../workers/calc-weekly-policy-worker-native.js', import.meta.url), {
+        type: 'module',
+    });
+
+const createTradeWorker = () =>
+    new Worker(new URL('../workers/calc-trade-worker-native.js', import.meta.url), {
+        type: 'module',
+    });
+
+const createTrendWorker = () =>
+    new Worker(new URL('../workers/calc-trend-chart-worker-native.js', import.meta.url), {
+        type: 'module',
+    });
+
+// 初始化原生 Worker Pools
+const policyPool = workerPoolManager.getPool('policy', createPolicyWorker, 4);
+const tradePool = workerPoolManager.getPool('trade', createTradeWorker, 2);
+const trendPool = workerPoolManager.getPool('trend', createTrendWorker, 2);
 
 // 開啟 Worker Pool 狀態監控（開發時使用）
 if (import.meta.env.DEV) {
     workerPoolManager.onAllStatusChange((poolName, status, allStatus) => {
-        console.log(`[Worker Pool] ${poolName}:`, status);
+        console.log(`[原生Worker Pool] ${poolName}:`, status);
     });
 }
 
@@ -220,14 +228,18 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
             // Step 1 & 2: 週線技術指標和政策報酬率平行計算
             const [policyResult, tradeResult] = await Promise.all([
-                policyPool.execute(
-                    'processPolicy',
+                policyPool.executeTask('processPolicy', {
+                    dailyData: newPriceData.newDailyData || [],
                     stockId,
-                    'priceChange',
-                    newPriceData.newDailyData || []
-                ),
-                tradePool.execute('processTrade', newPriceData.newDailyData || []),
+                    type: 'priceChange',
+                }),
+                tradePool.executeTask('calculateTrade', {
+                    stockData: newPriceData.newDailyData || [],
+                    tradeParams: {},
+                }),
             ]);
+
+            console.log('policyResult', policyResult);
 
             onProgress({
                 symbol: stockId,
@@ -237,9 +249,12 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             });
 
             // Step 3: 使用前兩步的結果計算訊號位置
-            const signalResult = await trendPool.execute('processSignal', {
-                policyResult,
-                tradeResult,
+            const signalResult = await trendPool.executeTask('calculateTrend', {
+                stockData: newPriceData.newDailyData || [],
+                trendParams: {
+                    policyResult,
+                    tradeResult,
+                },
             });
 
             onProgress({ symbol: stockId, step: 3, totalSteps: 3, message: '計算完成' });

@@ -21,6 +21,16 @@ export default defineConfig(async () => ({
             '@': path.resolve(__dirname, 'src'),
         },
     },
+    
+    // 原生 Worker 支援配置 (iOS Chrome 相容性)
+    worker: {
+        format: 'es', // 使用 ES 模組格式
+    },
+    
+    // 優化配置
+    optimizeDeps: {
+        exclude: ['worker'], // 排除 Worker 相關模組
+    },
 
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     //
