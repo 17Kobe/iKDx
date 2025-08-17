@@ -2,8 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import _ from 'lodash';
 import dayjs from 'dayjs';
-// 使用原生 Worker Pool 管理器
-import { workerPoolManager } from '@/workers/worker-pool';
+import { workerPoolManager } from '@/workers/worker-pool'; // 使用原生 Worker Pool 管理器
 import { fetchStockPriceByLastDate, getUserStockData } from '@/services/user-stock-data-service';
 import {
     getUserStockInfo,
@@ -15,17 +14,17 @@ import { getAllStocksById, putAllStocks } from '@/services/all-stocks-service';
 
 // Worker 工廠函數 - 使用 JS 引用而非字串路徑
 const createPolicyWorker = () =>
-    new Worker(new URL('../workers/calc-weekly-policy-worker-native.js', import.meta.url), {
+    new Worker(new URL('../workers/calc-weekly-policy-worker.js', import.meta.url), {
         type: 'module',
     });
 
 const createTradeWorker = () =>
-    new Worker(new URL('../workers/calc-trade-worker-native.js', import.meta.url), {
+    new Worker(new URL('../workers/calc-trade-worker.js', import.meta.url), {
         type: 'module',
     });
 
 const createTrendWorker = () =>
-    new Worker(new URL('../workers/calc-trend-chart-worker-native.js', import.meta.url), {
+    new Worker(new URL('../workers/calc-trend-chart-worker.js', import.meta.url), {
         type: 'module',
     });
 

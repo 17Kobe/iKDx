@@ -27,11 +27,11 @@ export class WorkerPool {
             try {
                 // 使用工廠函數創建 Worker
                 const worker = this.workerFactory();
-                
+
                 // 設定 Worker 訊息處理
-                worker.onmessage = (event) => this.handleWorkerMessage(i, event);
-                worker.onerror = (error) => this.handleWorkerError(i, error);
-                
+                worker.onmessage = event => this.handleWorkerMessage(i, event);
+                worker.onerror = error => this.handleWorkerError(i, error);
+
                 this.workers.push({
                     worker,
                     busy: false,
@@ -39,13 +39,13 @@ export class WorkerPool {
                     lastUsed: Date.now(),
                 });
                 this.availableWorkers.push(i);
-                
+
                 console.log(`✅ Worker ${i} 初始化成功`);
             } catch (error) {
                 console.error(`❌ Worker ${i} 初始化失敗:`, error);
             }
         }
-        
+
         console.log(`🎯 Worker Pool 初始化完成: ${this.workers.length}/${this.maxWorkers}`);
         this.notifyStatusChange();
     }
@@ -55,17 +55,17 @@ export class WorkerPool {
      */
     handleWorkerMessage(workerIndex, event) {
         const { messageId, result, error } = event.data;
-        
+
         if (this.pendingMessages.has(messageId)) {
             const { resolve, reject } = this.pendingMessages.get(messageId);
             this.pendingMessages.delete(messageId);
-            
+
             if (error) {
                 reject(new Error(error));
             } else {
                 resolve(result);
             }
-            
+
             // 釋放 Worker
             this.releaseWorker(workerIndex);
         }
@@ -76,10 +76,10 @@ export class WorkerPool {
      */
     handleWorkerError(workerIndex, error) {
         console.error(`❌ Worker ${workerIndex} 發生錯誤:`, error);
-        
+
         // 釋放 Worker
         this.releaseWorker(workerIndex);
-        
+
         // 重新創建 Worker (iOS 穩定性考量)
         this.recreateWorker(workerIndex);
     }
@@ -91,19 +91,19 @@ export class WorkerPool {
         try {
             const oldWorker = this.workers[workerIndex].worker;
             oldWorker.terminate();
-            
+
             // 創建新的 Worker
             const newWorker = this.workerFactory();
-            newWorker.onmessage = (event) => this.handleWorkerMessage(workerIndex, event);
-            newWorker.onerror = (error) => this.handleWorkerError(workerIndex, error);
-            
+            newWorker.onmessage = event => this.handleWorkerMessage(workerIndex, event);
+            newWorker.onerror = error => this.handleWorkerError(workerIndex, error);
+
             this.workers[workerIndex] = {
                 worker: newWorker,
                 busy: false,
                 index: workerIndex,
                 lastUsed: Date.now(),
             };
-            
+
             console.log(`🔄 Worker ${workerIndex} 重新創建成功`);
         } catch (error) {
             console.error(`❌ Worker ${workerIndex} 重新創建失敗:`, error);
@@ -139,7 +139,7 @@ export class WorkerPool {
     async processTask(task) {
         const workerIndex = this.availableWorkers.shift();
         const workerObj = this.workers[workerIndex];
-        
+
         if (!workerObj || workerObj.busy) {
             // Worker 不可用，重新加入佇列
             this.queue.unshift(task);
@@ -153,7 +153,7 @@ export class WorkerPool {
 
         // 生成唯一訊息 ID
         const messageId = ++this.messageId;
-        
+
         // 設定超時處理
         const timeoutId = setTimeout(() => {
             if (this.pendingMessages.has(messageId)) {
@@ -165,11 +165,11 @@ export class WorkerPool {
 
         // 儲存 Promise resolver
         this.pendingMessages.set(messageId, {
-            resolve: (result) => {
+            resolve: result => {
                 clearTimeout(timeoutId);
                 task.resolve(result);
             },
-            reject: (error) => {
+            reject: error => {
                 clearTimeout(timeoutId);
                 task.reject(error);
             },
@@ -251,13 +251,13 @@ export class WorkerPool {
      */
     async terminate() {
         console.log('🔴 終止 Worker Pool...');
-        
+
         // 清除所有待處理的訊息
         for (const [messageId, { reject }] of this.pendingMessages) {
             reject(new Error('Worker Pool 正在終止'));
         }
         this.pendingMessages.clear();
-        
+
         // 終止所有 Workers
         for (const workerObj of this.workers) {
             try {
@@ -266,14 +266,14 @@ export class WorkerPool {
                 console.error('終止 Worker 時發生錯誤:', error);
             }
         }
-        
+
         // 清空所有狀態
         this.workers = [];
         this.availableWorkers = [];
         this.queue = [];
         this.activeJobs = 0;
         this.statusCallbacks.clear();
-        
+
         console.log('✅ Worker Pool 已終止');
     }
 }
@@ -294,12 +294,12 @@ class WorkerPoolManager {
         if (!this.pools.has(name)) {
             const pool = new WorkerPool(workerFactory, maxWorkers);
             this.pools.set(name, pool);
-            
+
             // 監聽 Pool 狀態變更
-            pool.onStatusChange((status) => {
+            pool.onStatusChange(status => {
                 this.notifyGlobalStatusChange(name, status);
             });
-            
+
             console.log(`📦 創建新的 Worker Pool: ${name}`);
         }
         return this.pools.get(name);
@@ -310,14 +310,14 @@ class WorkerPoolManager {
      */
     onAllStatusChange(callback) {
         this.globalStatusCallbacks.add(callback);
-        
+
         // 立即回傳目前所有 Pool 的狀態
         const allStatus = {};
         for (const [name, pool] of this.pools) {
             allStatus[name] = pool.getStatus();
         }
         callback(null, null, allStatus);
-        
+
         return () => this.globalStatusCallbacks.delete(callback);
     }
 
@@ -348,11 +348,11 @@ class WorkerPoolManager {
             console.log(`🔴 終止 Worker Pool: ${name}`);
             promises.push(pool.terminate());
         }
-        
+
         await Promise.all(promises);
         this.pools.clear();
         this.globalStatusCallbacks.clear();
-        
+
         console.log('✅ 所有 Worker Pools 已終止');
     }
 
