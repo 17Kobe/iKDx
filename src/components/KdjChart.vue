@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue';
+    import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed, shallowRef } from 'vue';
     import { Chart, registerables } from 'chart.js';
     import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
     import { useUserStockListStore } from '@/stores/user-stock-list-store';
@@ -36,25 +36,54 @@
     // 響應式變數
     const chartContainer = ref(null);
     const chartCanvas = ref(null);
-    const chartInstance = ref(null);
+    const chartInstance = shallowRef(null); // 使用 shallowRef 避免深層響應式
 
-    // 計算 KDJ 資料 (回傳陣列: { x:Date, k:number, d:number })
-    const kdjData = computed(() => {
-        const stock = userStockListStore.userStockList.find(s => s.id === props.stockId);
-        if (!stock?.data?.weeklyKdj) return [];
+    // 處理後的 KDJ 資料，避免響應式循環
+    const processedKdjData = ref([]);
 
-        return stock.data.weeklyKdj.map(item => ({
-            x: dayjs(item[0], 'YYYYMMDD').toDate(), // 使用 Date 物件for時間軸
-            k: item[1],
-            d: item[2],
-            j: item[3],
-        }));
-    });
+    // 監聽原始資料變化，手動更新處理後的資料
+    watch(
+        () => {
+            const stock = userStockListStore.userStockList.find(s => s.id === props.stockId);
+            return stock?.data?.weeklyKdj;
+        },
+        newKdjData => {
+            if (!newKdjData) {
+                processedKdjData.value = [];
+                return;
+            }
+
+            processedKdjData.value = newKdjData
+                .filter(item => {
+                    return (
+                        item &&
+                        Array.isArray(item) &&
+                        item.length >= 4 &&
+                        typeof item[1] === 'number' &&
+                        !isNaN(item[1]) &&
+                        typeof item[2] === 'number' &&
+                        !isNaN(item[2]) &&
+                        typeof item[3] === 'number' &&
+                        !isNaN(item[3])
+                    );
+                })
+                .map(item => ({
+                    x: dayjs(item[0], 'YYYYMMDD').toDate(),
+                    k: item[1],
+                    d: item[2],
+                    j: item[3],
+                }));
+        },
+        { immediate: true }
+    );
 
     // 依據目前 KDJ 資料產生 dataset 陣列
     function buildDatasets() {
-        const kValues = kdjData.value.map(item => ({ x: item.x, y: item.k }));
-        const dValues = kdjData.value.map(item => ({ x: item.x, y: item.d }));
+        const data = processedKdjData.value;
+        if (!data || data.length === 0) return [];
+
+        const kValues = data.map(item => ({ x: item.x, y: item.k }));
+        const dValues = data.map(item => ({ x: item.x, y: item.d }));
         return [
             {
                 label: 'K',
@@ -84,18 +113,33 @@
     // 初始化或更新圖表 (避免每次銷毀重建)
     function createOrUpdateChart() {
         if (!chartCanvas.value) return;
-        if (kdjData.value.length === 0) return; // 無資料不建立圖表
+
+        const data = processedKdjData.value;
+        if (!data || data.length === 0) {
+            // 無資料時清理圖表
+            if (chartInstance.value) {
+                chartInstance.value.destroy();
+                chartInstance.value = null;
+            }
+            return;
+        }
 
         const ctx = chartCanvas.value.getContext('2d');
         if (!ctx) return;
 
         // 若已存在，僅更新資料
         if (chartInstance.value) {
-            const updated = buildDatasets();
-            chartInstance.value.data.datasets.forEach((ds, idx) => {
-                ds.data = updated[idx].data;
-            });
-            chartInstance.value.update('none');
+            try {
+                const updated = buildDatasets();
+                if (updated.length > 0) {
+                    chartInstance.value.data.datasets = updated;
+                    chartInstance.value.update('none');
+                }
+            } catch (error) {
+                console.error('更新圖表失敗:', error);
+                chartInstance.value.destroy();
+                chartInstance.value = null;
+            }
             return;
         }
 
@@ -106,9 +150,11 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    backgroundColor: 'transparent',
-                    layout: { padding: { top: 0, right: 0, bottom: 0, left: 0 } },
-                    plugins: { legend: { display: false } },
+                    interaction: { intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                    },
                     scales: {
                         x: {
                             type: 'time',
@@ -128,9 +174,11 @@
                             border: { display: false },
                             grid: {
                                 drawTicks: false,
-                                color: (ctx) => {
+                                color: ctx => {
                                     const v = ctx.tick.value;
-                                    return [0, 20, 50, 80, 100].includes(v) ? 'rgba(200, 200, 200, 0.3)' : 'transparent';
+                                    return [0, 20, 50, 80, 100].includes(v)
+                                        ? 'rgba(200, 200, 200, 0.3)'
+                                        : 'transparent';
                                 },
                             },
                             ticks: {
@@ -139,11 +187,15 @@
                                 color: '#888',
                                 font: { size: 12 },
                                 padding: -15,
-                                callback: (v) => (v === 20 || v === 50 || v === 80 ? v : ''),
+                                callback: v => (v === 20 || v === 50 || v === 80 ? v : ''),
                             },
                         },
                     },
-                    animation: { duration: 0 }, // 關閉動畫提升回應速度
+                    animation: false,
+                    elements: {
+                        point: { radius: 0 },
+                        line: { tension: 0 },
+                    },
                 },
             });
         } catch (error) {
@@ -177,19 +229,23 @@
         }
     }
 
-    // 監聽資料變化，更新圖表
+    // 監聽處理後的資料變化，更新圖表
     watch(
-        kdjData,
+        processedKdjData,
         () => {
             nextTick(() => createOrUpdateChart());
         },
-        { deep: true },
+        { immediate: false }
     );
 
     // 組件卸載前清理
     onBeforeUnmount(() => {
         if (chartInstance.value) {
-            try { chartInstance.value.destroy(); } catch (error) { console.warn('Chart.js 清理失敗:', error); }
+            try {
+                chartInstance.value.destroy();
+            } catch (error) {
+                console.warn('Chart.js 清理失敗:', error);
+            }
             chartInstance.value = null;
         }
     });
