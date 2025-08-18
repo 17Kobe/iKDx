@@ -14,41 +14,6 @@
     // 註冊 Chart.js 預設組件
     Chart.register(...registerables);
 
-    // 直接繪製水平參考線 (不使用外掛)
-    function drawReferenceLines() {
-        if (!chartInstance.value) return;
-        const chart = chartInstance.value;
-        const yScale = chart.scales.y;
-        if (!yScale) return;
-        const { left, right } = chart.chartArea;
-        const ctx = chart.ctx;
-        const levels = [0, 20, 50, 80, 100];
-        ctx.save();
-        ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.fillStyle = '#888';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        levels.forEach(v => {
-            const y = yScale.getPixelForValue(v);
-            if (isNaN(y)) return;
-            ctx.beginPath();
-            ctx.moveTo(left, y);
-            ctx.lineTo(right, y);
-            ctx.stroke();
-            if (v === 20 || v === 50 || v === 80) {
-                ctx.fillText(String(v), right - 3, y);
-            }
-        });
-        ctx.restore();
-    }
-
-    // 在下一個 frame 繪製，確保主圖完成
-    function scheduleDrawLines() {
-        requestAnimationFrame(() => drawReferenceLines());
-    }
-
     // Props 定義
     const props = defineProps({
         stockId: {
@@ -131,7 +96,6 @@
                 ds.data = updated[idx].data;
             });
             chartInstance.value.update('none');
-            scheduleDrawLines();
             return;
         }
 
@@ -157,15 +121,31 @@
                         },
                         y: {
                             type: 'linear',
-                            display: false,
+                            position: 'right',
+                            display: true,
                             min: 0,
                             max: 100,
+                            border: { display: false },
+                            grid: {
+                                drawTicks: false,
+                                color: (ctx) => {
+                                    const v = ctx.tick.value;
+                                    return [0, 20, 50, 80, 100].includes(v) ? 'rgba(200, 200, 200, 0.3)' : 'transparent';
+                                },
+                            },
+                            ticks: {
+                                stepSize: 10,
+                                autoSkip: false,
+                                color: '#888',
+                                font: { size: 12 },
+                                padding: -15,
+                                callback: (v) => (v === 20 || v === 50 || v === 80 ? v : ''),
+                            },
                         },
                     },
                     animation: { duration: 0 }, // 關閉動畫提升回應速度
                 },
             });
-            scheduleDrawLines();
         } catch (error) {
             console.error('創建 / 更新 KDJ 圖表失敗:', error);
             showErrorPlaceholder();
