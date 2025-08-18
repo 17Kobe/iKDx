@@ -274,10 +274,13 @@
                     max: 100,
                     border: { display: false },
                     grid: {
-                        display: true,
                         drawTicks: false,
-                        color: 'rgba(200, 200, 200, 0.2)',
-                        lineWidth: 1,
+                        color: ctx => {
+                            const v = ctx.tick.value;
+                            return [0, 20, 50, 80, 100].includes(v)
+                                ? 'rgba(200, 200, 200, 0.3)'
+                                : 'transparent';
+                        },
                     },
                     ticks: {
                         stepSize: 10,
