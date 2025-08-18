@@ -72,18 +72,29 @@
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
         
-        // 繪製 20, 50, 80 的橫線和數字
-        [20, 50, 80].forEach(value => {
+        // 需要畫線的數值 (showLabel 表示是否顯示文字)
+        const lines = [
+            { value: 0, showLabel: false },
+            { value: 20, showLabel: true },
+            { value: 50, showLabel: true },
+            { value: 80, showLabel: true },
+            { value: 100, showLabel: false },
+        ];
+
+        lines.forEach(({ value, showLabel }) => {
             const yPosition = yScale.getPixelForValue(value);
-            
+            if (isNaN(yPosition)) return;
+
             // 繪製橫線
             ctx.beginPath();
             ctx.moveTo(chartArea.left, yPosition);
             ctx.lineTo(chartArea.right, yPosition);
             ctx.stroke();
-            
-            // 在橫線的右端繪製數字
-            ctx.fillText(value.toString(), chartArea.right - 3, yPosition);
+
+            // 顯示 20/50/80 的文字，0/100 不顯示
+            if (showLabel) {
+                ctx.fillText(String(value), chartArea.right - 3, yPosition);
+            }
         });
     }
 
