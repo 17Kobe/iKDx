@@ -119,7 +119,7 @@
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             fill: false,
-                            tension: 0.1,
+                            tension: 0, // 使用直線避免貝茲曲線使視覺終點往內縮
                             pointRadius: 0, // 移除圓點
                             pointHoverRadius: 0, // 移除 hover 圓點
                         },
@@ -130,7 +130,7 @@
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             fill: false,
-                            tension: 0.1,
+                            tension: 0, // 同上
                             pointRadius: 0, // 移除圓點
                             pointHoverRadius: 0, // 移除 hover 圓點
                         },
@@ -184,19 +184,10 @@
                         },
                         y: {
                             type: 'linear',
-                            position: 'right', // Y 軸顯示在右側
-                            display: true,
+                            // 完全隱藏軸 (ticks / grid / border) 以釋放右側空間，線條可貼齊畫布
+                            display: false,
                             min: 0,
                             max: 100,
-                            border: {
-                                display: false, // 移除 Y 軸的直線
-                            },
-                            grid: {
-                                display: false, // 先隱藏所有網格線
-                            },
-                            ticks: {
-                                display: false, // 隱藏所有 Y 軸刻度文字
-                            },
                         },
                     },
                 },
