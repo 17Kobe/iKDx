@@ -3,7 +3,7 @@
         <div class="tabbar-progress-item" @click="handleProgressClick">
             <van-progress
                 :percentage="percent"
-                color="linear-gradient(90deg, #fff9c4 0%, #ffe066 100%)"
+                color="linear-gradient(90deg, #f3efca 0%, #ffe066 100%)"
                 :show-pivot="false"
                 stroke-width="24"
                 style="width: 100%; height: 32px"
@@ -101,7 +101,7 @@
         border: 1px solid #e0e0e0;
     }
     .tabbar-progress-item :deep(.van-progress__track) {
-        background: linear-gradient(90deg, #fffde7 0%, #fff9c4 60%, #ffe066 100%) !important;
+        background: linear-gradient(90deg, #fffde7 0%, #f3efca 60%, #ffe066 100%) !important;
         border-radius: 16px !important;
         height: 32px !important;
     }

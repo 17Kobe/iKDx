@@ -84,7 +84,7 @@ export async function fetchStockPriceByLastDate(stockId, prevLastPriceDate) {
             let lastPriceDate = null;
             let lastPrice = null;
             const last = filteredData[filteredData.length - 1];
-            lastPriceDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD HH:mm:ss');
+            lastPriceDate = dayjs(last[0], 'YYYYMMDD').format('YYYY-MM-DD');
             lastPrice = last[4];
             const updatedStock = {
                 fetchedAt,

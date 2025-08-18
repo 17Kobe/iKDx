@@ -5,176 +5,239 @@
 
 // 直接使用專案中安裝的 dayjs
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 
-// 內建工具函數，避免外部依賴
+// 使用專案的 IndexedDB 模組
+import { initDB, putToStore, getFromStore } from '@/lib/idb';
+
+// 擴展 dayjs 支援 ISO 週
+dayjs.extend(isoWeek);
+
+/**
+ * 從 daily 資料計算週線 OHLC
+ * @param {Array} dailyData - 日線資料 [[date, open, high, low, close, volume], ...]
+ * @returns {Array} 週線資料 [[date, open, high, low, close, tradingVolume], ...]
+ */
 function calcWeeklyFromDaily(dailyData) {
-    if (!dailyData || dailyData.length === 0) return [];
+    if (!dailyData || dailyData.length === 0) {
+        return [];
+    }
 
-    const weeklyData = [];
-    let currentWeek = null;
+    // 內建 slice, map, min, max, sum 函數，避免外部依賴
+    const slice = (arr, start, end) => arr.slice(start, end);
+    const map = (arr, fn) => arr.map(fn);
+    const min = (arr) => Math.min(...arr);
+    const max = (arr) => Math.max(...arr);
+    const sum = (arr) => arr.reduce((acc, val) => acc + val, 0);
 
-    for (const dayArray of dailyData) {
-        // 處理陣列格式: [日期, 開盤, 最高, 最低, 收盤, 成交量]
-        const dateStr = dayArray[0].toString();
-        const date = dayjs(dateStr, 'YYYYMMDD').toDate();
+    const resData = [];
+    let i = dailyData.length - 1; // 從最後一筆資料開始（最舊的）
+    let j = i;
+    let firstDayOfWeek = dayjs(dailyData[i][0], 'YYYYMMDD').startOf('isoWeek');
 
-        // 檢查日期是否有效
-        if (isNaN(date.getTime())) {
-            console.warn('無效的日期格式:', dateStr);
-            continue;
+    while (i >= 0) {
+        if (dayjs(dailyData[i][0], 'YYYYMMDD').isBefore(firstDayOfWeek) || i === 0) {
+            // startIndex 值要小於等於 endIndex，for 是由大到小, i<j
+            const startIndex = i + 1; // 因為是找到前一個才算後面1個
+            const endIndex = j; // 因為外層array 是從日期最現在，往以前日期去掃。endIndex應該是最現在日期. i比n大
+            const range2dArray = slice(dailyData, startIndex, endIndex + 1);
+            const rangeHighArray = map(range2dArray, v => v[2]);
+            const rangeLowArray = map(range2dArray, v => v[3]);
+            const rangeTradingVolumeArray = map(range2dArray, v => (v.length >= 6 ? v[5] : 0));
+
+            const date = dailyData[endIndex][0];
+            const open = dailyData[startIndex][1]; // 上一個n的意思， 也許有 bug n+1應該要<這迴圈數量，若只有1個就有問題
+            const close = dailyData[endIndex][4]; // 之前的i，還沒i=n是下一個
+            const low = min(rangeLowArray);
+            const high = max(rangeHighArray);
+            const tradingVolume = sum(rangeTradingVolumeArray);
+
+            resData.push([date, open, high, low, close, tradingVolume]);
+            j = startIndex - 1;
+
+            // 要採用下個i值的該週第一天，不能用firstDayOfWeek-7天，因為有可能該週都沒值
+            firstDayOfWeek = dayjs(dailyData[i][0], 'YYYYMMDD').startOf('isoWeek');
         }
+        i -= 1;
+    }
 
-        const day = {
-            date: dayjs(dateStr, 'YYYYMMDD').format('YYYY-MM-DD'),
-            open: parseFloat(dayArray[1]),
-            high: parseFloat(dayArray[2]),
-            low: parseFloat(dayArray[3]),
-            close: parseFloat(dayArray[4]),
-            volume: parseFloat(dayArray[5]) || 0,
-        };
+    return resData.reverse(); // 反轉回正常順序（由舊到新）
+}
 
-        const weekKey = getWeekKey(date);
+/**
+ * 計算週線 KD 指標
+ * @param {Array} weeklyData - 週線資料 [[date, open, high, low, close, volume], ...]
+ * @returns {Object} KD 計算結果 { data: [], predictGoldPrice, predictDeadPrice }
+ */
+function calcWeeklyKdj(weeklyData) {
+    if (!weeklyData || weeklyData.length === 0) {
+        return { data: [], predictGoldPrice: null, predictDeadPrice: null };
+    }
 
-        if (!currentWeek || currentWeek.weekKey !== weekKey) {
-            if (currentWeek) {
-                weeklyData.push(createWeeklyCandle(currentWeek));
-            }
-            currentWeek = {
-                weekKey,
-                open: day.open,
-                high: day.high,
-                low: day.low,
-                close: day.close,
-                volume: day.volume || 0,
-                date: day.date,
-            };
-        } else {
-            currentWeek.high = Math.max(currentWeek.high, day.high);
-            currentWeek.low = Math.min(currentWeek.low, day.low);
-            currentWeek.close = day.close;
-            currentWeek.volume += day.volume || 0;
-            currentWeek.date = day.date;
+    // 內建工具函數
+    const slice = (arr, start, end) => arr.slice(start, end);
+    const map = (arr, fn) => arr.map(fn);
+    const min = (arr) => Math.min(...arr);
+    const max = (arr) => Math.max(...arr);
+
+    let weeklyKdData = [];
+    let rsv = 0;
+    let preK = 0;
+    let preD = 0;
+    let todayK = 0;
+    let todayD = 0;
+    let todayJ = 0;
+    let predictGoldPrice = null;
+    let predictDeadPrice = null;
+
+    for (let k = 0; k <= weeklyData.length - 1; k += 1) {
+        const startIndex = k - 8 < 0 ? 0 : k - 8;
+        const endIndex = k;
+        const range2dArray = slice(weeklyData, startIndex, endIndex + 1);
+        const rangeHighArray = map(range2dArray, v => v[2]); // 高
+        const rangeLowArray = map(range2dArray, v => v[3]); // 低
+        const low = min(rangeLowArray);
+        const high = max(rangeHighArray);
+
+        const close = weeklyData[k][4];
+        rsv = high - low !== 0 ? ((close - low) / (high - low)) * 100 : 100;
+        todayK = (2 / 3) * preK + (1 / 3) * rsv;
+        todayD = (2 / 3) * preD + (1 / 3) * todayK;
+        todayJ = 3 * todayD - 2 * todayK;
+        preK = todayK;
+        preD = todayD;
+        const date = weeklyData[endIndex][0];
+
+        weeklyKdData.push([date, todayK, todayD, todayJ]);
+
+        // ✅ 如果是最後一週，內部計算黃金交叉 & 死亡交叉收盤價
+        const isLast = k === weeklyData.length - 1;
+        if (isLast) {
+            const pastHighs = rangeHighArray.slice(0, -1);
+            const pastLows = rangeLowArray.slice(0, -1);
+            const thisWeekHigh = rangeHighArray[rangeHighArray.length - 1];
+            const thisWeekLow = rangeLowArray[rangeLowArray.length - 1];
+
+            // === 黃金交叉收盤價 ===
+            // predictGoldPrice = calcCrossPrice(preK, preD, pastHighs, pastLows, thisWeekHigh, thisWeekLow, 'gold');
+
+            // === 死亡交叉收盤價 ===
+            // predictDeadPrice = calcCrossPrice(preK, preD, pastHighs, pastLows, thisWeekHigh, thisWeekLow, 'dead');
         }
     }
 
-    if (currentWeek) {
-        weeklyData.push(createWeeklyCandle(currentWeek));
-    }
-
-    return weeklyData;
-}
-
-function getWeekKey(date) {
-    const d = new Date(date);
-    const dayOfWeek = d.getDay();
-    const mondayDate = new Date(d);
-    mondayDate.setDate(d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-    return mondayDate.toISOString().split('T')[0];
-}
-
-function createWeeklyCandle(week) {
     return {
-        date: week.date,
-        open: week.open,
-        high: week.high,
-        low: week.low,
-        close: week.close,
-        volume: week.volume,
+        data: weeklyKdData,
+        predictGoldPrice,
+        predictDeadPrice,
     };
 }
 
-function calcWeeklyKdj(weeklyData, period = 9) {
-    if (!weeklyData || weeklyData.length < period) return [];
+/**
+ * 計算週線 RSI 指標
+ * @param {Array} weeklyData - 週線資料 [[date, open, high, low, close, volume], ...]
+ * @returns {Array} RSI 計算結果 [[date, rsi], ...]
+ */
+function calcWeeklyRsi(weeklyData) {
+    if (!weeklyData || weeklyData.length === 0) {
+        return [];
+    }
 
-    const kdj = [];
+    const period = 5;
+    let weeklyRsiData = [];
+    let gains = [];
+    let losses = [];
+    let avgGain = 0;
+    let avgLoss = 0;
 
-    for (let i = period - 1; i < weeklyData.length; i++) {
-        const periodData = weeklyData.slice(i - period + 1, i + 1);
-        const highest = Math.max(...periodData.map(d => d.high));
-        const lowest = Math.min(...periodData.map(d => d.low));
-        const close = weeklyData[i].close;
-
-        const rsv = lowest === highest ? 50 : ((close - lowest) / (highest - lowest)) * 100;
-
-        let k, d, j;
-        if (i === period - 1) {
-            k = d = rsv;
+    for (let i = 0; i < weeklyData.length; i++) {
+        let closePrice = weeklyData[i][4];
+        if (i === 0) {
+            gains.push(0);
+            losses.push(0);
         } else {
-            const prevKDJ = kdj[kdj.length - 1];
-            k = (2 * prevKDJ.k + rsv) / 3;
-            d = (2 * prevKDJ.d + k) / 3;
+            let diff = closePrice - weeklyData[i - 1][4];
+            gains.push(Math.max(diff, 0));
+            losses.push(Math.max(-diff, 0));
         }
-        j = 3 * k - 2 * d;
 
-        kdj.push({
-            date: weeklyData[i].date,
-            k: Number(k.toFixed(2)),
-            d: Number(d.toFixed(2)),
-            j: Number(j.toFixed(2)),
-        });
+        if (i >= period) {
+            avgGain = (avgGain * (period - 1) + gains[i]) / period;
+            avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+        } else {
+            avgGain = (avgGain * (i + 1) + gains[i]) / (i + 2);
+            avgLoss = (avgLoss * (i + 1) + losses[i]) / (i + 2);
+        }
+
+        if (i >= period - 1) {
+            let rs = avgGain / avgLoss;
+            weeklyRsiData.push([weeklyData[i][0], 100 - 100 / (1 + rs)]);
+        }
     }
 
-    return kdj;
-}
-
-function calcWeeklyRsi(weeklyData, period = 14) {
-    if (!weeklyData || weeklyData.length < period + 1) return [];
-
-    const rsi = [];
-    const gains = [];
-    const losses = [];
-
-    for (let i = 1; i < weeklyData.length; i++) {
-        const change = weeklyData[i].close - weeklyData[i - 1].close;
-        gains.push(change > 0 ? change : 0);
-        losses.push(change < 0 ? Math.abs(change) : 0);
-    }
-
-    for (let i = period - 1; i < gains.length; i++) {
-        const periodGains = gains.slice(i - period + 1, i + 1);
-        const periodLosses = losses.slice(i - period + 1, i + 1);
-
-        const avgGain = periodGains.reduce((sum, gain) => sum + gain, 0) / period;
-        const avgLoss = periodLosses.reduce((sum, loss) => sum + loss, 0) / period;
-
-        const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-        const rsiValue = 100 - 100 / (1 + rs);
-
-        rsi.push({
-            date: weeklyData[i + 1].date,
-            rsi: Number(rsiValue.toFixed(2)),
-        });
-    }
-
-    return rsi;
+    return weeklyRsiData;
 }
 
 // Worker 方法映射
 const workerMethods = {
     processPolicy: async function (params) {
         try {
-            const { dailyData, ...options } = params;
+            const { stockId, type, newDailyData, ...options } = params;
 
-            if (!dailyData || dailyData.length === 0) {
-                throw new Error('日線資料為空');
+            if (!stockId) {
+                throw new Error('stockId 參數必須提供');
             }
 
-            // 轉換為週線
-            const weeklyData = calcWeeklyFromDaily(dailyData);
+            // 從 IndexedDB 讀取現有的股票資料
+            let existingData = await getFromStore('user-stock-data', stockId);
+            let allDailyData = [];
+
+            if (existingData && existingData.daily) {
+                allDailyData = [...existingData.daily];
+            }
+
+            // 合併新的日線資料
+            if (newDailyData && newDailyData.length > 0) {
+                allDailyData = [...allDailyData, ...newDailyData];
+            }
+
+            // 計算週線
+            const weeklyData = calcWeeklyFromDaily(allDailyData);
 
             if (weeklyData.length === 0) {
                 throw new Error('無法產生週線資料，請檢查日線資料格式');
             }
 
-            // 計算技術指標
-            const weeklyKdj = calcWeeklyKdj(weeklyData, options.kdjPeriod || 9);
-            const weeklyRsi = calcWeeklyRsi(weeklyData, options.rsiPeriod || 14);
+            // 計算週線技術指標（並行執行）
+            const [weeklyKdj, weeklyRsi] = await Promise.all([
+                Promise.resolve(calcWeeklyKdj(weeklyData)),
+                Promise.resolve(calcWeeklyRsi(weeklyData)),
+            ]);
+
+            // 更新資料到 IndexedDB
+            const dataToSave = {
+                id: stockId,
+                daily: allDailyData,
+                weekly: weeklyData,
+                weeklyKdj: weeklyKdj.data,
+                weeklyRsi,
+                lastUpdated: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            };
+
+            // 如果原本有其他資料，保留它們
+            if (existingData) {
+                Object.assign(dataToSave, existingData, dataToSave);
+            }
+
+            await putToStore('user-stock-data', dataToSave);
 
             return {
                 success: true,
-                weekly: weeklyData,
-                weeklyKdj,
-                weeklyRsi,
+                stockId,
+                weekly: weeklyData.slice(-26),
+                weeklyKdj: weeklyKdj.data.slice(-26),
+                weeklyRsi: weeklyRsi.slice(-26),
                 processedAt: new Date().toISOString(),
             };
         } catch (error) {

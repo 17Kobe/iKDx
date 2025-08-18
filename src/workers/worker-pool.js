@@ -236,13 +236,18 @@ export class WorkerPool {
      * 取得目前 Pool 狀態
      */
     getStatus() {
+        const busyWorkers = this.workers.filter(w => w.busy).length;
+        const totalWorkers = this.workers.length;
+        const utilization = totalWorkers > 0 ? ((busyWorkers / totalWorkers) * 100).toFixed(1) : 0;
+        
         return {
-            totalWorkers: this.workers.length,
+            totalWorkers: totalWorkers,
             availableWorkers: this.availableWorkers.length,
-            busyWorkers: this.workers.filter(w => w.busy).length,
+            busyWorkers: busyWorkers,
             queuedTasks: this.queue.length,
             activeJobs: this.activeJobs,
             pendingMessages: this.pendingMessages.size,
+            utilization: utilization,
         };
     }
 

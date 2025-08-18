@@ -75,8 +75,14 @@
 
     const overallUtilization = computed(() => {
         const pools = Object.values(poolStatus.value);
-        if (pools.length === 0) return 0;
-        const avgUtilization = pools.reduce((sum, status) => sum + parseFloat(status.utilization), 0) / pools.length;
+        if (pools.length === 0) return '0.0';
+        
+        const totalUtilization = pools.reduce((sum, status) => {
+            const utilization = parseFloat(status.utilization) || 0;
+            return sum + utilization;
+        }, 0);
+        
+        const avgUtilization = totalUtilization / pools.length;
         return avgUtilization.toFixed(1);
     });
 

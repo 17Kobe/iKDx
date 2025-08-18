@@ -30,8 +30,8 @@ const createTrendWorker = () =>
 
 // 初始化原生 Worker Pools
 const policyPool = workerPoolManager.getPool('policy', createPolicyWorker, 4);
-const tradePool = workerPoolManager.getPool('trade', createTradeWorker, 2);
-const trendPool = workerPoolManager.getPool('trend', createTrendWorker, 2);
+const tradePool = workerPoolManager.getPool('trade', createTradeWorker, 4);
+const trendPool = workerPoolManager.getPool('trend', createTrendWorker, 4);
 
 // 開啟 Worker Pool 狀態監控（開發時使用）
 if (import.meta.env.DEV) {
@@ -228,7 +228,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             // Step 1 & 2: 週線技術指標和政策報酬率平行計算
             const [policyResult, tradeResult] = await Promise.all([
                 policyPool.executeTask('processPolicy', {
-                    dailyData: newPriceData.newDailyData || [],
+                    newDailyData: newPriceData.newDailyData || [],
                     stockId,
                     type: 'priceChange',
                 }),

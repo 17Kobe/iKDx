@@ -84,7 +84,7 @@
                         {
                             label: 'K',
                             data: kValues,
-                            borderColor: '#2196F3', // 更鮮明的藍色
+                            borderColor: '#4286f5', // 更鮮明的藍色
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             fill: false,
@@ -95,7 +95,7 @@
                         {
                             label: 'D',
                             data: dValues,
-                            borderColor: '#F44336', // 更鮮明的紅色
+                            borderColor: '#e75c9a', // 更鮮明的紅色
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             fill: false,
@@ -108,6 +108,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    backgroundColor: 'transparent', // Chart.js 背景透明
                     plugins: {
                         legend: {
                             display: false, // 移除圖例
@@ -122,28 +123,39 @@
                                     week: 'MM/DD'
                                 }
                             },
-                            display: true,
+                            display: false, // 完全隱藏 X 軸
                             grid: { 
                                 display: false, // 移除 X 軸網格線
                             },
                             ticks: {
-                                display: true, // 顯示 X 軸刻度標籤
-                                maxTicksLimit: 6,
-                                font: { size: 9 },
-                                color: '#666',
+                                display: false, // 隱藏 X 軸刻度標籤
                             },
                         },
                         y: {
+                            type: 'linear',
+                            position: 'right', // Y 軸顯示在右側
                             display: true,
                             min: 0,
                             max: 100,
+                            border: {
+                                display: false, // 移除 Y 軸的直線
+                            },
                             grid: {
                                 display: true,
                                 color: 'rgba(0,0,0,0.1)',
                             },
                             ticks: {
                                 font: { size: 9 },
-                                stepSize: 20,
+                                color: '#666',
+                                stepSize: 10, // 每10為一格
+                                callback: function(value, index, ticks) {
+                                    // 只顯示 20, 50, 80
+                                    if (value === 20 || value === 50 || value === 80) {
+                                        return value.toString();
+                                    }
+                                    // 隱藏其他刻度但保留空間
+                                    return undefined;
+                                }
                             },
                         },
                     },
@@ -201,9 +213,9 @@
 
 <style scoped>
     .kdj-chart {
-        background: #fff;
+        background: transparent;
         border-radius: 6px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        /* box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04); */
         overflow: hidden;
         position: relative;
         padding: 8px;
