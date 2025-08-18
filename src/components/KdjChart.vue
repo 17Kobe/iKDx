@@ -56,6 +56,37 @@
         });
     });
 
+    // 繪製自定義橫線的函數
+    function drawCustomLines(chart) {
+        const ctx = chart.ctx;
+        const chartArea = chart.chartArea;
+        const yScale = chart.scales.y;
+        
+        // 設定線條樣式
+        ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+        ctx.lineWidth = 1;
+        
+        // 設定文字樣式
+        ctx.fillStyle = '#888';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        
+        // 繪製 20, 50, 80 的橫線和數字
+        [20, 50, 80].forEach(value => {
+            const yPosition = yScale.getPixelForValue(value);
+            
+            // 繪製橫線
+            ctx.beginPath();
+            ctx.moveTo(chartArea.left, yPosition);
+            ctx.lineTo(chartArea.right, yPosition);
+            ctx.stroke();
+            
+            // 在橫線的右端繪製數字
+            ctx.fillText(value.toString(), chartArea.right - 3, yPosition);
+        });
+    }
+
     // 創建 KDJ 線圖表
     function createChart() {
         if (!chartCanvas.value || kdjData.value.length === 0) return;
@@ -109,10 +140,28 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     backgroundColor: 'transparent', // Chart.js 背景透明
+                    layout: {
+                        padding: {
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            left: 0
+                        }
+                    },
                     plugins: {
                         legend: {
                             display: false, // 移除圖例
                         },
+                    },
+                    onResize: (chart, size) => {
+                        // 重繪自定義線條
+                        chart.update('none');
+                    },
+                    animation: {
+                        onComplete: function() {
+                            // 在動畫完成後繪製自定義橫線
+                            drawCustomLines(this);
+                        }
                     },
                     scales: {
                         x: {
@@ -130,6 +179,8 @@
                             ticks: {
                                 display: false, // 隱藏 X 軸刻度標籤
                             },
+                            offset: false, // 移除偏移，讓線條貼邊
+                            bounds: 'data', // 使用資料邊界
                         },
                         y: {
                             type: 'linear',
@@ -141,21 +192,10 @@
                                 display: false, // 移除 Y 軸的直線
                             },
                             grid: {
-                                display: true,
-                                color: 'rgba(0,0,0,0.1)',
+                                display: false, // 先隱藏所有網格線
                             },
                             ticks: {
-                                font: { size: 9 },
-                                color: '#666',
-                                stepSize: 10, // 每10為一格
-                                callback: function(value, index, ticks) {
-                                    // 只顯示 20, 50, 80
-                                    if (value === 20 || value === 50 || value === 80) {
-                                        return value.toString();
-                                    }
-                                    // 隱藏其他刻度但保留空間
-                                    return undefined;
-                                }
+                                display: false, // 隱藏所有 Y 軸刻度文字
                             },
                         },
                     },
@@ -218,6 +258,6 @@
         /* box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04); */
         overflow: hidden;
         position: relative;
-        padding: 8px;
+        padding: 0; /* 移除 padding，讓圖表充滿容器 */
     }
 </style>
