@@ -64,6 +64,7 @@
                                                 :width="120"
                                                 :height="60"
                                                 :stock-id="stock.id"
+                                                @kdj-click="onKdjClick"
                                             />
                                         </div>
                                     </SwipeItem>
@@ -112,12 +113,21 @@
 
         <!-- 股票搜尋組件 -->
         <StockSearch />
+        
+        <!-- KDJ ActionSheet -->
+        <ActionSheet 
+            v-model:show="showKdjActionSheet" 
+            :actions="kdjActions" 
+            cancel-text="取消"
+            title="KDJ 指標詳情"
+            @select="onKdjActionSelect"
+        />
     </div>
 </template>
 
 <script setup>
     import { ref, reactive, onMounted, computed, watch } from 'vue';
-    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, showToast } from 'vant';
+    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, ActionSheet, showToast } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import KdjChart from '@/components/KdjChart.vue';
     import StockName from '@/components/StockName.vue';
@@ -137,6 +147,8 @@
     const stockListRef = ref(null);
     const indicatorSwipeRef = ref(null);
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
+    const showKdjActionSheet = ref(false);
+    const currentKdjData = ref(null);
     // ...已移除 PullRefresh 相關狀態...
 
     onMounted(async () => {
@@ -186,6 +198,53 @@
     }
 
     // KD 指標樣式和狀態
+    const kdjActions = computed(() => {
+        if (!currentKdjData.value) return [];
+        
+        return [
+            {
+                name: `K 值: ${currentKdjData.value.k}`,
+                subname: '快線指標 (敏感度高)',
+                color: '#4286f5',
+            },
+            {
+                name: `D 值: ${currentKdjData.value.d}`,
+                subname: '慢線指標 (敏感度低)',
+                color: '#e75c9a',
+            },
+            {
+                name: `J 值: ${currentKdjData.value.j}`,
+                subname: '超買超賣指標',
+                color: '#666',
+            },
+            {
+                name: `更新時間: ${currentKdjData.value.date}`,
+                subname: '週線資料最後更新',
+                color: '#999',
+            },
+        ];
+    });
+
+    // KDJ 點擊處理
+    function onKdjClick(kdjData) {
+        currentKdjData.value = kdjData;
+        showKdjActionSheet.value = true;
+    }
+
+    // KDJ ActionSheet 選擇處理
+    function onKdjActionSelect(action) {
+        console.log('KDJ ActionSheet 選擇:', action.name);
+        showKdjActionSheet.value = false;
+        
+        // 可以在這裡加上更多處理邏輯，比如顯示詳細分析
+        if (action.name.includes('K 值')) {
+            showToast('K 值反映股價短期波動');
+        } else if (action.name.includes('D 值')) {
+            showToast('D 值是 K 值的移動平均');
+        } else if (action.name.includes('J 值')) {
+            showToast('J 值 > 80 超買，< 20 超賣');
+        }
+    };
     function getKDClass(kd) {
         if (kd > 80) return 'kd-overbought';
         if (kd < 20) return 'kd-oversold';
