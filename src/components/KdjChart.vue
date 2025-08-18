@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed, shallowRef } from 'vue';
+    import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed, markRaw } from 'vue';
     import { Chart, registerables } from 'chart.js';
     import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
     import { useUserStockListStore } from '@/stores/user-stock-list-store';
@@ -36,50 +36,38 @@
     // 響應式變數
     const chartContainer = ref(null);
     const chartCanvas = ref(null);
-    const chartInstance = shallowRef(null); // 使用 shallowRef 避免深層響應式
+    const chartInstance = ref(null);
 
-    // 處理後的 KDJ 資料，避免響應式循環
-    const processedKdjData = ref([]);
+    // KDJ 資料 computed
+    const kdjData = computed(() => {
+        const stock = userStockListStore.userStockList.find(s => s.id === props.stockId);
+        if (!stock?.data?.weeklyKdj) return [];
 
-    // 監聽原始資料變化，手動更新處理後的資料
-    watch(
-        () => {
-            const stock = userStockListStore.userStockList.find(s => s.id === props.stockId);
-            return stock?.data?.weeklyKdj;
-        },
-        newKdjData => {
-            if (!newKdjData) {
-                processedKdjData.value = [];
-                return;
-            }
-
-            processedKdjData.value = newKdjData
-                .filter(item => {
-                    return (
-                        item &&
-                        Array.isArray(item) &&
-                        item.length >= 4 &&
-                        typeof item[1] === 'number' &&
-                        !isNaN(item[1]) &&
-                        typeof item[2] === 'number' &&
-                        !isNaN(item[2]) &&
-                        typeof item[3] === 'number' &&
-                        !isNaN(item[3])
-                    );
-                })
-                .map(item => ({
-                    x: dayjs(item[0], 'YYYYMMDD').toDate(),
-                    k: item[1],
-                    d: item[2],
-                    j: item[3],
-                }));
-        },
-        { immediate: true }
-    );
+        return stock.data.weeklyKdj
+            .filter(item => {
+                return (
+                    item &&
+                    Array.isArray(item) &&
+                    item.length >= 4 &&
+                    typeof item[1] === 'number' &&
+                    !isNaN(item[1]) &&
+                    typeof item[2] === 'number' &&
+                    !isNaN(item[2]) &&
+                    typeof item[3] === 'number' &&
+                    !isNaN(item[3])
+                );
+            })
+            .map(item => ({
+                x: dayjs(item[0], 'YYYYMMDD').toDate(),
+                k: item[1],
+                d: item[2],
+                j: item[3],
+            }));
+    });
 
     // 依據目前 KDJ 資料產生 dataset 陣列
     function buildDatasets() {
-        const data = processedKdjData.value;
+        const data = kdjData.value;
         if (!data || data.length === 0) return [];
 
         const kValues = data.map(item => ({ x: item.x, y: item.k }));
@@ -114,7 +102,7 @@
     function createOrUpdateChart() {
         if (!chartCanvas.value) return;
 
-        const data = processedKdjData.value;
+        const data = kdjData.value;
         if (!data || data.length === 0) {
             // 無資料時清理圖表
             if (chartInstance.value) {
@@ -127,77 +115,65 @@
         const ctx = chartCanvas.value.getContext('2d');
         if (!ctx) return;
 
-        // 若已存在，僅更新資料
+        // 銷毀舊圖表，重新建立（簡單且穩定）
         if (chartInstance.value) {
-            try {
-                const updated = buildDatasets();
-                if (updated.length > 0) {
-                    chartInstance.value.data.datasets = updated;
-                    chartInstance.value.update('none');
-                }
-            } catch (error) {
-                console.error('更新圖表失敗:', error);
-                chartInstance.value.destroy();
-                chartInstance.value = null;
-            }
-            return;
+            chartInstance.value.destroy();
+            chartInstance.value = null;
         }
 
         try {
-            chartInstance.value = new Chart(ctx, {
-                type: 'line',
-                data: { datasets: buildDatasets() },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false },
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: 'week', displayFormats: { week: 'MM/DD' } },
-                            display: false,
-                            grid: { display: false },
-                            ticks: { display: false },
-                            offset: false,
-                            bounds: 'data',
+            // 使用 markRaw 避免 Chart.js 實例被 Vue 響應式化
+            chartInstance.value = markRaw(
+                new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: buildDatasets() },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false },
                         },
-                        y: {
-                            type: 'linear',
-                            position: 'right',
-                            display: true,
-                            min: 0,
-                            max: 100,
-                            border: { display: false },
-                            grid: {
-                                drawTicks: false,
-                                color: ctx => {
-                                    const v = ctx.tick.value;
-                                    return [0, 20, 50, 80, 100].includes(v)
-                                        ? 'rgba(200, 200, 200, 0.3)'
-                                        : 'transparent';
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: { unit: 'week', displayFormats: { week: 'MM/DD' } },
+                                display: false,
+                                grid: { display: false },
+                                ticks: { display: false },
+                                offset: false,
+                                bounds: 'data',
+                            },
+                            y: {
+                                type: 'linear',
+                                position: 'right',
+                                display: true,
+                                min: 0,
+                                max: 100,
+                                border: { display: false },
+                                grid: {
+                                    drawTicks: false,
+                                    color: ctx => {
+                                        const v = ctx.tick.value;
+                                        return [0, 20, 50, 80, 100].includes(v)
+                                            ? 'rgba(200, 200, 200, 0.3)'
+                                            : 'transparent';
+                                    },
+                                },
+                                ticks: {
+                                    stepSize: 10,
+                                    autoSkip: false,
+                                    color: '#888',
+                                    font: { size: 12 },
+                                    padding: -15,
+                                    callback: v => (v === 20 || v === 50 || v === 80 ? v : ''),
                                 },
                             },
-                            ticks: {
-                                stepSize: 10,
-                                autoSkip: false,
-                                color: '#888',
-                                font: { size: 12 },
-                                padding: -15,
-                                callback: v => (v === 20 || v === 50 || v === 80 ? v : ''),
-                            },
                         },
+                        animation: false,
                     },
-                    animation: false,
-                    elements: {
-                        point: { radius: 0 },
-                        line: { tension: 0 },
-                    },
-                },
-            });
+                })
+            );
         } catch (error) {
             console.error('創建 / 更新 KDJ 圖表失敗:', error);
             showErrorPlaceholder();
@@ -229,9 +205,9 @@
         }
     }
 
-    // 監聽處理後的資料變化，更新圖表
+    // 監聽 KDJ 資料變化，更新圖表
     watch(
-        processedKdjData,
+        kdjData,
         () => {
             nextTick(() => createOrUpdateChart());
         },
