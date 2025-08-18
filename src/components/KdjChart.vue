@@ -11,7 +11,43 @@
     import { useUserStockListStore } from '@/stores/user-stock-list-store';
     import dayjs from 'dayjs';
 
+    // 註冊 Chart.js 預設組件
     Chart.register(...registerables);
+
+    // 直接繪製水平參考線 (不使用外掛)
+    function drawReferenceLines() {
+        if (!chartInstance.value) return;
+        const chart = chartInstance.value;
+        const yScale = chart.scales.y;
+        if (!yScale) return;
+        const { left, right } = chart.chartArea;
+        const ctx = chart.ctx;
+        const levels = [0, 20, 50, 80, 100];
+        ctx.save();
+        ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#888';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        levels.forEach(v => {
+            const y = yScale.getPixelForValue(v);
+            if (isNaN(y)) return;
+            ctx.beginPath();
+            ctx.moveTo(left, y);
+            ctx.lineTo(right, y);
+            ctx.stroke();
+            if (v === 20 || v === 50 || v === 80) {
+                ctx.fillText(String(v), right - 3, y);
+            }
+        });
+        ctx.restore();
+    }
+
+    // 在下一個 frame 繪製，確保主圖完成
+    function scheduleDrawLines() {
+        requestAnimationFrame(() => drawReferenceLines());
+    }
 
     // Props 定義
     const props = defineProps({
@@ -37,7 +73,7 @@
     const chartCanvas = ref(null);
     const chartInstance = ref(null);
 
-    // 計算 KDJ 資料
+    // 計算 KDJ 資料 (回傳陣列: { x:Date, k:number, d:number })
     const kdjData = computed(() => {
         const stock = userStockListStore.userStockList.find(s => s.id === props.stockId);
         if (!stock?.data?.weeklyKdj) return [];
@@ -50,164 +86,96 @@
         }));
     });
 
-    onMounted(() => {
-        nextTick(() => {
-            createChart();
-        });
-    });
-
-    // 繪製自定義橫線的函數
-    function drawCustomLines(chart) {
-        const ctx = chart.ctx;
-        const chartArea = chart.chartArea;
-        const yScale = chart.scales.y;
-        
-        // 設定線條樣式
-        ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
-        ctx.lineWidth = 1;
-        
-        // 設定文字樣式
-        ctx.fillStyle = '#888';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        
-        // 需要畫線的數值 (showLabel 表示是否顯示文字)
-        const lines = [
-            { value: 0, showLabel: false },
-            { value: 20, showLabel: true },
-            { value: 50, showLabel: true },
-            { value: 80, showLabel: true },
-            { value: 100, showLabel: false },
+    // 依據目前 KDJ 資料產生 dataset 陣列
+    function buildDatasets() {
+        const kValues = kdjData.value.map(item => ({ x: item.x, y: item.k }));
+        const dValues = kdjData.value.map(item => ({ x: item.x, y: item.d }));
+        return [
+            {
+                label: 'K',
+                data: kValues,
+                borderColor: '#4286f5',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                fill: false,
+                tension: 0,
+                pointRadius: 0,
+                pointHoverRadius: 0,
+            },
+            {
+                label: 'D',
+                data: dValues,
+                borderColor: '#e75c9a',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                fill: false,
+                tension: 0,
+                pointRadius: 0,
+                pointHoverRadius: 0,
+            },
         ];
-
-        lines.forEach(({ value, showLabel }) => {
-            const yPosition = yScale.getPixelForValue(value);
-            if (isNaN(yPosition)) return;
-
-            // 繪製橫線
-            ctx.beginPath();
-            ctx.moveTo(chartArea.left, yPosition);
-            ctx.lineTo(chartArea.right, yPosition);
-            ctx.stroke();
-
-            // 顯示 20/50/80 的文字，0/100 不顯示
-            if (showLabel) {
-                ctx.fillText(String(value), chartArea.right - 3, yPosition);
-            }
-        });
     }
 
-    // 創建 KDJ 線圖表
-    function createChart() {
-        if (!chartCanvas.value || kdjData.value.length === 0) return;
+    // 初始化或更新圖表 (避免每次銷毀重建)
+    function createOrUpdateChart() {
+        if (!chartCanvas.value) return;
+        if (kdjData.value.length === 0) return; // 無資料不建立圖表
 
         const ctx = chartCanvas.value.getContext('2d');
         if (!ctx) return;
 
-        // 清理現有圖表實例
+        // 若已存在，僅更新資料
         if (chartInstance.value) {
-            try {
-                chartInstance.value.destroy();
-            } catch (error) {
-                console.warn('清理現有圖表失敗:', error);
-            }
-            chartInstance.value = null;
+            const updated = buildDatasets();
+            chartInstance.value.data.datasets.forEach((ds, idx) => {
+                ds.data = updated[idx].data;
+            });
+            chartInstance.value.update('none');
+            scheduleDrawLines();
+            return;
         }
 
         try {
-            const kValues = kdjData.value.map(item => ({ x: item.x, y: item.k }));
-            const dValues = kdjData.value.map(item => ({ x: item.x, y: item.d }));
-
             chartInstance.value = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    datasets: [
-                        {
-                            label: 'K',
-                            data: kValues,
-                            borderColor: '#4286f5', // 更鮮明的藍色
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0, // 使用直線避免貝茲曲線使視覺終點往內縮
-                            pointRadius: 0, // 移除圓點
-                            pointHoverRadius: 0, // 移除 hover 圓點
-                        },
-                        {
-                            label: 'D',
-                            data: dValues,
-                            borderColor: '#e75c9a', // 更鮮明的紅色
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0, // 同上
-                            pointRadius: 0, // 移除圓點
-                            pointHoverRadius: 0, // 移除 hover 圓點
-                        },
-                    ],
-                },
+                data: { datasets: buildDatasets() },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    backgroundColor: 'transparent', // Chart.js 背景透明
-                    layout: {
-                        padding: {
-                            top: 0,
-                            right: 0,
-                            bottom: 0,
-                            left: 0
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false, // 移除圖例
-                        },
-                    },
-                    onResize: (chart, size) => {
-                        // 重繪自定義線條
-                        chart.update('none');
-                    },
-                    animation: {
-                        onComplete: function() {
-                            // 在動畫完成後繪製自定義橫線
-                            drawCustomLines(this);
-                        }
-                    },
+                    backgroundColor: 'transparent',
+                    layout: { padding: { top: 0, right: 0, bottom: 0, left: 0 } },
+                    plugins: { legend: { display: false } },
                     scales: {
                         x: {
                             type: 'time',
-                            time: {
-                                unit: 'week',
-                                displayFormats: {
-                                    week: 'MM/DD'
-                                }
-                            },
-                            display: false, // 完全隱藏 X 軸
-                            grid: { 
-                                display: false, // 移除 X 軸網格線
-                            },
-                            ticks: {
-                                display: false, // 隱藏 X 軸刻度標籤
-                            },
-                            offset: false, // 移除偏移，讓線條貼邊
-                            bounds: 'data', // 使用資料邊界
+                            time: { unit: 'week', displayFormats: { week: 'MM/DD' } },
+                            display: false,
+                            grid: { display: false },
+                            ticks: { display: false },
+                            offset: false,
+                            bounds: 'data',
                         },
                         y: {
                             type: 'linear',
-                            // 完全隱藏軸 (ticks / grid / border) 以釋放右側空間，線條可貼齊畫布
                             display: false,
                             min: 0,
                             max: 100,
                         },
                     },
+                    animation: { duration: 0 }, // 關閉動畫提升回應速度
                 },
             });
+            scheduleDrawLines();
         } catch (error) {
-            console.error('創建 KDJ 圖表失敗:', error);
+            console.error('創建 / 更新 KDJ 圖表失敗:', error);
             showErrorPlaceholder();
         }
     }
+
+    // 初始化
+    onMounted(() => {
+        nextTick(() => createOrUpdateChart());
+    });
 
     // 顯示錯誤佔位符
     function showErrorPlaceholder() {
@@ -229,27 +197,21 @@
         }
     }
 
-    // 監聽 KDJ 資料變化，重新渲染圖表
+    // 監聽資料變化，更新圖表
     watch(
         kdjData,
         () => {
-            nextTick(() => {
-                createChart();
-            });
+            nextTick(() => createOrUpdateChart());
         },
-        { deep: true }
+        { deep: true },
     );
 
     // 組件卸載前清理
     onBeforeUnmount(() => {
         if (chartInstance.value) {
-            try {
-                chartInstance.value.destroy();
-            } catch (error) {
-                console.warn('Chart.js 清理失敗:', error);
-            }
+            try { chartInstance.value.destroy(); } catch (error) { console.warn('Chart.js 清理失敗:', error); }
+            chartInstance.value = null;
         }
-        chartInstance.value = null;
     });
 </script>
 
