@@ -1,13 +1,11 @@
 <template>
     <div class="app-container" :class="{ dark: isDark }">
         <div class="main-content">
-            <div class="view-frame">
-                <router-view v-slot="{ Component, route }">
-                    <transition :name="firstLoad ? '' : 'slide-left'">
-                        <component :is="Component" :key="route.path" class="route-slide-page" />
-                    </transition>
-                </router-view>
-            </div>
+            <router-view v-slot="{ Component, route }">
+                <transition :name="firstLoad ? '' : 'slide-left'">
+                    <component :is="Component" :key="route.path" class="route-slide-page" />
+                </transition>
+            </router-view>
         </div>
         <Tabbar v-model="active" @change="onTabChange" class="custom-tabbar">
             <TabbarItem>
@@ -159,16 +157,6 @@
         box-sizing: border-box;
         overflow: hidden;
         /* 不再用 padding-bottom 撐高度，避免底部多出空白 */
-    }
-
-    /* 固定高度視窗，防止路由切換時高度塌縮 */
-    .view-frame {
-        position: relative;
-        height: 100%;
-        overflow: hidden; /* 過場時只顯示一頁 */
-        width: 100%;
-        padding-bottom: 60px; /* 只在這裡為內容留出 tabbar 空間 */
-        box-sizing: border-box;
     }
 
     /* 單一頁面容器：絕對定位鋪滿，自己可滾動 */
