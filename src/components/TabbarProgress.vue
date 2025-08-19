@@ -27,7 +27,7 @@
     // 取得 globalStore
     const globalStore = useGlobalStore();
     const percent = computed(() => Math.round(globalStore.cnnIndex));
-    const label = computed(() => globalStore.cnnLabel || 'N/A');
+    const label = computed(() => globalStore.cnnLabel || '');
     let toastInstance = null;
     const toastVisible = ref(false);
 

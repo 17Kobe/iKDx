@@ -225,10 +225,6 @@
         background: rgba(255, 255, 255, 0.97);
         box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
         z-index: 100;
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
     }
 
     /* 讓 Tabbar 的 active item 也有透明度 */
