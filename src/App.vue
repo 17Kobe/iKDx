@@ -45,7 +45,7 @@
                         width="28"
                         height="28"
                     />
-                    <span>資產表</span>
+                    <span>資產預算</span>
                 </div>
             </TabbarItem>
             <TabbarItem>
