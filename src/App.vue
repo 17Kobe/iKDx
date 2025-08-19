@@ -1,11 +1,13 @@
 <template>
     <div class="app-container" :class="{ dark: isDark }">
         <div class="main-content">
-            <router-view v-slot="{ Component, route }">
-                <transition :name="firstLoad ? '' : 'slide-left'">
-                    <component :is="Component" :key="route.path" />
-                </transition>
-            </router-view>
+            <div class="view-frame">
+                <router-view v-slot="{ Component, route }">
+                    <transition :name="firstLoad ? '' : 'slide-left'">
+                        <component :is="Component" :key="route.path" class="route-slide-page" />
+                    </transition>
+                </router-view>
+            </div>
         </div>
         <Tabbar v-model="active" @change="onTabChange" class="custom-tabbar">
             <TabbarItem>
@@ -152,16 +154,33 @@
     }
 
     .main-content {
-        position: relative; /* 讓動畫層不會超出父層。 */
-        /* flex: 1; */
-        /* overflow-y: auto; */
-        /* 為 Tabbar padding-bottom: 60px; 留空間 */
-        /* position: relative; 為頁面切換動畫提供定位基準 */
-        /* height: 100vh; 設定高度為 100vh */
-        /* min-height: 100dvh; 新瀏覽器支援，舊瀏覽器自動 fallback */
-        padding-bottom: 60px;
-        /* overflow: hidden; */
-        /* overflow-y: auto; */
+        position: relative;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+        /* 不再用 padding-bottom 撐高度，避免底部多出空白 */
+    }
+
+    /* 固定高度視窗，防止路由切換時高度塌縮 */
+    .view-frame {
+        position: relative;
+        height: 100%;
+        overflow: hidden; /* 過場時只顯示一頁 */
+        width: 100%;
+        padding-bottom: 60px; /* 只在這裡為內容留出 tabbar 空間 */
+        box-sizing: border-box;
+    }
+
+    /* 單一頁面容器：絕對定位鋪滿，自己可滾動 */
+    .route-slide-page {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--van-background, #fff);
+        box-sizing: border-box;
     }
 
     /* Progress Bar 樣式已移至 TabbarProgress.vue */
@@ -182,28 +201,33 @@
         margin-bottom: 7px;
     }
 
-    /* 頁面切換動畫 - 新頁面從右側滑入，舊頁面向左移出50px，同時進行 */
+    /* 過場動畫：兩頁並存，但高度/寬度固定不被擠壓 */
     .slide-left-enter-active,
     .slide-left-leave-active {
-        transition: transform 0.35s ease-in-out;
-        position: absolute;
-        width: 100%;
-        top: 0;
-        left: 0;
-        height: 100%;
+        transition: transform 0.3s ease;
+        will-change: transform;
     }
 
+    /* 進入頁：從右側滑入 */
     .slide-left-enter-from {
-        transform: translateX(100%); /* 新頁面從右側進入 */
+        transform: translateX(100%);
+    }
+    .slide-left-enter-to {
+        transform: translateX(0);
     }
 
-    .slide-left-leave-to {
-        transform: translateX(-100px); /* 舊頁面向左移出100px */
-    }
-
-    .slide-left-enter-to,
+    /* 離開頁：維持原寬度，純位移，不縮放、不塌縮 */
     .slide-left-leave-from {
         transform: translateX(0);
+    }
+    .slide-left-leave-to {
+        transform: translateX(-200px); /* 輕微左滑，保留視覺連續性 */
+    }
+
+    /* 停用瀏覽器可能的 transform 導致的抗鋸齒閃動 */
+    .slide-left-enter-active .route-slide-page,
+    .slide-left-leave-active .route-slide-page {
+        backface-visibility: hidden;
     }
 
     /* 自定義 Tabbar 高度 */
@@ -211,12 +235,12 @@
         height: 60px !important;
         border-top: 1px solid #ebedf0 !important;
         background: rgba(255, 255, 255, 0.97);
-        /* backdrop-filter: blur(1px); */
         box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
         z-index: 100;
-        /* position: absolute;
-        bottom: 0; */
-        /* bottom: 10px; */
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
     }
 
     /* 讓 Tabbar 的 active item 也有透明度 */
