@@ -201,7 +201,7 @@
         transform: translateX(0);
     }
     .slide-left-leave-to {
-        transform: translateX(-100px); /* 輕微左滑，保留視覺連續性 */
+        transform: translateX(-150px); /* 輕微左滑，保留視覺連續性 */
     }
 
     /* 自定義 Tabbar 高度 */
