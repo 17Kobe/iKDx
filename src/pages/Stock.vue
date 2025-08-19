@@ -344,15 +344,8 @@
 
 <style scoped>
     .stock-page {
-        /* padding: 16px; */
-        background-color: #f5f5f5;
+        background: var(--page-bg, #eff3f6);
         padding: 6px 6px 2px 6px;
-        /* min-height: 100vh; */
-        /* padding-bottom: 60px !important; */
-        /* padding-bottom: 60px; */
-        /* min-height: 100vh; 保證整頁佔滿可視區域，避免 scroll bug */
-        /* overflow-y: auto; */
-        /* overflow: hidden; */
     }
 
     /* vuedraggable ghost 拖曳目標位置效果 */

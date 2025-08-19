@@ -39,7 +39,7 @@ const onTabChange = (name) => {
 <style scoped>
 .dividend-page {
     height: 100%;
-    background-color: var(--van-background-color);
+    background: var(--page-bg, #eff3f6);
 }
 
 .custom-tabs {

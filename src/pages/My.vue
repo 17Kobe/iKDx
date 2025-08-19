@@ -1,5 +1,5 @@
 <template>
-    <div style="padding: 32px">
+    <div class="my-page" style="padding: 32px">
         <h2>我的頁面</h2>
         <div style="margin-bottom: 16px">
             <RadioGroup v-model="themeStore.mode" direction="horizontal">
@@ -21,6 +21,14 @@
     import { useThemeStore } from '../stores/theme';
     import { RadioGroup, Radio } from 'vant';
     import WorkerMonitor from '../components/WorkerMonitor.vue';
-    
+
     const themeStore = useThemeStore();
 </script>
+
+    <style scoped>
+    .my-page {
+        background: var(--page-bg, #eff3f6);
+        min-height: 100%;
+        box-sizing: border-box;
+    }
+    </style>

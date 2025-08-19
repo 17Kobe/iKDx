@@ -179,7 +179,7 @@
         height: 100%;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        background: var(--van-background, #fff);
+        background: var(--page-bg, #eff3f6);
         box-sizing: border-box;
     }
 
@@ -221,7 +221,7 @@
         transform: translateX(0);
     }
     .slide-left-leave-to {
-        transform: translateX(-200px); /* 輕微左滑，保留視覺連續性 */
+        transform: translateX(-100px); /* 輕微左滑，保留視覺連續性 */
     }
 
     /* 停用瀏覽器可能的 transform 導致的抗鋸齒閃動 */
