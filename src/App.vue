@@ -3,7 +3,7 @@
         <div class="main-content">
             <router-view v-slot="{ Component, route }">
                 <transition :name="firstLoad ? '' : 'slide-left'">
-                    <component :is="Component" :key="route.path" class="route-slide-page" />
+                    <component :is="Component" :key="route.path" />
                 </transition>
             </router-view>
         </div>
@@ -153,22 +153,8 @@
 
     .main-content {
         position: relative;
-        height: 100%;
-        box-sizing: border-box;
-        overflow: hidden;
+        padding-bottom: 60px;
         /* 不再用 padding-bottom 撐高度，避免底部多出空白 */
-    }
-
-    /* 單一頁面容器：絕對定位鋪滿，自己可滾動 */
-    .route-slide-page {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        background: var(--page-bg, #eff3f6);
-        box-sizing: border-box;
     }
 
     /* Progress Bar 樣式已移至 TabbarProgress.vue */
@@ -192,8 +178,14 @@
     /* 過場動畫：兩頁並存，但高度/寬度固定不被擠壓 */
     .slide-left-enter-active,
     .slide-left-leave-active {
-        transition: transform 0.3s ease;
-        will-change: transform;
+        /* transition: transform 0.3s ease; */
+        /* will-change: transform; */
+        transition: transform 0.35s ease-in-out;
+        position: absolute;
+        width: 100%;
+        top: 0;
+        left: 0;
+        height: 100%;
     }
 
     /* 進入頁：從右側滑入 */
@@ -210,12 +202,6 @@
     }
     .slide-left-leave-to {
         transform: translateX(-100px); /* 輕微左滑，保留視覺連續性 */
-    }
-
-    /* 停用瀏覽器可能的 transform 導致的抗鋸齒閃動 */
-    .slide-left-enter-active .route-slide-page,
-    .slide-left-leave-active .route-slide-page {
-        backface-visibility: hidden;
     }
 
     /* 自定義 Tabbar 高度 */
