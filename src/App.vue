@@ -176,16 +176,23 @@
     }
 
     /* 過場動畫：兩頁並存，但高度/寬度固定不被擠壓 */
-    .slide-left-enter-active,
-    .slide-left-leave-active {
-        /* transition: transform 0.3s ease; */
-        /* will-change: transform; */
+    .slide-left-enter-active {
         transition: transform 0.35s ease-in-out;
         position: absolute;
         width: 100%;
         top: 0;
         left: 0;
         height: 100%;
+        z-index: 2;
+    }
+    .slide-left-leave-active {
+        transition: transform 0.35s ease-in-out;
+        position: absolute;
+        width: 100%;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1;
     }
 
     /* 進入頁：從右側滑入 */
@@ -196,12 +203,12 @@
         transform: translateX(0);
     }
 
-    /* 離開頁：維持原寬度，純位移，不縮放、不塌縮 */
+    /* 離開頁：完全移出視窗，避免殘影和變型 */
     .slide-left-leave-from {
         transform: translateX(0);
     }
     .slide-left-leave-to {
-        transform: translateX(-150px); /* 輕微左滑，保留視覺連續性 */
+        transform: translateX(-100%);
     }
 
     /* 自定義 Tabbar 高度 */
