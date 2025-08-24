@@ -44,7 +44,7 @@
             type: 'html',
             message:
                 '<div style="text-align:center;">CNN 恐慌與貪婪指數：<span style="color: rgb(255, 105, 105);">' +
-                globalStore.cnnIndex +
+                Number(globalStore.cnnIndex).toFixed(2) +
                 '</span><br>更新時間：' +
                 globalStore.cnnUpdateTimeLabel +
                 '</div>' +
