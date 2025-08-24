@@ -113,11 +113,11 @@
 
         <!-- 股票搜尋組件 -->
         <StockSearch />
-        
+
         <!-- KDJ ActionSheet -->
-        <ActionSheet 
-            v-model:show="showKdjActionSheet" 
-            :actions="kdjActions" 
+        <ActionSheet
+            v-model:show="showKdjActionSheet"
+            :actions="kdjActions"
             cancel-text="取消"
             title="KDJ 指標詳情"
             @select="onKdjActionSelect"
@@ -127,7 +127,16 @@
 
 <script setup>
     import { ref, reactive, onMounted, computed, watch } from 'vue';
-    import { FloatingBubble, Swipe, SwipeItem, SwipeCell, Button, Icon, ActionSheet, showToast } from 'vant';
+    import {
+        FloatingBubble,
+        Swipe,
+        SwipeItem,
+        SwipeCell,
+        Button,
+        Icon,
+        ActionSheet,
+        showToast,
+    } from 'vant';
     import StockSearch from '@/components/StockSearch.vue';
     import KdjChart from '@/components/KdjChart.vue';
     import StockName from '@/components/StockName.vue';
@@ -200,7 +209,7 @@
     // KD 指標樣式和狀態
     const kdjActions = computed(() => {
         if (!currentKdjData.value) return [];
-        
+
         return [
             {
                 name: `K 值: ${currentKdjData.value.k}`,
@@ -235,7 +244,7 @@
     function onKdjActionSelect(action) {
         console.log('KDJ ActionSheet 選擇:', action.name);
         showKdjActionSheet.value = false;
-        
+
         // 可以在這裡加上更多處理邏輯，比如顯示詳細分析
         if (action.name.includes('K 值')) {
             showToast('K 值反映股價短期波動');
@@ -244,7 +253,7 @@
         } else if (action.name.includes('J 值')) {
             showToast('J 值 > 80 超買，< 20 超賣');
         }
-    };
+    }
     function getKDClass(kd) {
         if (kd > 80) return 'kd-overbought';
         if (kd < 20) return 'kd-oversold';
@@ -380,6 +389,7 @@
     } */
 
     .stock-row {
+        max-width: 100%;
         display: flex;
         align-items: center;
         background: white;
@@ -396,16 +406,18 @@
         max-height: 94px; /* 新增最大高度限制 */
         min-height: 80px;
         padding: 5px;
-        width: 100%;
+        width: calc(100% - 10px);
     }
 
     /* 指標欄 - 可滑動，等高 */
     .stock-indicator {
-        width: calc(100% - 173px); /*  這裡自動扣掉左側寬度 */
-        /* flex: 1;
-        min-width: 0; */
+        flex: 1 1 0%;
+        min-width: 0;
+        width: 100%;
         display: flex; /* 讓內層可吃到 100% 高度 */
         align-items: stretch;
+        box-sizing: border-box;
+        transition: none !important;
     }
 
     /* 強制 Vant Swipe 內層填滿高度 */

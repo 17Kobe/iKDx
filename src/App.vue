@@ -177,7 +177,7 @@
 
     /* 過場動畫：兩頁並存，但高度/寬度固定不被擠壓 */
     .slide-left-enter-active {
-        transition: transform 0.35s ease-in-out;
+        transition: transform 0.3s ease-in-out;
         position: absolute;
         width: 100%;
         top: 0;
@@ -186,7 +186,7 @@
         z-index: 2;
     }
     .slide-left-leave-active {
-        transition: transform 0.35s ease-in-out;
+        transition: transform 0.3s ease-in-out;
         position: absolute;
         width: 100%;
         top: 0;
