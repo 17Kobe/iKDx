@@ -4,10 +4,10 @@
             <h3>Worker Pool 監控</h3>
             <span class="total-cpu">CPU 核心數: {{ cpuCores }}</span>
         </div>
-        
+
         <div class="pool-stats">
-            <div 
-                v-for="(status, poolName) in poolStatus" 
+            <div
+                v-for="(status, poolName) in poolStatus"
                 :key="poolName"
                 class="pool-card"
                 :class="{ 'pool-busy': status.busyWorkers > 0 }"
@@ -16,7 +16,9 @@
                 <div class="pool-info">
                     <div class="stat-item">
                         <span class="label">可用:</span>
-                        <span class="value">{{ status.availableWorkers }}/{{ status.totalWorkers }}</span>
+                        <span class="value"
+                            >{{ status.availableWorkers }}/{{ status.totalWorkers }}</span
+                        >
                     </div>
                     <div class="stat-item">
                         <span class="label">使用中:</span>
@@ -32,10 +34,7 @@
                     </div>
                 </div>
                 <div class="progress-bar">
-                    <div 
-                        class="progress-fill"
-                        :style="{ width: status.utilization + '%' }"
-                    ></div>
+                    <div class="progress-fill" :style="{ width: status.utilization + '%' }"></div>
                 </div>
             </div>
         </div>
@@ -76,12 +75,12 @@
     const overallUtilization = computed(() => {
         const pools = Object.values(poolStatus.value);
         if (pools.length === 0) return '0.0';
-        
+
         const totalUtilization = pools.reduce((sum, status) => {
             const utilization = parseFloat(status.utilization) || 0;
             return sum + utilization;
         }, 0);
-        
+
         const avgUtilization = totalUtilization / pools.length;
         return avgUtilization.toFixed(1);
     });
@@ -94,7 +93,7 @@
     onMounted(() => {
         // 訂閱所有 Pool 的狀態變更
         workerPoolManager.onAllStatusChange(handleStatusUpdate);
-        
+
         // 初始化狀態
         poolStatus.value = workerPoolManager.getAllStatus();
     });
@@ -107,7 +106,7 @@
 <style scoped>
     .worker-monitor {
         padding: 16px;
-        background: #f8f9fa;
+        background: #eff3f6;
         border-radius: 8px;
         font-family: monospace;
     }

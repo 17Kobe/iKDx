@@ -137,7 +137,7 @@
                                             transition: all 0.2s ease;
                                         "
                                         @mouseenter="
-                                            $event => ($event.target.style.background = '#f8f9fa')
+                                            $event => ($event.target.style.background = '#eff3f6')
                                         "
                                         @mouseleave="
                                             $event => ($event.target.style.background = '#fff')
