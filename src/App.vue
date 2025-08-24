@@ -184,6 +184,8 @@
         left: 0;
         height: 100%;
         z-index: 2;
+        padding-right: 6px; /* 已加上 padding-right: 6px，確保動畫期間的頁面和正常狀態下有相同的右側 padding，避免 KD 圖寬度跳動。 */
+        box-sizing: border-box; /* 已加上 padding-right: 6px，確保動畫期間的頁面和正常狀態下有相同的右側 padding，避免 KD 圖寬度跳動。 */
     }
     .slide-left-leave-active {
         transition: transform 0.3s ease-in-out;
@@ -193,6 +195,8 @@
         left: 0;
         height: 100%;
         z-index: 1;
+        padding-right: 6px; /* 已加上 padding-right: 6px，確保動畫期間的頁面和正常狀態下有相同的右側 padding，避免 KD 圖寬度跳動。 */
+        box-sizing: border-box; /* 已加上 padding-right: 6px，確保動畫期間的頁面和正常狀態下有相同的右側 padding，避免 KD 圖寬度跳動。 */
     }
 
     /* 進入頁：從右側滑入 */
