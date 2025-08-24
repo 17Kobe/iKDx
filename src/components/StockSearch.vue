@@ -75,7 +75,7 @@
                                     <div
                                         v-if="userStockListStore.isStockInList(item.id)"
                                         style="
-                                            background: #fff783;
+                                            background: #d3d3d3;
                                             border-radius: 12px;
                                             box-shadow: 0 2px 8px #0001;
                                             padding: 10px;
