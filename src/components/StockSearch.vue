@@ -1,179 +1,156 @@
 <template>
     <!-- 以 showSheet 控制顯示，移除 v-model:show -->
-    <ShareSheet
-        :show="showSheet"
-        @update:show="bus.emit(false)"
+    <ActionSheet
+        v-model:show="showSheet"
         cancel-text="離開"
-        :options="[]"
-        style="--van-share-sheet-header-padding: 24px 24px 0 24px"
+        title="股票搜尋"
+        @select="onAddStock"
+        :style="{ height: '80vh', maxHeight: '80vh' }"
+        body-style="height:80vh;max-height:80vh;overflow-y:auto;"
     >
-        <template #title>
-            <div
-                style="
-                    font-size: 18px;
-                    font-weight: bold;
-                    letter-spacing: 1px;
-                    text-align: center;
-                    margin-top: 0;
-                    margin-bottom: 0;
-                    color: #222;
-                    line-height: 1.2;
-                "
-            >
-                股票搜尋
-            </div>
-        </template>
         <template #description>
-            <div style="display: flex; flex-direction: column; height: 100%; min-height: 60vh">
-                <div style="flex: 1 1 auto">
-                    <div>
-                        <Search
-                            ref="searchInputRef"
-                            v-model="localSearch"
-                            placeholder="請輸入股票名稱或代碼"
-                            action-text=""
-                            style="--van-search-input-height: 48px; font-size: 18px"
-                            @search="onSearch"
-                        />
+            <div style="display: flex; flex-direction: column; gap: 0;">
+                <Search
+                    ref="searchInputRef"
+                    v-model="localSearch"
+                    placeholder="請輸入股票名稱或代碼"
+                    action-text=""
+                    style="--van-search-input-height: 48px; font-size: 18px"
+                    @search="onSearch"
+                />
+                <div style="margin: 16px 0 0 0">
+                    <div
+                        style="
+                            font-size: 16px;
+                            color: #222;
+                            font-weight: bold;
+                            letter-spacing: 1px;
+                            margin-bottom: 8px;
+                            margin-left: 8px;
+                            text-align: left;
+                        "
+                    >
+                        | 熱門股票
                     </div>
-                    <div>
-                        <div style="display: flex; align-items: center; margin: 0 0 10px 0">
+                <div
+                    style="
+                        display: flex;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                        justify-content: center;
+                        margin-bottom: 24px;
+                    "
+                >
+                    <span
+                        v-for="tag in hotStocks"
+                        :key="tag"
+                        @click="onHotTagClick(tag)"
+                        :style="getTagStyle(tag)"
+                        >{{ tag }}</span
+                    >
+                </div>
+                <!-- 搜尋結果卡片區塊 -->
+                <div v-if="localSearch && localSearch.length >= 1" style="margin-top: 12px">
+                    <div v-if="searchResults.length">
+                        <template v-for="item in searchResults" :key="item.id">
+                            <!-- 已新增的股票 - 保持原樣 -->
                             <div
+                                v-if="userStockListStore.isStockInList(item.id)"
                                 style="
-                                    margin-left: 16px;
-                                    font-size: 16px;
-                                    color: #222;
-                                    font-weight: bold;
-                                    letter-spacing: 1px;
+                                    background: #d3d3d3;
+                                    border-radius: 12px;
+                                    box-shadow: 0 2px 8px #0001;
+                                    padding: 10px;
+                                    margin-bottom: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    min-height: 56px;
+                                    opacity: 0.6;
                                 "
                             >
-                                | 熱門股票
+                                <div
+                                    style="
+                                        font-size: 17px;
+                                        font-weight: bold;
+                                        color: #222;
+                                        margin-right: 16px;
+                                        min-width: 60px;
+                                    "
+                                >
+                                    {{ item.id }}
+                                </div>
+                                <div style="font-size: 16px; color: #333; flex: 1">
+                                    {{ item.name }}
+                                </div>
+                                <div
+                                    style="
+                                        margin-left: 12px;
+                                        min-width: 60px;
+                                        height: 40px;
+                                        background: #e0e0e0;
+                                        color: #666;
+                                        font-weight: bold;
+                                        font-size: 16px;
+                                        border-radius: 8px;
+                                        width: 64px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    "
+                                >
+                                    已新增
+                                </div>
                             </div>
-                        </div>
-                        <div
-                            style="
-                                display: flex;
-                                gap: 8px;
-                                flex-wrap: wrap;
-                                justify-content: center;
-                                margin-bottom: 24px;
-                            "
-                        >
-                            <span
-                                v-for="tag in hotStocks"
-                                :key="tag"
-                                @click="onHotTagClick(tag)"
-                                :style="getTagStyle(tag)"
-                                >{{ tag }}</span
-                            >
-                        </div>
-                        <!-- 搜尋結果卡片區塊 -->
-                        <div v-if="localSearch && localSearch.length >= 1" style="margin-top: 12px">
-                            <div v-if="searchResults.length">
-                                <template v-for="item in searchResults" :key="item.id">
-                                    <!-- 已新增的股票 - 保持原樣 -->
-                                    <div
-                                        v-if="userStockListStore.isStockInList(item.id)"
-                                        style="
-                                            background: #d3d3d3;
-                                            border-radius: 12px;
-                                            box-shadow: 0 2px 8px #0001;
-                                            padding: 10px;
-                                            margin-bottom: 12px;
-                                            display: flex;
-                                            align-items: center;
-                                            min-height: 56px;
-                                            opacity: 0.6;
-                                        "
-                                    >
-                                        <div
-                                            style="
-                                                font-size: 17px;
-                                                font-weight: bold;
-                                                color: #222;
-                                                margin-right: 16px;
-                                                min-width: 60px;
-                                            "
-                                        >
-                                            {{ item.id }}
-                                        </div>
-                                        <div style="font-size: 16px; color: #333; flex: 1">
-                                            {{ item.name }}
-                                        </div>
-                                        <div
-                                            style="
-                                                margin-left: 12px;
-                                                min-width: 60px;
-                                                height: 40px;
-                                                background: #e0e0e0;
-                                                color: #666;
-                                                font-weight: bold;
-                                                font-size: 16px;
-                                                border-radius: 8px;
-                                                width: 64px;
-                                                display: flex;
-                                                align-items: center;
-                                                justify-content: center;
-                                            "
-                                        >
-                                            已新增
-                                        </div>
-                                    </div>
 
-                                    <!-- 未新增的股票 - 整列可點擊 -->
-                                    <div
-                                        v-else
-                                        @click="onAddStock(item)"
-                                        style="
-                                            background: #fff;
-                                            border-radius: 12px;
-                                            box-shadow: 0 2px 8px #0001;
-                                            padding: 10px;
-                                            margin-bottom: 12px;
-                                            display: flex;
-                                            align-items: center;
-                                            min-height: 56px;
-                                            cursor: pointer;
-                                            transition: all 0.2s ease;
-                                        "
-                                        @mouseenter="
-                                            $event => ($event.target.style.background = '#eff3f6')
-                                        "
-                                        @mouseleave="
-                                            $event => ($event.target.style.background = '#fff')
-                                        "
-                                    >
-                                        <div
-                                            style="
-                                                font-size: 17px;
-                                                font-weight: bold;
-                                                color: #222;
-                                                margin-right: 16px;
-                                                min-width: 60px;
-                                            "
-                                        >
-                                            {{ item.id }}
-                                        </div>
-                                        <div style="font-size: 16px; color: #333; flex: 1">
-                                            {{ item.name }}
-                                        </div>
-                                    </div>
-                                </template>
+                            <!-- 未新增的股票 - 整列可點擊 -->
+                            <div
+                                v-else
+                                @click="onAddStock(item)"
+                                style="
+                                    background: #fff;
+                                    border-radius: 12px;
+                                    box-shadow: 0 2px 8px #0001;
+                                    padding: 10px;
+                                    margin-bottom: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    min-height: 56px;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+                                "
+                                @mouseenter="$event => ($event.target.style.background = '#eff3f6')"
+                                @mouseleave="$event => ($event.target.style.background = '#fff')"
+                            >
+                                <div
+                                    style="
+                                        font-size: 17px;
+                                        font-weight: bold;
+                                        color: #222;
+                                        margin-right: 16px;
+                                        min-width: 60px;
+                                    "
+                                >
+                                    {{ item.id }}
+                                </div>
+                                <div style="font-size: 16px; color: #333; flex: 1">
+                                    {{ item.name }}
+                                </div>
                             </div>
-                            <div v-else style="color: #999; text-align: center; margin-top: 16px">
-                                查無資料
-                            </div>
-                        </div>
+                        </template>
+                    </div>
+                    <div v-else style="color: #999; text-align: center; margin-top: 16px">
+                        查無資料
                     </div>
                 </div>
             </div>
+            </div>
         </template>
-    </ShareSheet>
+    </ActionSheet>
 </template>
 
 <script setup>
     import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-    import { ShareSheet, Search, Button, showToast } from 'vant';
+    import { ShareSheet, Search, ActionSheet, Button, showToast } from 'vant';
     import { getAllStocks } from '@/services/all-stocks-service';
     import { useEventBus } from '@vueuse/core';
     import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
