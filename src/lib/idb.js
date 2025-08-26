@@ -33,6 +33,8 @@ export async function getAllFromStore(storeName) {
 
 // 清除資料
 export async function clearStore(storeName) {
+    console.log("storeName", storeName);
+    
     const db = await getDB();
     const tx = db.transaction(storeName, 'readwrite');
     await tx.objectStore(storeName).clear();
@@ -47,6 +49,25 @@ export async function getFromStore(storeName, id) {
 export async function putToStore(storeName, data) {
     const db = await getDB();
     return db.put(storeName, data);
+}
+
+// 批次寫入多筆資料
+export async function putListToStore(storeName, dataList) {
+    console.log("123");
+    
+    const db = await getDB();
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    console.log("456");
+    console.log("dataList", dataList);
+    
+    await store.clear();
+    for (const data of dataList) {
+        console.log("data", data);
+        
+        store.put(data);
+    }
+    await tx.done;
 }
 
 export async function deleteFromStore(storeName, id) {

@@ -9,6 +9,7 @@ import {
     clearUserStockInfo,
     deleteUserStockInfo,
     putUserStockInfo,
+    putUserStockInfoList,
 } from '@/services/user-stock-info-service';
 import { getAllStocksById, putAllStocks } from '@/services/all-stocks-service';
 
@@ -370,6 +371,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
      */
     async function reorderStockList(newOrder) {
         userStockList.value = newOrder;
+        console.log("000");
         await saveStockListToIndexedDB();
     }
 
@@ -378,19 +380,24 @@ export const useUserStockListStore = defineStore('userStockList', () => {
      */
     async function saveStockListToIndexedDB() {
         try {
-            await clearUserStockInfo();
-            for (const stock of userStockList.value) {
-                // 只存純資料欄位
-                const d = JSON.parse(JSON.stringify(stock));
-                // const info = {
-                //     id: stock.id,
-                //     name: stock.name,
-                //     industryCategory: Array.from(stock.industryCategory || []),
-                //     type: stock.type,
-                //     addedAt: stock.addedAt,
-                // };
-                await putUserStockInfo(d);
-            }
+            console.log("111");
+            
+            const pureList = userStockList.value.map(stock => JSON.parse(JSON.stringify(stock)));
+            console.log("pureList", pureList);
+            
+            await putUserStockInfoList(pureList);
+            // for (const stock of userStockList.value) {
+            //     // 只存純資料欄位
+            //     const d = JSON.parse(JSON.stringify(stock));
+            //     // const info = {
+            //     //     id: stock.id,
+            //     //     name: stock.name,
+            //     //     industryCategory: Array.from(stock.industryCategory || []),
+            //     //     type: stock.type,
+            //     //     addedAt: stock.addedAt,
+            //     // };
+            //     await putUserStockInfo(d);
+            // }
         } catch (error) {
             console.error('儲存股票排序失敗:', error);
         }

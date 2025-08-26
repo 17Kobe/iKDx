@@ -2,7 +2,7 @@
  * user-stock-info 資料表專用 service
  * 集中所有 user-stock-info CRUD 操作
  */
-import { getAllFromStore, putToStore, deleteFromStore, clearStore } from '@/lib/idb';
+import { getAllFromStore, putToStore, putListToStore, deleteFromStore, clearStore } from '@/lib/idb';
 
 /**
  * 取得所有 user-stock-info 資料
@@ -18,6 +18,11 @@ export async function getUserStockInfo() {
  */
 export async function putUserStockInfo(info) {
     return await putToStore('user-stock-info', info);
+}
+
+export async function putUserStockInfoList(stockList) {
+    // 使用 idb 批次寫入工具
+    return await putListToStore('user-stock-info', stockList);
 }
 
 /**
