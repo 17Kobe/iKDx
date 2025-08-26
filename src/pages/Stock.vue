@@ -106,7 +106,19 @@
                     justify-content: center;
                 "
             >
-                <Icon name="plus" size="22" color="#322b0d" style="margin-bottom: 2px" />
+                <!-- 以 SVG 取代 Icon 組件 -->
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22px"
+                    height="22px"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        fill="#322b0d"
+                        fill-rule="evenodd"
+                        d="M13 13v7a1 1 0 0 1-2 0v-7H4a1 1 0 0 1 0-2h7V4a1 1 0 0 1 2 0v7h7a1 1 0 0 1 0 2z"
+                    />
+                </svg>
                 <span class="bubble-label" style="color: #322b0d; font-size: 14px">新增</span>
             </div>
         </FloatingBubble>
@@ -133,7 +145,6 @@
         SwipeItem,
         SwipeCell,
         Button,
-        Icon,
         ActionSheet,
         showToast,
     } from 'vant';
