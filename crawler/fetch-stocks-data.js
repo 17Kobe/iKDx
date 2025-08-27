@@ -12,7 +12,7 @@ async function main() {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const rootDir = resolve(__dirname, '../../');
     const stocksData = JSON.parse(
-        fs.readFileSync(resolve(rootDir, 'public/stocks/stock_list.json'), 'utf8')
+        fs.readFileSync(resolve(rootDir, 'public/data/stock_list.json'), 'utf8')
     );
     // 僅處理指定 id 的股票
     const targetIds = [

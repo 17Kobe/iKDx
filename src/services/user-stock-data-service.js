@@ -62,7 +62,7 @@ async function getUserStockDataById(stockCode) {
 export async function fetchStockPriceByLastDate(stockId, prevLastPriceDate) {
     try {
         console.log(`開始抓取股票 ${stockId} 的資料...`);
-        const response = await axios.get(`stocks/${stockId}/all.json`);
+        const response = await axios.get(`data/${stockId}/all.json`);
 
         if (response.data) {
             // 過濾日期大於 prevLastPriceDate 的資料

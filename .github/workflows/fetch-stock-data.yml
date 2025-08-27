@@ -1,5 +1,5 @@
 name: Fetch Stock Data
-# 每週一到五台灣時間下午1點40分，抓股票清單及各股股價，儲存至 public/stocks/stock_list.json 及 public/stocks/2330/all.json
+# 每週一到五台灣時間下午1點40分，抓股票清單及各股股價，儲存至 public/data/stock_list.json 及 public/data/2330/all.json
 on:
     schedule:
         - cron: '35 5 * * 1-5' # 每週一到五台灣時間下午1點40分 (UTC+8, 所以是UTC 5:40)
@@ -29,8 +29,8 @@ jobs:
               run: |
                   git config --global user.name 'github-actions'
                   git config --global user.email 'github-actions@github.com'
-                  git add public/stocks/stock_list.json
-                  git add public/stocks/*/*.json
+                  git add public/data/stock_list.json
+                  git add public/data/*/*.json
                   git add public/data/global.json
                   git commit -m 'Update stock data - $(date +"%Y-%m-%d %H:%M")' || echo "No changes to commit"
                   git push

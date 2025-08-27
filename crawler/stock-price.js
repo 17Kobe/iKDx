@@ -4,14 +4,14 @@ import { resolve } from 'path';
 import dayjs from 'dayjs';
 
 /**
- * 取得單一股票歷史與當日價格，寫入 public/stocks/{id}/all.json
+ * 取得單一股票歷史與當日價格，寫入 public/data/{id}/all.json
  * 若無歷史檔案則先抓 FinMind，若已有則只補今日收盤價
  * @param {Object} stock - 股票物件，需有 id, name
  */
 export async function fetchStockPrice(stock) {
     const logs = [];
     const rootDir = process.cwd();
-    const stockDir = resolve(rootDir, 'public/stocks', stock.id);
+    const stockDir = resolve(rootDir, 'public/data', stock.id);
     const allJsonPath = resolve(stockDir, 'all.json');
 
     // 確保目錄存在

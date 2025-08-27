@@ -13,7 +13,7 @@ export async function getAllStocks() {
         return localDb;
     } else {
         console.log('all-stocks store 無資料，開始從 stock_list.json 獲取');
-        const res = await axios.get('stocks/stock_list.json');
+        const res = await axios.get('data/stock_list.json');
         const stocks = res.data;
         for (const stock of stocks) {
             await putToStore('all-stocks', stock);

@@ -1,4 +1,4 @@
-// 取得台股股票清單，並寫入 public/stocks/stock_list.json
+// 取得台股股票清單，並寫入 public/data/stock_list.json
 // 使用 axios 取得 FinMind API，並轉換格式
 import axios from 'axios';
 import { promises as fs } from 'fs';
@@ -28,12 +28,12 @@ export async function fetchStockList() {
         industryCategory: _.uniq(group.map(i => i.industry_category)),
         type: group[0].type,
     }));
-    // 寫入 public/stocks/stock_list.json
-    // 目前 stock-list.js 的邏輯是每次執行都會將最新取得的股票清單「全部覆寫」寫入 public/stocks/stock_list.json，不會保留舊資料。這樣可確保 stock_list.json 內容永遠是最新的全量清單
+    // 寫入 public/data/stock_list.json
+    // 目前 stock-list.js 的邏輯是每次執行都會將最新取得的股票清單「全部覆寫」寫入 public/data/stock_list.json，不會保留舊資料。這樣可確保 stock_list.json 內容永遠是最新的全量清單
     const __dirname = dirname(fileURLToPath(import.meta.url));
     const rootDir = resolve(__dirname, '../../');
-    const outPath = resolve(rootDir, 'public/stocks/stock_list.json');
-    await fs.mkdir(resolve(rootDir, 'public/stocks'), { recursive: true });
+    const outPath = resolve(rootDir, 'public/data/stock_list.json');
+    await fs.mkdir(resolve(rootDir, 'public/data'), { recursive: true });
     await fs.writeFile(outPath, JSON.stringify(stocks, null, 4), 'utf8');
     console.log('股票清單已寫入 stock_list.json');
 }
