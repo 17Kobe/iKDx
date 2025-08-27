@@ -11,7 +11,10 @@ export async function initDB() {
                 // 第一版包含 all-stocks、user-stock-info、user-stock-data
                 if (oldVersion < 1) {
                     db.createObjectStore('all-stocks', { keyPath: 'id' });
-                    db.createObjectStore('user-stock-info', { keyPath: 'id' });
+                    // 建立 user-stock-info 並加 orderIndex
+                    const store = db.createObjectStore('user-stock-info', { keyPath: 'id' });
+                    store.createIndex('orderIndex', 'order');
+
                     db.createObjectStore('user-stock-data', { keyPath: 'id' });
                 }
             },
@@ -29,6 +32,26 @@ export function getDB() {
 export async function getAllFromStore(storeName) {
     const localDb = await getDB();
     return localDb.getAll(storeName);
+}
+
+// 取得所有資料並依 order 排序（針對有 orderIndex 的 store）
+export async function getAllFromStoreOrdered(storeName) {
+    const localDb = await getDB();
+    const tx = localDb.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    
+    // 檢查是否有 orderIndex
+    if (store.indexNames.contains('orderIndex')) {
+        const index = store.index('orderIndex');
+        const result = await index.getAll();
+        await tx.done;
+        return result;
+    } else {
+        // 沒有 orderIndex，使用一般 getAll
+        const result = await store.getAll();
+        await tx.done;
+        return result;
+    }
 }
 
 // 清除資料

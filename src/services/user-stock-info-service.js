@@ -2,14 +2,14 @@
  * user-stock-info 資料表專用 service
  * 集中所有 user-stock-info CRUD 操作
  */
-import { getAllFromStore, putToStore, putListToStore, deleteFromStore, clearStore } from '@/lib/idb';
+import { getAllFromStore, getAllFromStoreOrdered, putToStore, putListToStore, deleteFromStore, clearStore } from '@/lib/idb';
 
 /**
- * 取得所有 user-stock-info 資料
+ * 取得所有 user-stock-info 資料（依 order 排序）
  * @returns {Promise<Array>} 股票清單
  */
 export async function getUserStockInfo() {
-    return await getAllFromStore('user-stock-info');
+    return await getAllFromStoreOrdered('user-stock-info');
 }
 
 /**

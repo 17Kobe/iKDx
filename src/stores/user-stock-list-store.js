@@ -312,11 +312,20 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             return { success: false, message: '股票已存在於清單中' };
         }
 
-        // newStock，保留原本 stock 物件內容，但 industryCategory 要從 proxy(array) -> array，擴增 addedAt 欄位
+        // 計算新股票的 order 值（間隔排序法）
+        let newOrder = 1000; // 預設值
+        if (userStockList.value.length > 0) {
+            // 找到最大的 order 值，新增的股票放在最後
+            const maxOrder = Math.max(...userStockList.value.map(s => s.order || 0));
+            newOrder = maxOrder + 1000; // 間隔 1000，方便後續插入
+        }
+
+        // newStock，保留原本 stock 物件內容，但 industryCategory 要從 proxy(array) -> array，擴增 addedAt 和 order 欄位
         const newStock = {
             ...stock,
             industryCategory: Array.from(stock.industryCategory || []), // industryCategory 從 stock 取出，然後不支援響應
             addedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            order: newOrder,
         };
 
         console.log('新增股票到 Pinia store:', newStock);
@@ -366,13 +375,52 @@ export const useUserStockListStore = defineStore('userStockList', () => {
     }
 
     /**
+     * 重新排序單支股票（支援拖拽排序）
+     * @param {string} stockId - 股票代碼
+     * @param {number} newOrder - 新的 order 值
+     */
+    async function updateSingleStockOrder(stockId, newOrder) {
+        // 找到該股票並更新 order
+        const stock = userStockList.value.find(s => s.id === stockId);
+        if (stock) {
+            stock.order = newOrder;
+            
+            // 重新排序 Pinia 列表
+            userStockList.value.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            // 只更新這支股票到 IndexedDB
+            try {
+                const d = JSON.parse(JSON.stringify(stock));
+                await putUserStockInfo(d);
+                console.log(`股票 ${stockId} 排序已更新, order: ${newOrder}`);
+            } catch (error) {
+                console.error(`儲存股票 ${stockId} 排序失敗:`, error);
+            }
+        }
+    }
+
+    /**
      * 重新排序股票列表（支援拖拽排序）
      * @param {Array} newOrder - 重新排序後的股票陣列
      */
-    async function reorderStockList(newOrder) {
+    async function updateStockList(newOrder) {
+        // 重新計算 order 值（間隔排序法）
+        newOrder.forEach((stock, index) => {
+            stock.order = (index + 1) * 1000; // 每個間隔 1000
+        });
+        
         userStockList.value = newOrder;
         console.log("000");
-        await saveStockListToIndexedDB();
+        
+        // 直接逐筆更新，不需要清空重建
+        try {
+            for (const stock of userStockList.value) {
+                const d = JSON.parse(JSON.stringify(stock));
+                await putUserStockInfo(d);
+            }
+        } catch (error) {
+            console.error('儲存股票排序失敗:', error);
+        }
     }
 
     /**
@@ -434,7 +482,8 @@ export const useUserStockListStore = defineStore('userStockList', () => {
         addStockToList,
         removeStockFromList,
         isStockInList,
-        reorderStockList,
+        updateStockList,
+        updateSingleStockOrder,
         loadStockToList,
         saveStockToList,
         updateStockListPrices,

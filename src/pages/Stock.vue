@@ -9,6 +9,7 @@
             ghost-class="stock-row-ghost"
             @start="onDragStart"
             @end="onDragEnd"
+            @change="onDragChange"
         >
             <template #item="{ element: stock, index }">
                 <div class="stock-row" @contextmenu.prevent>
@@ -187,11 +188,90 @@
         get() {
             return userStockListStore.userStockList;
         },
-        set(newList) {
-            // 支援拖拽排序功能
-            userStockListStore.reorderStockList(newList);
-        },
+        set() {
+            // 空的 setter，實際處理在 onDragChange
+        }
     });
+
+    // 拖曳變更事件
+    function onDragChange(evt) {
+        if (evt.moved) {
+            const { element: movedStock, newIndex, oldIndex } = evt.moved;
+            console.log('[onDragChange] 事件', {
+                movedStock,
+                newIndex,
+                oldIndex,
+                evt,
+                userStockList: userStockListStore.userStockList.map(s => ({ id: s.id, order: s.order }))
+            });
+            // 獲取拖曳前的原始列表順序（排除被移動的股票）
+            const originalList = userStockListStore.userStockList.filter(s => s.id !== movedStock.id);
+            // 計算新的 order 值（保持間隔排序法原則）
+            let newOrder;
+            if (newIndex === 0) {
+                // 移到第一位：取 0 與第一位 order 的中間值
+                const firstOrder = originalList[0]?.order || 2000;
+                newOrder = Math.floor(firstOrder / 2);
+                // 若間隔太小，觸發重新排序
+                if (firstOrder < 100) {
+                    console.log('[onDragChange] 第一位間隔太小，觸發重新排序', {
+                        movedStock,
+                        firstOrder,
+                        newOrder,
+                        originalList: originalList.map(s => ({ id: s.id, order: s.order }))
+                    });
+                    userStockListStore.updateStockList(userStockListStore.userStockList);
+                    return;
+                }
+                console.log('[onDragChange] 移到第一位', {
+                    movedStock,
+                    firstOrder,
+                    newOrder,
+                    originalList: originalList.map(s => ({ id: s.id, order: s.order }))
+                });
+            } else if (newIndex === originalList.length) {
+                // 移到最後一位：保持 1000 間隔
+                const lastOrder = originalList[originalList.length - 1]?.order || 0;
+                newOrder = lastOrder + 1000;
+                console.log('[onDragChange] 移到最後一位', {
+                    movedStock,
+                    lastOrder,
+                    newOrder,
+                    originalList: originalList.map(s => ({ id: s.id, order: s.order }))
+                });
+            } else {
+                // 移到中間位置：在前後兩個股票的 order 之間
+                const prevOrder = originalList[newIndex - 1]?.order || 0;
+                const nextOrder = originalList[newIndex]?.order || (prevOrder + 2000);
+                const midOrder = Math.floor((prevOrder + nextOrder) / 2);
+                console.log('[onDragChange] 移到中間', {
+                    movedStock,
+                    prevOrder,
+                    nextOrder,
+                    midOrder,
+                    originalList: originalList.map(s => ({ id: s.id, order: s.order }))
+                });
+                // 如果間隔太小，重新分配所有股票的 order
+                if (nextOrder - prevOrder < 100) {
+                    console.log('[onDragChange] 間隔太小，觸發重新排序', {
+                        movedStock,
+                        prevOrder,
+                        nextOrder,
+                        originalList: originalList.map(s => ({ id: s.id, order: s.order }))
+                    });
+                    userStockListStore.updateStockList(userStockListStore.userStockList);
+                    return;
+                }
+                newOrder = midOrder;
+            }
+            // 只更新被移動的股票
+            console.log('[onDragChange] 最終更新', {
+                movedStock,
+                newOrder
+            });
+            userStockListStore.updateSingleStockOrder(movedStock.id, newOrder);
+        }
+    }
 
     // 浮動按鈕點擊
     function onBubbleClick() {
