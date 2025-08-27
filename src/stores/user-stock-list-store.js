@@ -401,15 +401,15 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
     /**
      * 重新排序股票列表（支援拖拽排序）
-     * @param {Array} newOrder - 重新排序後的股票陣列
+     * @param {Array} updateStockList - 重新排序後的股票陣列
      */
-    async function updateStockList(newOrder) {
+    async function updateStockList(updateStockList) {
         // 重新計算 order 值（間隔排序法）
-        newOrder.forEach((stock, index) => {
+        updateStockList.forEach((stock, index) => {
             stock.order = (index + 1) * 1000; // 每個間隔 1000
         });
         
-        userStockList.value = newOrder;
+        userStockList.value = updateStockList;
         console.log("000");
         
         // 直接逐筆更新，不需要清空重建
