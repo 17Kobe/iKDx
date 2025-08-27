@@ -20,7 +20,7 @@
 <script setup>
     import { useThemeStore } from '../stores/theme';
     import { RadioGroup, Radio } from 'vant';
-    import WorkerMonitor from '../components/WorkerMonitor.vue';
+    import WorkerMonitor from '../components/my/WorkerMonitor.vue';
 
     const themeStore = useThemeStore();
 </script>

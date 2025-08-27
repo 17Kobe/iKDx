@@ -149,9 +149,9 @@
         ActionSheet,
         showToast,
     } from 'vant';
-    import StockSearch from '@/components/StockSearch.vue';
-    import KdjChart from '@/components/KdjChart.vue';
-    import StockName from '@/components/StockName.vue';
+    import StockSearch from '@/components/stock/StockSearch.vue';
+    import KdjChart from '@/components/stock/KdjChart.vue';
+    import StockName from '@/components/stock/StockName.vue';
     import { useEventBus, useEventListener } from '@vueuse/core';
     import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
     import draggable from 'vuedraggable/src/vuedraggable';

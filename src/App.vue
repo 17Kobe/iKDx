@@ -155,7 +155,7 @@
     const active = ref(0);
     const firstLoad = ref(true);
 
-    const tabRoutes = ['/', '/dividend', '/asset', '/my'];
+    const tabRoutes = ['/', '/profit', '/asset', '/my'];
 
     const isDark = usePreferredDark();
 

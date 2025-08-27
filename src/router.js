@@ -8,9 +8,9 @@ const routes = [
         component: () => import('./pages/Stock.vue'),
     },
     {
-        path: '/dividend',
-        name: 'dividend',
-        component: () => import('./pages/Dividend.vue'),
+        path: '/profit',
+        name: 'profit',
+        component: () => import('./pages/Profit.vue'),
     },
     {
         path: '/asset',
