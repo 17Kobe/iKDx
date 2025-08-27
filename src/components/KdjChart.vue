@@ -44,34 +44,45 @@
             const { ctx, chartArea } = chart;
             const { lastKdj } = options;
 
-            // 設定 KD 值顯示位置（右下角）
-            const x = chartArea.right - 75;
-            const y = chartArea.bottom - 15;
+            // 計算 0 軸位置
+            const yScale = chart.scales.y;
+            const zeroY = yScale.getPixelForValue(0);
+            
+            // 設定 KD 值顯示位置（右下角，0 軸以下，向左移動確保有足夠空間顯示完整數字）
+            const xStart = chartArea.right - 97;  // 從85改為100，向左移動15像素
+            const yK = zeroY + 15; // K 值位置
+            const yD = zeroY + 30; // D 值位置，確保不重疊
 
-            // 繪製背景
+            // 繪製文字（不要外框）
             ctx.save();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.lineWidth = 1;
-
-            // 使用 fillRect 和 strokeRect 替代 roundRect（相容性更好）
-            const rectX = x - 5;
-            const rectY = y - 12;
-            const rectWidth = 70;
-            const rectHeight = 20;
-
-            ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
-            ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-
+            
+            // 調試信息
+            console.log('Drawing KDJ values:', { 
+                k: lastKdj.k, 
+                d: lastKdj.d,
+                xStart,
+                yK,
+                yD,
+                zeroY,
+                chartArea
+            });
+            
             // 繪製 K 值
-            ctx.font = 'bold 11px Arial';
+            ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = '#4286f5';
-            ctx.fillText(`K: ${lastKdj.k}`, x, y);
+            const kText = `K: ${lastKdj.k}`;
+            ctx.fillText(kText, xStart, yK);
 
-            // 繪製 D 值
+            // 計算 K 值文字寬度，讓 D 值緊接在後面同一行
+            const kTextWidth = ctx.measureText(kText).width;
+            
+            // 繪製 D 值在同一行，K 值後面
             ctx.fillStyle = '#e75c9a';
-            ctx.fillText(`D: ${lastKdj.d}`, x + 35, y);
+            const dText = ` D: ${lastKdj.d}`;  // 前面加個空格分隔
+            const dXPosition = xStart + kTextWidth;
+            console.log('Drawing D value:', dText, 'at same line position:', dXPosition, yK);
+            ctx.fillText(dText, dXPosition, yK);
 
             ctx.restore();
         },
@@ -270,7 +281,7 @@
                     type: 'linear',
                     position: 'right',
                     display: true,
-                    min: 0,
+                    min: -20,
                     max: 100,
                     border: { display: false },
                     grid: {
@@ -333,13 +344,16 @@
                 console.log('Click position:', { x, y });
                 console.log('Canvas rect:', rect);
 
-                // 判斷點擊位置是否在右下角 KD 值區域
+                // 判斷點擊位置是否在右下角 KD 值區域（0 軸以下，同一行）
                 const chartArea = chart.chartArea;
+                const yScale = chart.scales.y;
+                const zeroY = yScale.getPixelForValue(0);
+                
                 const kdjArea = {
-                    left: chartArea.right - 80,
+                    left: chartArea.right - 120,  // 調整對應新的xStart位置 (100 + 35預留空間)
                     right: chartArea.right - 5,
-                    top: chartArea.bottom - 25,
-                    bottom: chartArea.bottom - 5,
+                    top: zeroY + 5,
+                    bottom: zeroY + 20,  // 減少高度因為只有一行
                 };
 
                 console.log('KDJ area:', kdjArea);
