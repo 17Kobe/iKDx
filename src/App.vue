@@ -78,7 +78,7 @@
                         />
                         <!-- 圓餅分割區塊（同步放大並下移） -->
                         <path
-                            :fill="active === 2 ? '#fff' : 'none'"
+                            :fill="active === 2 ? '#fae54c' : 'none'"
                             stroke= '#959698'
                             stroke-width="1"
                             d="M12,13 L12,4 A9,9 0 0,1 21,13 Z"
