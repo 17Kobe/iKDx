@@ -261,6 +261,24 @@ self.onmessage = async function (event) {
     try {
         if (workerMethods[method]) {
             const result = await workerMethods[method](params);
+            // result = {
+            //     success: true, // 是否成功
+            //     stockId: '股票代碼',
+            //     weekly: [      // 週線資料，最多26筆
+            //         [date, open, high, low, close, tradingVolume],
+            //         // ...
+            //     ],
+            //     weeklyKdj: [   // 週線KD資料，最多26筆
+            //         [date, K, D, J],
+            //         // ...
+            //     ],
+            //     weeklyRsi: [   // 週線RSI資料，最多26筆
+            //         [date, rsi],
+            //         // ...
+            //     ],
+            //     processedAt: '2025-08-27T12:34:56.789Z', // 處理完成時間
+            // }
+
             self.postMessage({
                 messageId,
                 result,
