@@ -180,7 +180,7 @@ function calcWeeklyRsi(weeklyData) {
 
 // Worker 方法映射
 const workerMethods = {
-    processPolicy: async function (params) {
+    calcPolicy: async function (params) {
         try {
             const { stockId, type, newDailyData, ...options } = params;
 

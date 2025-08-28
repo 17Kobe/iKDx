@@ -5,7 +5,7 @@
 
 // Worker 方法映射
 const workerMethods = {
-    calculateTrade: async function(params) {
+    calcTrade: async function(params) {
         try {
             const { stockData, tradeParams } = params;
             

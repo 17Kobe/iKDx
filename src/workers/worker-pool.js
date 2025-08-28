@@ -6,7 +6,7 @@
 export class WorkerPool {
     constructor(workerFactory, maxWorkers = navigator.hardwareConcurrency || 4) {
         this.workerFactory = workerFactory; // Worker 工廠函數
-        this.maxWorkers = Math.min(maxWorkers, 8); // iOS 限制最多8個
+        this.maxWorkers = maxWorkers; // iOS  Math.min(maxWorkers, 8);限制最多8個
         this.workers = [];
         this.availableWorkers = [];
         this.queue = [];

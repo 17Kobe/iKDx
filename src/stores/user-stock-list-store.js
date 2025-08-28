@@ -29,10 +29,16 @@ const createTrendWorker = () =>
         type: 'module',
     });
 
+// 取得 CPU 核心數，預設至少 2
+console.log(navigator.hardwareConcurrency);
+
+const maxWorkers = Math.max(2, navigator.hardwareConcurrency || 4);
+const halfWorkers = Math.max(1, Math.floor(maxWorkers / 2));
+
 // 初始化原生 Worker Pools
-const policyPool = workerPoolManager.getPool('policy', createPolicyWorker, 4);
-const tradePool = workerPoolManager.getPool('trade', createTradeWorker, 4);
-const trendPool = workerPoolManager.getPool('trend', createTrendWorker, 4);
+const policyPool = workerPoolManager.getPool('policy', createPolicyWorker, halfWorkers);
+const tradePool = workerPoolManager.getPool('trade', createTradeWorker, halfWorkers);
+const trendPool = workerPoolManager.getPool('trend', createTrendWorker, maxWorkers);
 
 // 開啟 Worker Pool 狀態監控（開發時使用）
 if (import.meta.env.DEV) {
@@ -228,12 +234,12 @@ export const useUserStockListStore = defineStore('userStockList', () => {
 
             // Step 1 & 2: 週線技術指標和政策報酬率平行計算
             const [policyResult, tradeResult] = await Promise.all([
-                policyPool.executeTask('processPolicy', {
+                policyPool.executeTask('calcPolicy', {
                     newDailyData: newPriceData.newDailyData || [],
                     stockId,
                     type: 'priceChange',
                 }),
-                tradePool.executeTask('calculateTrade', {
+                tradePool.executeTask('calcTrade', {
                     stockData: newPriceData.newDailyData || [],
                     tradeParams: {},
                 }),
@@ -249,7 +255,7 @@ export const useUserStockListStore = defineStore('userStockList', () => {
             });
 
             // Step 3: 使用前兩步的結果計算訊號位置
-            const signalResult = await trendPool.executeTask('calculateTrend', {
+            const signalResult = await trendPool.executeTask('calcTrend', {
                 stockData: newPriceData.newDailyData || [],
                 trendParams: {
                     policyResult,

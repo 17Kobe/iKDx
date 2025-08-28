@@ -49,7 +49,7 @@ function calculateBollingerBands(stockData, period = 20, stdDev = 2) {
 
 // Worker 方法映射
 const workerMethods = {
-    calculateTrend: async function(params) {
+    calcTrend: async function(params) {
         try {
             const { stockData, trendParams = {} } = params;
             
