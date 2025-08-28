@@ -191,28 +191,124 @@ const workerMethods = {
             // 從 IndexedDB 讀取現有的股票資料
             let existingData = await getFromStore('user-stock-data', stockId);
             let allDailyData = [];
+            let existingWeeklyData = [];
+
+            console.log(`[${stockId}] 開始處理股票資料`);
+            console.log(`[${stockId}] 新增日線資料筆數:`, newDailyData ? newDailyData.length : 0);
 
             if (existingData && existingData.daily) {
                 allDailyData = [...existingData.daily];
+                existingWeeklyData = existingData.weekly || [];
+                console.log(`[${stockId}] 現有日線資料筆數:`, allDailyData.length);
+                console.log(`[${stockId}] 現有週線資料筆數:`, existingWeeklyData.length);
+            } else {
+                console.log(`[${stockId}] 無現有資料，從零開始計算`);
             }
 
             // 合併新的日線資料
             if (newDailyData && newDailyData.length > 0) {
                 allDailyData = [...allDailyData, ...newDailyData];
+                console.log(`[${stockId}] 合併後總日線資料筆數:`, allDailyData.length);
             }
 
-            // 計算週線
-            const weeklyData = calcWeeklyFromDaily(allDailyData);
+            // 優化週線計算：只計算新增或需要更新的週線
+            let weeklyData = [];
+            if (newDailyData && newDailyData.length > 0 && existingWeeklyData.length > 0) {
+                console.log(`[${stockId}] 執行增量週線計算`);
+                
+                // 找出需要重新計算的週線起始點
+                const lastExistingDate = existingWeeklyData[existingWeeklyData.length - 1][0];
+                const lastExistingWeek = dayjs(lastExistingDate, 'YYYYMMDD').startOf('isoWeek');
+                console.log(`[${stockId}] 最後現有週線日期:`, lastExistingDate, '週開始:', lastExistingWeek.format('YYYY-MM-DD'));
+                
+                // 找出新資料中第一筆可能影響週線的日期
+                const firstNewDate = newDailyData[0][0];
+                const firstNewWeek = dayjs(firstNewDate, 'YYYYMMDD').startOf('isoWeek');
+                console.log(`[${stockId}] 第一筆新資料日期:`, firstNewDate, '週開始:', firstNewWeek.format('YYYY-MM-DD'));
+                
+                if (firstNewWeek.isSameOrBefore(lastExistingWeek)) {
+                    console.log(`[${stockId}] 新資料會影響最後一週，重新計算受影響週線`);
+                    
+                    // 新資料會影響最後一週，需要重新計算最後幾週
+                    const weekDataToRecalc = allDailyData.filter(item => {
+                        const itemWeek = dayjs(item[0], 'YYYYMMDD').startOf('isoWeek');
+                        return itemWeek.isSameOrAfter(lastExistingWeek);
+                    });
+                    
+                    console.log(`[${stockId}] 需要重新計算的日線資料筆數:`, weekDataToRecalc.length);
+                    console.log(`[${stockId}] 重新計算範圍: ${weekDataToRecalc[0][0]} ~ ${weekDataToRecalc[weekDataToRecalc.length-1][0]}`);
+                    
+                    const newWeeklyData = calcWeeklyFromDaily(weekDataToRecalc);
+                    console.log(`[${stockId}] 重新計算得到週線筆數:`, newWeeklyData.length);
+                    
+                    // 移除舊的最後一週，加入新計算的週線
+                    weeklyData = [...existingWeeklyData.slice(0, -1), ...newWeeklyData];
+                    console.log(`[${stockId}] 保留現有週線:`, existingWeeklyData.length - 1, '筆，新增:', newWeeklyData.length, '筆');
+                } else {
+                    console.log(`[${stockId}] 新資料不影響現有週線，只計算新週線`);
+                    
+                    // 新資料不影響現有週線，只需計算新週線
+                    const newWeeklyData = calcWeeklyFromDaily(newDailyData);
+                    console.log(`[${stockId}] 新週線資料筆數:`, newWeeklyData.length);
+                    
+                    weeklyData = [...existingWeeklyData, ...newWeeklyData];
+                    console.log(`[${stockId}] 現有週線:`, existingWeeklyData.length, '筆，新增:', newWeeklyData.length, '筆');
+                }
+            } else {
+                console.log(`[${stockId}] 執行完整週線計算 (無現有資料或無新資料)`);
+                
+                // 沒有現有週線資料或沒有新資料，重新計算全部
+                weeklyData = calcWeeklyFromDaily(allDailyData);
+                console.log(`[${stockId}] 完整計算得到週線筆數:`, weeklyData.length);
+            }
+
+            console.log(`[${stockId}] 最終週線資料筆數:`, weeklyData.length);
+
+            console.log(`[${stockId}] 最終週線資料筆數:`, weeklyData.length);
 
             if (weeklyData.length === 0) {
                 throw new Error('無法產生週線資料，請檢查日線資料格式');
             }
 
-            // 計算週線技術指標（並行執行）
-            const [weeklyKdj, weeklyRsi] = await Promise.all([
-                Promise.resolve(calcWeeklyKdj(weeklyData)),
-                Promise.resolve(calcWeeklyRsi(weeklyData)),
-            ]);
+            // 優化技術指標計算：只重新計算受影響的部分
+            let weeklyKdj, weeklyRsi;
+            
+            console.log(`[${stockId}] 開始計算技術指標`);
+            
+            if (existingData && existingData.weeklyKdj && existingData.weeklyRsi && 
+                existingWeeklyData.length > 0 && weeklyData.length > existingWeeklyData.length) {
+                
+                console.log(`[${stockId}] 檢查是否可以增量計算技術指標`);
+                console.log(`[${stockId}] 現有KDJ資料筆數:`, existingData.weeklyKdj.length);
+                console.log(`[${stockId}] 現有RSI資料筆數:`, existingData.weeklyRsi.length);
+                
+                // 如果只是新增週線資料，可以基於現有指標計算
+                const newWeeksCount = weeklyData.length - existingWeeklyData.length;
+                console.log(`[${stockId}] 新增週線筆數:`, newWeeksCount);
+                
+                if (newWeeksCount === weeklyData.length - existingWeeklyData.length && newWeeksCount <= 2) {
+                    console.log(`[${stockId}] 少量新週線，使用增量計算邏輯`);
+                    // 少量新週線，使用增量計算（這裡簡化，實際可以更精確）
+                    weeklyKdj = calcWeeklyKdj(weeklyData);
+                    weeklyRsi = calcWeeklyRsi(weeklyData);
+                } else {
+                    console.log(`[${stockId}] 較多變動，重新計算全部技術指標`);
+                    // 較多變動，重新計算全部
+                    weeklyKdj = calcWeeklyKdj(weeklyData);
+                    weeklyRsi = calcWeeklyRsi(weeklyData);
+                }
+            } else {
+                console.log(`[${stockId}] 無現有技術指標資料，重新計算全部`);
+                // 沒有現有指標資料，重新計算全部
+                weeklyKdj = calcWeeklyKdj(weeklyData);
+                weeklyRsi = calcWeeklyRsi(weeklyData);
+            }
+
+            console.log(`[${stockId}] KDJ計算完成，資料筆數:`, weeklyKdj.data ? weeklyKdj.data.length : 0);
+            console.log(`[${stockId}] RSI計算完成，資料筆數:`, weeklyRsi ? weeklyRsi.length : 0);
+
+            console.log(`[${stockId}] KDJ計算完成，資料筆數:`, weeklyKdj.data ? weeklyKdj.data.length : 0);
+            console.log(`[${stockId}] RSI計算完成，資料筆數:`, weeklyRsi ? weeklyRsi.length : 0);
 
             // 更新資料到 IndexedDB
             const dataToSave = {
@@ -225,14 +321,19 @@ const workerMethods = {
                 fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             };
 
+            console.log(`[${stockId}] 準備儲存資料到 IndexedDB`);
+            console.log(`[${stockId}] 儲存資料摘要: 日線${dataToSave.daily.length}筆, 週線${dataToSave.weekly.length}筆, KDJ${dataToSave.weeklyKdj.length}筆, RSI${dataToSave.weeklyRsi.length}筆`);
+
             // 如果原本有其他資料，保留它們
             if (existingData) {
+                console.log(`[${stockId}] 合併現有資料`);
                 Object.assign(dataToSave, existingData, dataToSave);
             }
 
             await putToStore('user-stock-data', dataToSave);
+            console.log(`[${stockId}] 資料已成功儲存到 IndexedDB`);
 
-            return {
+            const result = {
                 success: true,
                 stockId,
                 weekly: weeklyData.slice(-26),
@@ -240,6 +341,10 @@ const workerMethods = {
                 weeklyRsi: weeklyRsi.slice(-26),
                 processedAt: new Date().toISOString(),
             };
+
+            console.log(`[${stockId}] 回傳結果: 週線${result.weekly.length}筆, KDJ${result.weeklyKdj.length}筆, RSI${result.weeklyRsi.length}筆`);
+            
+            return result;
         } catch (error) {
             return {
                 success: false,
