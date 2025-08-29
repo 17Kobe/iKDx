@@ -130,11 +130,9 @@
     import { useGlobalStore } from '@/stores/global-store.js';
     import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
     import axios from '@/lib/axios';
+
     // 取得 globalStore
     const globalStore = useGlobalStore();
-    // 取得 userStockListStore
-    const userStockListStore = useUserStockListStore();
-
     // 取得 CNN 指數資料
     async function fetchGlobal() {
         try {
@@ -145,6 +143,8 @@
         }
     }
 
+    // 取得 userStockListStore
+    const userStockListStore = useUserStockListStore();
     // 載入使用者股票清單
     async function loadUserStockList() {
         try {
@@ -153,7 +153,6 @@
             console.error('載入使用者股票清單失敗:', error);
         }
     }
-    // 移除 JS 動態高度，改用 CSS 100dvh
 
     // const { height } = useWindowSize();
     onMounted(() => {
@@ -285,16 +284,11 @@
     /* 自定義 Tabbar 高度 */
     .custom-tabbar {
         height: 60px !important;
-        border-top: 1px solid #ebedf0 !important;
         background: rgba(255, 255, 255, 0.97);
         box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
         z-index: 100;
     }
 
-    /* 讓 Tabbar 的 active item 也有透明度 */
-    .van-tabbar-item--active .tabbar-icon-wrap {
-        color: #fae54c !important;
-    }
     .van-tabbar-item--active .tabbar-icon-wrap span {
         color: #222 !important;
     }
