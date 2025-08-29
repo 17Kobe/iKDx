@@ -119,7 +119,62 @@ export async function fetchStockPrice(stock) {
     } else {
         logs.push(`跳過 ${stock.id} 今日資料更新，因歷史資料檔案無建立`);
     }
+
+    // 4. 生成並儲存期間資料檔案 (1, 5, 15, 30, 60天)
+    await generatePeriodFiles(stockDir, klineArr, stock.id, logs);
+
     return { id: stock.id, name: stock.name, logs };
+}
+
+/**
+ * 生成並儲存期間資料檔案
+ * @param {string} stockDir - 股票資料目錄
+ * @param {Array} klineArr - 完整的K線資料
+ * @param {string} stockId - 股票代碼
+ * @param {Array} logs - 日誌陣列
+ */
+async function generatePeriodFiles(stockDir, klineArr, stockId, logs) {
+    const periods = [1, 5, 15, 30, 60]; // 天數
+    const today = dayjs();
+
+    try {
+        // 1. 先刪除所有舊的期間檔案（保留 all.json）
+        const files = await fs.readdir(stockDir);
+        const datePattern = /^\d{8}\.json$/; // 匹配 YYYYMMDD.json 格式
+        
+        for (const file of files) {
+            if (datePattern.test(file)) {
+                const filePath = resolve(stockDir, file);
+                await fs.unlink(filePath);
+                logs.push(`刪除舊檔案: ${file}`);
+            }
+        }
+
+        // 2. 為每個期間生成新檔案
+        for (const days of periods) {
+            const startDate = today.subtract(days - 1, 'day'); // 包含今天，所以減1
+            const startDateStr = startDate.format('YYYYMMDD');
+            const startDateFormatted = startDate.format('YYYY-MM-DD');
+            
+            // 過濾出該期間的資料
+            const periodData = klineArr.filter(row => {
+                const rowDate = dayjs(row[0], 'YYYYMMDD').format('YYYY-MM-DD');
+                return rowDate >= startDateFormatted;
+            });
+
+            // 只有當有資料時才儲存檔案
+            if (periodData.length > 0) {
+                const fileName = `${startDateStr}.json`;
+                const filePath = resolve(stockDir, fileName);
+                await fs.writeFile(filePath, JSON.stringify(periodData), 'utf8');
+                logs.push(`✓ ${stockId} 已儲存 ${days}天期間資料: ${fileName} (${periodData.length} 筆)`);
+            } else {
+                logs.push(`⚠ ${stockId} ${days}天期間無資料，跳過檔案生成`);
+            }
+        }
+    } catch (error) {
+        logs.push(`✗ ${stockId} 生成期間檔案失敗: ${error.message}`);
+    }
 }
 
 /**
