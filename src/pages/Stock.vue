@@ -172,16 +172,6 @@
     const currentKdjData = ref(null);
     // ...已移除 PullRefresh 相關狀態...
 
-    onMounted(async () => {
-        try {
-            // await initDB();
-            // await ensureStoreExists('all-stocks');
-            // await ensureStoreExists('user-stocks');
-            userStockListStore.loadUserStockList();
-        } catch (error) {
-            console.error('初始化資料庫失敗:', error);
-        }
-    });
 
     // 計算屬性：取得使用者股票清單
     const stockList = computed({

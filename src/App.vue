@@ -128,9 +128,12 @@
     import { Tabbar, TabbarItem } from 'vant';
     import TabbarProgress from '@/components/TabbarProgress.vue';
     import { useGlobalStore } from '@/stores/global-store.js';
+    import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
     import axios from '@/lib/axios';
     // 取得 globalStore
     const globalStore = useGlobalStore();
+    // 取得 userStockListStore
+    const userStockListStore = useUserStockListStore();
 
     // 取得 CNN 指數資料
     async function fetchGlobal() {
@@ -141,11 +144,21 @@
             globalStore.reset();
         }
     }
+
+    // 載入使用者股票清單
+    async function loadUserStockList() {
+        try {
+            await userStockListStore.loadUserStockList();
+        } catch (error) {
+            console.error('載入使用者股票清單失敗:', error);
+        }
+    }
     // 移除 JS 動態高度，改用 CSS 100dvh
 
     // const { height } = useWindowSize();
     onMounted(() => {
         fetchGlobal();
+        loadUserStockList(); // 從 idb 載入到 pinia
     });
 
     import { usePreferredDark } from '@vueuse/core';

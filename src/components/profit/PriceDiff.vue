@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { Cell as VanCell, CellGroup as VanCellGroup } from 'vant';
 import { useUserStockListStore } from '../../stores/user-stock-list-store.js';
 import VantTable from '../VantTable.vue';
@@ -222,22 +222,6 @@ export default {
     const handleSortChange = (sortInfo) => {
       console.log('排序變化：', sortInfo);
     };
-
-    // 載入使用者股票清單
-    const loadData = async () => {
-      try {
-        loading.value = true;
-        await userStockListStore.loadUserStockList();
-      } catch (error) {
-        console.error('載入股票清單失敗：', error);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    onMounted(() => {
-      loadData();
-    });
 
     return {
       loading,
