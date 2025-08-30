@@ -1,27 +1,39 @@
 <template>
     <div class="my-page">
-        <div class="setting-list">
-            <!-- 主題設定 -->
-            <div class="setting-item" @click="showThemeSheet">
-                <div class="setting-left">
-                    <span class="setting-title">主題</span>
+        <Tabs 
+            v-model:active="activeTab" 
+            swipeable 
+            sticky
+            @change="onTabChange"
+            class="custom-tabs"
+        >
+            <Tab title="基本" name="basic">
+                <div class="tab-content">
+                    <div class="setting-list">
+                        <!-- 主題設定 -->
+                        <div class="setting-item" @click="showThemeSheet">
+                            <div class="setting-left">
+                                <span class="setting-title">主題</span>
+                            </div>
+                            <div class="setting-right">
+                                <span class="setting-value">{{ currentThemeLabel }}</span>
+                                <span class="arrow">></span>
+                            </div>
+                        </div>
+                        
+                        <!-- 開發者設定 -->
+                        <div class="setting-item" @click="showDeveloperSheet">
+                            <div class="setting-left">
+                                <span class="setting-title">開發者</span>
+                            </div>
+                            <div class="setting-right">
+                                <span class="arrow">></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="setting-right">
-                    <span class="setting-value">{{ currentThemeLabel }}</span>
-                    <span class="arrow">></span>
-                </div>
-            </div>
-            
-            <!-- 開發者設定 -->
-            <div class="setting-item" @click="showDeveloperSheet">
-                <div class="setting-left">
-                    <span class="setting-title">開發者</span>
-                </div>
-                <div class="setting-right">
-                    <span class="arrow">></span>
-                </div>
-            </div>
-        </div>
+            </Tab>
+        </Tabs>
 
         <!-- 主題選擇 ActionSheet -->
         <ActionSheet
@@ -41,30 +53,29 @@
             @select="onDeveloperSelect"
         />
 
-        <!-- Worker Monitor 彈窗 -->
-        <Popup
+        <!-- Worker Monitor ActionSheet -->
+        <ActionSheet
             v-model:show="workerMonitorVisible"
-            position="bottom"
-            :style="{ height: '70%' }"
-            round
+            title="Worker Pool 監控"
+            cancel-text="關閉"
         >
-            <div style="padding: 20px;">
-                <div style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;">
-                    Worker Pool 監控
-                </div>
+            <div style="padding: 20px; max-height: 70vh; overflow-y: auto;">
                 <WorkerMonitor />
             </div>
-        </Popup>
+        </ActionSheet>
     </div>
 </template>
 
 <script setup>
     import { ref, computed } from 'vue';
     import { useThemeStore } from '../stores/theme';
-    import { ActionSheet, Popup } from 'vant';
+    import { ActionSheet, Tab, Tabs } from 'vant';
     import WorkerMonitor from '../components/my/WorkerMonitor.vue';
 
     const themeStore = useThemeStore();
+    
+    // Tab 狀態管理
+    const activeTab = ref('basic');
     
     // ActionSheet 顯示狀態
     const themeSheetVisible = ref(false);
@@ -105,6 +116,11 @@
         developerSheetVisible.value = true;
     }
 
+    // Tab 切換事件
+    function onTabChange(name) {
+        console.log('切換到：', name);
+    }
+
     // 主題選擇
     function onThemeSelect(action) {
         themeStore.mode = action.value;
@@ -133,10 +149,17 @@
 
     <style scoped>
     .my-page {
+        height: 100%;
         background: var(--page-bg, #eff3f6);
-        min-height: 100%;
-        box-sizing: border-box;
+    }
+
+    .custom-tabs {
+        height: 100%;
+    }
+
+    .tab-content {
         padding: 16px;
+        min-height: 400px;
     }
 
     .setting-list {
@@ -144,6 +167,44 @@
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Vant Tabs 樣式自訂 - 與價差股利頁面一致 */
+    :deep(.van-tabs__wrap) {
+        position: sticky;
+        top: 0;
+        z-index: 99;
+    }
+
+    :deep(.van-tabs__nav) {
+        background-color: var(--van-background-color);
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: flex-start;
+        padding: 0 8px;
+    }
+
+    :deep(.van-tab) {
+        min-width: 50px;
+        padding: 0;
+        font-size: 22px;
+        line-height: 22px;
+        color: #888;
+        font-weight: 500;
+        text-align: center;
+        flex: none;
+    }
+
+    :deep(.van-tab--active) {
+        color: #222;
+        font-weight: 700;
+    }
+
+    :deep(.van-tabs__line) {
+        background-color: #FFD600;
+        height: 3px;
+        border-radius: 2px;
+        bottom: 6px;
     }
 
     .setting-item {
