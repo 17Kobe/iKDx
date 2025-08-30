@@ -127,6 +127,7 @@
             title="選擇主題"
             cancel-text="取消"
             @select="onThemeSelect"
+            class="theme-action-sheet"
         />
 
         <!-- 開發者 ActionSheet -->
@@ -282,11 +283,26 @@
     });
 
     // 主題選項
-    const themeActions = [
-        { name: '跟隨系統', value: 0 },
-        { name: '亮', value: 1 },
-        { name: '暗', value: 2 },
-    ];
+    const themeActions = computed(() => [
+        { 
+            name: '跟隨系統', 
+            value: 0,
+            color: themeStore.mode === 0 ? '#1989fa' : undefined,
+            className: themeStore.mode === 0 ? 'selected-theme' : undefined
+        },
+        { 
+            name: '亮', 
+            value: 1,
+            color: themeStore.mode === 1 ? '#1989fa' : undefined,
+            className: themeStore.mode === 1 ? 'selected-theme' : undefined
+        },
+        { 
+            name: '暗', 
+            value: 2,
+            color: themeStore.mode === 2 ? '#1989fa' : undefined,
+            className: themeStore.mode === 2 ? 'selected-theme' : undefined
+        },
+    ]);
 
     // 開發者選項
     const developerActions = [
@@ -490,13 +506,6 @@
     .tab-content {
         padding: 0 16px;
         min-height: 400px;
-    }
-
-    .setting-list {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     /* Vant Tabs 樣式自訂 - 與價差股利頁面一致 */
@@ -819,5 +828,30 @@
         flex-direction: column;
         align-items: center;
         color: white;
+    }
+
+    /* 主題選擇 ActionSheet 樣式 */
+    :deep(.theme-action-sheet .van-action-sheet__item) {
+        position: relative;
+        font-weight: 500;
+    }
+
+    /* 選中的主題項目樣式 */
+    :deep(.theme-action-sheet .van-action-sheet__item[style*="color: rgb(25, 137, 250)"]) {
+        background-color: #f0f8ff;
+        font-weight: 600;
+        border-left: 3px solid #1989fa;
+    }
+
+    /* 選中項目的對勾圖標 */
+    :deep(.theme-action-sheet .van-action-sheet__item[style*="color: rgb(25, 137, 250)"])::after {
+        content: '✓';
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #1989fa;
+        font-weight: bold;
+        font-size: 16px;
     }
 </style>
