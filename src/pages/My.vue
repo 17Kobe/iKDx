@@ -1,122 +1,22 @@
 <template>
     <div class="my-page">
         <Tabs v-model:active="activeTab" swipeable sticky @change="onTabChange" class="custom-tabs">
-            <Tab title="基本" name="basic">
-                <div class="tab-content">
-                    <!-- 登入狀態區域 -->
-                    <div v-if="!authStore.isAuthenticated" class="auth-section">
-                        <div class="login-prompt">
-                            <div class="login-icon">
-                                <Icon
-                                    icon="flowbite:user-circle-solid"
-                                    width="60"
-                                    height="60"
-                                    color="#ccc"
-                                />
-                            </div>
-                            <h3>歡迎使用 iKDx</h3>
-                            <p>登入後可同步您的股票資料</p>
-                            <Button
-                                type="primary"
-                                size="large"
-                                round
-                                block
-                                @click="showLoginSheet"
-                                style="margin-top: 16px"
-                            >
-                                立即登入
-                            </Button>
-                        </div>
-                    </div>
+            <Tab title="偏好" name="preference">
+                <PreferenceSettings 
+                    @showLogin="showLoginSheet"
+                    @showLogout="showLogoutConfirm"
+                    @showTheme="showThemeSheet"
+                />
+            </Tab>
 
-                    <!-- 已登入用戶資訊 -->
-                    <div v-else-if="authStore.isLoggedIn" class="user-section">
-                        <div class="user-info">
-                            <div class="user-avatar">
-                                <img
-                                    v-if="authStore.user?.avatar"
-                                    :src="authStore.user.avatar"
-                                    :alt="authStore.user.name"
-                                />
-                                <Icon
-                                    v-else
-                                    icon="flowbite:user-circle-solid"
-                                    width="60"
-                                    height="60"
-                                    color="#ccc"
-                                />
-                            </div>
-                            <div class="user-details">
-                                <h3>{{ authStore.user?.name || '用戶' }}</h3>
-                                <p>{{ authStore.user?.email }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 訪客模式提示 -->
-                    <div v-else-if="authStore.isGuestMode" class="guest-section">
-                        <div class="guest-info">
-                            <div class="guest-icon">
-                                <Icon
-                                    icon="flowbite:user-circle-solid"
-                                    width="60"
-                                    height="60"
-                                    color="#999"
-                                />
-                            </div>
-                            <div class="guest-details">
-                                <h3>訪客模式</h3>
-                                <p>資料僅保存在本地</p>
-                                <Button
-                                    type="primary"
-                                    size="small"
-                                    plain
-                                    @click="showLoginSheet"
-                                    style="margin-top: 8px"
-                                >
-                                    切換到登入
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="setting-list">
-                        <!-- 登出設定 -->
-                        <div
-                            v-if="authStore.isLoggedIn"
-                            class="setting-item"
-                            @click="showLogoutConfirm"
-                        >
-                            <div class="setting-left">
-                                <span class="setting-title">登出</span>
-                            </div>
-                            <div class="setting-right">
-                                <span class="arrow">></span>
-                            </div>
-                        </div>
-
-                        <!-- 主題設定 -->
-                        <div class="setting-item" @click="showThemeSheet">
-                            <div class="setting-left">
-                                <span class="setting-title">主題</span>
-                            </div>
-                            <div class="setting-right">
-                                <span class="setting-value">{{ currentThemeLabel }}</span>
-                                <span class="arrow">></span>
-                            </div>
-                        </div>
-
-                        <!-- 開發者設定 -->
-                        <div class="setting-item" @click="showDeveloperSheet">
-                            <div class="setting-left">
-                                <span class="setting-title">開發者</span>
-                            </div>
-                            <div class="setting-right">
-                                <span class="arrow">></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <Tab title="進階" name="advanced">
+                <AdvancedSettings 
+                    @showDeveloper="showDeveloperSheet"
+                    @showAppInfo="showAppInfo"
+                    @clearCache="clearCache"
+                    @showBackup="showBackup"
+                    @showExperimental="showExperimental"
+                />
             </Tab>
         </Tabs>
 
@@ -249,13 +149,15 @@
     import { ActionSheet, Tab, Tabs, Button, showDialog, showToast, Overlay, Loading } from 'vant';
     import { Icon } from '@iconify/vue';
     import WorkerMonitor from '../components/my/WorkerMonitor.vue';
+    import PreferenceSettings from '../components/my/PreferenceSettings.vue';
+    import AdvancedSettings from '../components/my/AdvancedSettings.vue';
 
     const router = useRouter();
     const themeStore = useThemeStore();
     const authStore = useAuthStore();
 
     // Tab 狀態管理
-    const activeTab = ref('basic');
+    const activeTab = ref('preference');
 
     // ActionSheet 顯示狀態
     const themeSheetVisible = ref(false);
@@ -267,20 +169,6 @@
     const isLoading = ref(false);
     const googleLoading = ref(false);
     const facebookLoading = ref(false);
-
-    // 當前主題標籤
-    const currentThemeLabel = computed(() => {
-        switch (themeStore.mode) {
-            case 0:
-                return '跟隨系統';
-            case 1:
-                return '亮';
-            case 2:
-                return '暗';
-            default:
-                return '跟隨系統';
-        }
-    });
 
     // 主題選項
     const themeActions = computed(() => [
@@ -370,14 +258,67 @@
                 workerMonitorVisible.value = true;
                 break;
             case 'info':
-                // 可以加入應用資訊邏輯
-                console.log('顯示應用資訊');
+                showAppInfo();
                 break;
             case 'clear':
-                // 可以加入清除快取邏輯
-                console.log('清除快取');
+                clearCache();
                 break;
         }
+    }
+
+    // 應用資訊
+    function showAppInfo() {
+        showDialog({
+            title: '應用資訊',
+            message: `
+應用名稱：iKDx 智能股票分析平台
+版本：v1.0.0
+構建日期：${new Date().toLocaleDateString()}
+框架：Vue 3 + Vant + Tauri
+            `.trim(),
+            showCancelButton: false,
+            confirmButtonText: '我知道了',
+        });
+    }
+
+    // 清除快取
+    function clearCache() {
+        showDialog({
+            title: '清除快取',
+            message: '確定要清除所有快取資料嗎？這將會清除本地保存的股票資料。',
+            showCancelButton: true,
+            confirmButtonText: '清除',
+            cancelButtonText: '取消',
+        })
+            .then(() => {
+                // 執行清除快取邏輯
+                localStorage.clear();
+                sessionStorage.clear();
+                showToast.success('快取已清除');
+            })
+            .catch(() => {
+                // 取消清除
+            });
+    }
+
+    // 備份與還原
+    function showBackup() {
+        showDialog({
+            title: '備份與還原',
+            message: '此功能將在未來版本中提供，敬請期待。',
+            showCancelButton: false,
+            confirmButtonText: '我知道了',
+        });
+    }
+
+    // 實驗性功能
+    function showExperimental() {
+        showDialog({
+            title: '實驗性功能',
+            message: '此功能將在未來版本中提供，敬請期待。',
+            showCancelButton: false,
+            confirmButtonText: '我知道了',
+        });
     }
 
     // Google 登入
@@ -503,11 +444,6 @@
         height: 100%;
     }
 
-    .tab-content {
-        padding: 0 16px;
-        min-height: 400px;
-    }
-
     /* Vant Tabs 樣式自訂 - 與價差股利頁面一致 */
     :deep(.van-tabs__wrap) {
         position: sticky;
@@ -544,155 +480,6 @@
         height: 3px;
         border-radius: 2px;
         bottom: 6px;
-    }
-
-    /* 登入狀態區域 */
-    .auth-section,
-    .user-section,
-    .guest-section {
-        background: white;
-        margin: 16px;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .login-prompt {
-        text-align: center;
-        padding: 40px 20px;
-    }
-
-    .login-icon {
-        margin-bottom: 16px;
-    }
-
-    .login-prompt h3 {
-        font-size: 20px;
-        font-weight: 600;
-        color: #333;
-        margin: 0 0 8px 0;
-    }
-
-    .login-prompt p {
-        color: #666;
-        margin: 0 0 16px 0;
-        font-size: 14px;
-    }
-
-    .user-info {
-        display: flex;
-        align-items: center;
-        padding: 20px;
-    }
-
-    .user-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        overflow: hidden;
-        margin-right: 16px;
-        flex-shrink: 0;
-    }
-
-    .user-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .user-details h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin: 0 0 4px 0;
-    }
-
-    .user-details p {
-        color: #666;
-        margin: 0;
-        font-size: 14px;
-    }
-
-    .guest-info {
-        display: flex;
-        align-items: center;
-        padding: 20px;
-    }
-
-    .guest-icon {
-        margin-right: 16px;
-        flex-shrink: 0;
-    }
-
-    .guest-details h3 {
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
-        margin: 0 0 4px 0;
-    }
-
-    .guest-details p {
-        color: #666;
-        margin: 0;
-        font-size: 14px;
-    }
-
-    .setting-list {
-        background: white;
-        margin: 16px;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .setting-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 20px;
-        border-bottom: 1px solid #f5f5f5;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .setting-item:last-child {
-        border-bottom: none;
-    }
-
-    .setting-item:hover {
-        background-color: #f8f9fa;
-    }
-
-    .setting-item:active {
-        background-color: #f0f1f2;
-    }
-
-    .setting-left {
-        display: flex;
-        align-items: center;
-    }
-
-    .setting-title {
-        font-size: 16px;
-        color: #333;
-        font-weight: 500;
-    }
-
-    .setting-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .setting-value {
-        font-size: 14px;
-        color: #666;
-    }
-
-    .arrow {
-        font-size: 16px;
-        color: #c8c9cc;
-        font-weight: bold;
     }
 
     /* 登入 ActionSheet 樣式 */
