@@ -293,7 +293,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     transition: background-color 0.3s;
-    min-height: 32px;
+    min-height: 28px;
 }
 
 .header-cell:hover {
@@ -333,7 +333,7 @@ export default {
 .body-cell {
     font-size: 12px;
     color: var(--van-text-color);
-    min-height: 32px;
+    min-height: 20px;
     display: flex;
     align-items: center;
 }
