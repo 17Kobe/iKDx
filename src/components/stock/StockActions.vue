@@ -10,25 +10,22 @@
             <div class="sheet-content">
                 <div class="sheet-header">
                     <h3>{{ stockInfo.name }} ({{ stockInfo.code }})</h3>
-                    <p class="current-price">現價：NT$ {{ currentPrice ? currentPrice.toLocaleString() : '--' }}</p>
+                    <p class="current-price">
+                        現價：NT$ {{ currentPrice ? currentPrice.toLocaleString() : '--' }}
+                    </p>
                 </div>
 
                 <!-- 新增交易按鈕 -->
                 <div class="add-trade-section">
-                    <Button 
-                        type="primary" 
-                        block 
-                        @click="showAddTrade"
-                        icon="plus"
-                    >
+                    <Button type="primary" block @click="showAddTrade" icon="plus">
                         新增交易記錄
                     </Button>
                 </div>
 
                 <!-- 交易記錄列表 -->
                 <div class="trade-list">
-                    <div 
-                        v-for="trade in tradeRecords" 
+                    <div
+                        v-for="trade in tradeRecords"
                         :key="trade.id"
                         class="trade-item"
                         @click="editTrade(trade)"
@@ -39,11 +36,15 @@
                             </div>
                             <div class="trade-details">
                                 <p class="trade-date">{{ formatDate(trade.date) }}</p>
-                                <p class="trade-amount">{{ trade.shares }}股 @ NT$ {{ trade.price }}</p>
+                                <p class="trade-amount">
+                                    {{ trade.shares }}股 @ NT$ {{ trade.price }}
+                                </p>
                             </div>
                         </div>
                         <div class="trade-total">
-                            <span class="total-amount">NT$ {{ (trade.shares * trade.price).toLocaleString() }}</span>
+                            <span class="total-amount"
+                                >NT$ {{ (trade.shares * trade.price).toLocaleString() }}</span
+                            >
                         </div>
                     </div>
 
@@ -65,8 +66,12 @@
                     </div>
                     <div class="summary-item">
                         <span class="label">損益</span>
-                        <span class="value" :class="{ profit: profitLoss > 0, loss: profitLoss < 0 }">
-                            {{ profitLoss > 0 ? '+' : '' }}NT$ {{ Math.abs(profitLoss).toLocaleString() }}
+                        <span
+                            class="value"
+                            :class="{ profit: profitLoss > 0, loss: profitLoss < 0 }"
+                        >
+                            {{ profitLoss > 0 ? '+' : '' }}NT$
+                            {{ Math.abs(profitLoss).toLocaleString() }}
                         </span>
                     </div>
                 </div>
@@ -118,7 +123,9 @@
                             <p>到價通知提醒</p>
                         </div>
                         <div class="strategy-status">
-                            <span v-if="strategies.priceAlert.enabled" class="enabled">{{ strategies.priceAlert.alerts.length }}個提醒</span>
+                            <span v-if="strategies.priceAlert.enabled" class="enabled"
+                                >{{ strategies.priceAlert.alerts.length }}個提醒</span
+                            >
                             <span v-else class="disabled">未設定</span>
                         </div>
                     </div>
@@ -194,6 +201,14 @@
                             <p>匯出交易記錄</p>
                         </div>
                     </div>
+
+                    <div class="more-item danger" @click="deleteStockData">
+                        <div class="more-icon">🗑️</div>
+                        <div class="more-info">
+                            <h4>刪除</h4>
+                            <p>清除股票相關數據</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </ActionSheet>
@@ -210,7 +225,13 @@
                     label="交易類型"
                     readonly
                     @click="showTradeTypeSelector"
-                    :placeholder="tradeForm.type === 'buy' ? '買入' : tradeForm.type === 'sell' ? '賣出' : '請選擇'"
+                    :placeholder="
+                        tradeForm.type === 'buy'
+                            ? '買入'
+                            : tradeForm.type === 'sell'
+                              ? '賣出'
+                              : '請選擇'
+                    "
                 />
                 <Field
                     v-model="tradeForm.shares"
@@ -224,11 +245,7 @@
                     type="number"
                     placeholder="請輸入成交價格"
                 />
-                <Field
-                    v-model="tradeForm.date"
-                    label="交易日期"
-                    type="date"
-                />
+                <Field v-model="tradeForm.date" label="交易日期" type="date" />
                 <Field
                     v-model="tradeForm.note"
                     label="備註"
@@ -236,15 +253,9 @@
                     type="textarea"
                     rows="2"
                 />
-                
+
                 <div class="form-actions">
-                    <Button
-                        type="primary"
-                        size="large"
-                        block
-                        @click="saveTrade"
-                        :loading="saving"
-                    >
+                    <Button type="primary" size="large" block @click="saveTrade" :loading="saving">
                         {{ editingTrade ? '更新' : '新增' }}
                     </Button>
                     <Button
@@ -275,15 +286,21 @@
 
 <script setup>
     import { ref, computed, onMounted } from 'vue';
-    import { ActionSheet, Button, Field, showDialog, showToast } from 'vant';
+    import { ActionSheet, Button, Field, showDialog, showToast, showSuccessToast, showFailToast } from 'vant';
+    import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
+    import { deleteUserStockInfo } from '@/services/user-stock-info-service.js';
+    import { getDB } from '@/lib/idb.js';
 
     // Props
     const props = defineProps({
         stockInfo: {
             type: Object,
-            required: true
-        }
+            required: true,
+        },
     });
+
+    // Store
+    const userStockListStore = useUserStockListStore();
 
     // 響應式數據
     const tradeSheetVisible = ref(false);
@@ -312,7 +329,7 @@
         shares: '',
         price: '',
         date: new Date().toISOString().split('T')[0],
-        note: ''
+        note: '',
     });
 
     // 交易記錄 (根據股票ID獲取)
@@ -323,42 +340,40 @@
         stopLoss: {
             enabled: false,
             price: 0,
-            percentage: 10
+            percentage: 10,
         },
         takeProfit: {
             enabled: false,
             price: 0,
-            percentage: 15
+            percentage: 15,
         },
         priceAlert: {
             enabled: false,
-            alerts: []
+            alerts: [],
         },
         autoInvest: {
             enabled: false,
             amount: 10000,
-            frequency: 'monthly'
-        }
+            frequency: 'monthly',
+        },
     });
 
     // 交易類型選項
     const tradeTypeActions = [
         { name: '買入', value: 'buy' },
-        { name: '賣出', value: 'sell' }
+        { name: '賣出', value: 'sell' },
     ];
 
     // 計算屬性
     const totalShares = computed(() => {
         return tradeRecords.value.reduce((total, trade) => {
-            return trade.type === 'buy' 
-                ? total + trade.shares 
-                : total - trade.shares;
+            return trade.type === 'buy' ? total + trade.shares : total - trade.shares;
         }, 0);
     });
 
     const averageCost = computed(() => {
         const buyTrades = tradeRecords.value.filter(t => t.type === 'buy');
-        const totalCost = buyTrades.reduce((sum, trade) => sum + (trade.shares * trade.price), 0);
+        const totalCost = buyTrades.reduce((sum, trade) => sum + trade.shares * trade.price, 0);
         const totalBuyShares = buyTrades.reduce((sum, trade) => sum + trade.shares, 0);
         return totalBuyShares > 0 ? totalCost / totalBuyShares : 0;
     });
@@ -367,9 +382,9 @@
         if (!currentPrice.value || totalShares.value === 0) return 0;
         const currentValue = totalShares.value * currentPrice.value;
         const buyTrades = tradeRecords.value.filter(t => t.type === 'buy');
-        const totalCost = buyTrades.reduce((sum, trade) => sum + (trade.shares * trade.price), 0);
+        const totalCost = buyTrades.reduce((sum, trade) => sum + trade.shares * trade.price, 0);
         const sellTrades = tradeRecords.value.filter(t => t.type === 'sell');
-        const sellRevenue = sellTrades.reduce((sum, trade) => sum + (trade.shares * trade.price), 0);
+        const sellRevenue = sellTrades.reduce((sum, trade) => sum + trade.shares * trade.price, 0);
         return currentValue + sellRevenue - totalCost;
     });
 
@@ -377,7 +392,7 @@
     function loadTradeRecords() {
         if (!props.stockInfo) return;
         const stockId = props.stockInfo.code || props.stockInfo.id;
-        
+
         const savedRecords = localStorage.getItem(`tradeRecords_${stockId}`);
         if (savedRecords) {
             tradeRecords.value = JSON.parse(savedRecords);
@@ -391,7 +406,7 @@
                         shares: 1000,
                         price: 550,
                         date: '2024-01-15',
-                        note: '首次買入'
+                        note: '首次買入',
                     },
                     {
                         id: 2,
@@ -399,8 +414,8 @@
                         shares: 500,
                         price: 520,
                         date: '2024-02-10',
-                        note: '加碼買入'
-                    }
+                        note: '加碼買入',
+                    },
                 ];
             } else {
                 tradeRecords.value = [];
@@ -462,7 +477,7 @@
             shares: '',
             price: currentPrice.value > 0 ? currentPrice.value.toString() : '',
             date: new Date().toISOString().split('T')[0],
-            note: ''
+            note: '',
         };
         addTradeSheetVisible.value = true;
     }
@@ -475,7 +490,7 @@
             shares: trade.shares.toString(),
             price: trade.price.toString(),
             date: trade.date,
-            note: trade.note || ''
+            note: trade.note || '',
         };
         tradeSheetVisible.value = false;
         addTradeSheetVisible.value = true;
@@ -495,7 +510,7 @@
     // 儲存交易
     function saveTrade() {
         if (!tradeForm.value.type || !tradeForm.value.shares || !tradeForm.value.price) {
-            showToast.fail('請填寫必要欄位');
+            showFailToast('請填寫必要欄位');
             return;
         }
 
@@ -507,7 +522,7 @@
                 shares: parseInt(tradeForm.value.shares),
                 price: parseFloat(tradeForm.value.price),
                 date: tradeForm.value.date,
-                note: tradeForm.value.note
+                note: tradeForm.value.note,
             };
 
             if (editingTrade.value) {
@@ -516,18 +531,18 @@
                 if (index !== -1) {
                     tradeRecords.value[index] = { ...tradeRecords.value[index], ...tradeData };
                 }
-                showToast.success('交易記錄已更新');
+                showSuccessToast('交易記錄已更新');
             } else {
                 // 新增交易
                 tradeData.id = Date.now();
                 tradeRecords.value.push(tradeData);
-                showToast.success('交易記錄已新增');
+                showSuccessToast('交易記錄已新增');
             }
 
             addTradeSheetVisible.value = false;
             saveTradeRecords(); // 保存到本地存儲
         } catch (error) {
-            showToast.fail('操作失敗');
+            showFailToast('操作失敗');
         } finally {
             saving.value = false;
         }
@@ -546,7 +561,7 @@
                 const index = tradeRecords.value.findIndex(t => t.id === editingTrade.value.id);
                 if (index !== -1) {
                     tradeRecords.value.splice(index, 1);
-                    showToast.success('交易記錄已刪除');
+                    showSuccessToast('交易記錄已刪除');
                     addTradeSheetVisible.value = false;
                     saveTradeRecords(); // 保存到本地存儲
                 }
@@ -588,7 +603,7 @@
 
     function addToWatchlist() {
         isInWatchlist.value = !isInWatchlist.value;
-        showToast.success(isInWatchlist.value ? '已加入關注' : '已移除關注');
+        showSuccessToast(isInWatchlist.value ? '已加入關注' : '已移除關注');
         moreSheetVisible.value = false;
     }
 
@@ -600,11 +615,57 @@
         showToast('匯出功能開發中');
     }
 
+    // 刪除股票相關數據
+    async function deleteStockData() {
+        if (!props.stockInfo) return;
+
+        const stockId = props.stockInfo.code || props.stockInfo.id;
+        const stockName = props.stockInfo.name || stockId;
+
+        // 二次確認對話框
+        showDialog({
+            title: '確認刪除',
+            message: `確定要刪除「${stockName}」的所有相關數據嗎？\n\n此操作將清除：\n• Pinia Store 中的股票資料\n• IndexedDB 中的交易記錄\n• IndexedDB 中的價格數據\n\n此操作無法復原！`,
+            showCancelButton: true,
+            confirmButtonText: '刪除',
+            confirmButtonColor: '#ee0a24',
+            cancelButtonText: '取消',
+        })
+            .then(async () => {
+                try {
+                    // 1. 從 Pinia Store 中移除股票
+                    const result = await userStockListStore.removeStockFromList(stockId);
+                    if (!result.success) {
+                        showFailToast(`從股票清單移除失敗：${result.message}`);
+                        return;
+                    }
+
+                    // 2. 從 IndexedDB 中刪除 user-stock-info
+                    await deleteUserStockInfo(stockId);
+
+                    // 3. 從 IndexedDB 中刪除 user-stock-data
+                    const db = await getDB();
+                    await db.delete('user-stock-data', stockId);
+
+                    // 關閉 ActionSheet
+                    moreSheetVisible.value = false;
+
+                    showSuccessToast(`已刪除「${stockName}」的所有相關數據`);
+                } catch (error) {
+                    console.error('刪除股票數據失敗:', error);
+                    showFailToast('刪除失敗，請稍後再試');
+                }
+            })
+            .catch(() => {
+                // 用戶取消刪除
+            });
+    }
+
     // 暴露方法供父組件調用
     defineExpose({
         showTradeSheet,
         showStrategySheet,
-        showMoreSheet
+        showMoreSheet,
     });
 
     // 組件掛載時載入資料
@@ -778,6 +839,25 @@
     .strategy-item:hover,
     .more-item:hover {
         background: #e9ecef;
+    }
+
+    .more-item.danger {
+        border-top: 1px solid #fee;
+        margin-top: 8px;
+        padding-top: 20px;
+    }
+
+    .more-item.danger:hover {
+        background: #ffebee;
+    }
+
+    .more-item.danger .more-info h4 {
+        color: #f44336;
+    }
+
+    .more-item.danger .more-info p {
+        color: #f44336;
+        opacity: 0.8;
     }
 
     .strategy-icon,
