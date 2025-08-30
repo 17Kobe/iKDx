@@ -1,11 +1,8 @@
 <template>
-    <div class="dividend-page">
+    <div class="asset-page">
         <Tabs v-model:active="activeTab" swipeable sticky @change="onTabChange" class="custom-tabs">
-            <Tab title="資產" name="price-diff">
-                <div class="tab-content">
-                    <h3>資產內容</h3>
-                    <p>這裡是資產相關的內容</p>
-                </div>
+            <Tab title="資產" name="asset">
+                <AssetOverview />
             </Tab>
             <Tab title="收支" name="income">
                 <div class="tab-content">
@@ -13,7 +10,7 @@
                     <p>這裡是收支相關的內容</p>
                 </div>
             </Tab>
-            <Tab title="預算" name="dividend">
+            <Tab title="預算" name="budget">
                 <div class="tab-content">
                     <h3>預算內容</h3>
                     <p>這裡是預算相關的內容</p>
@@ -26,9 +23,10 @@
 <script setup>
     import { ref } from 'vue';
     import { Tab, Tabs } from 'vant';
+    import AssetOverview from '../components/asset/AssetOverview.vue';
 
     // Tab 狀態管理
-    const activeTab = ref('price-diff');
+    const activeTab = ref('asset');
 
     // Tab 切換事件
     const onTabChange = name => {
@@ -37,7 +35,7 @@
 </script>
 
 <style scoped>
-    .dividend-page {
+    .asset-page {
         height: 100%;
         background: var(--page-bg, #eff3f6);
     }
