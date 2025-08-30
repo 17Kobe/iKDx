@@ -71,10 +71,12 @@
                                     </SwipeItem>
                                     <SwipeItem class="indicator-content">
                                         <div class="rsi-indicator">
-                                            <div class="rsi-value">{{ stock.rsi }}</div>
-                                            <div class="rsi-trend" :class="getRSIClass(stock.rsi)">
-                                                {{ getRSIStatus(stock.rsi) }}
-                                            </div>
+                                            <RsiChart
+                                                :width="120"
+                                                :height="60"
+                                                :stock-id="stock.id"
+                                                @rsi-click="onRsiClick"
+                                            />
                                         </div>
                                     </SwipeItem>
                                 </Swipe>
@@ -136,6 +138,15 @@
             @select="onKdjActionSelect"
         />
 
+        <!-- RSI ActionSheet -->
+        <ActionSheet
+            v-model:show="showRsiActionSheet"
+            :actions="rsiActions"
+            cancel-text="取消"
+            title="RSI 指標詳情"
+            @select="onRsiActionSelect"
+        />
+
         <!-- Stock Actions Component -->
         <StockActions
             ref="stockActionsRef"
@@ -158,6 +169,7 @@
     } from 'vant';
     import StockSearch from '@/components/stock/StockSearch.vue';
     import KdjChart from '@/components/stock/KdjChart.vue';
+    import RsiChart from '@/components/stock/RsiChart.vue';
     import StockName from '@/components/stock/StockName.vue';
     import StockActions from '@/components/stock/StockActions.vue';
     import { useEventBus, useEventListener } from '@vueuse/core';
@@ -177,7 +189,9 @@
     const indicatorSwipeRef = ref(null);
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
     const showKdjActionSheet = ref(false);
+    const showRsiActionSheet = ref(false);
     const currentKdjData = ref(null);
+    const currentRsiData = ref(null);
     const stockActionsRef = ref(null);
     const selectedStock = ref(null);
     // ...已移除 PullRefresh 相關狀態...
@@ -345,6 +359,56 @@
             showToast('J 值 > 80 超買，< 20 超賣');
         }
     }
+
+    // RSI 指標動態數據
+    const rsiActions = computed(() => {
+        if (!currentRsiData.value) return [];
+
+        return [
+            {
+                name: `RSI 值: ${currentRsiData.value.rsi}`,
+                subname: '相對強弱指標',
+                color: currentRsiData.value.rsi > 70 ? '#e74c3c' : 
+                       currentRsiData.value.rsi < 30 ? '#27ae60' : '#3498db',
+            },
+            {
+                name: `狀態: ${currentRsiData.value.status}`,
+                subname: 'RSI > 70 超買，< 30 超賣',
+                color: currentRsiData.value.rsi > 70 ? '#e74c3c' : 
+                       currentRsiData.value.rsi < 30 ? '#27ae60' : '#3498db',
+            },
+            {
+                name: `更新時間: ${currentRsiData.value.date}`,
+                subname: '週線資料最後更新',
+                color: '#999',
+            },
+        ];
+    });
+
+    // RSI 點擊處理
+    function onRsiClick(rsiData) {
+        currentRsiData.value = rsiData;
+        showRsiActionSheet.value = true;
+    }
+
+    // RSI ActionSheet 選擇處理
+    function onRsiActionSelect(action) {
+        console.log('RSI ActionSheet 選擇:', action.name);
+        showRsiActionSheet.value = false;
+
+        // 可以在這裡加上更多處理邏輯，比如顯示詳細分析
+        if (action.name.includes('RSI 值')) {
+            showToast('RSI 是衡量股價強弱的動量指標');
+        } else if (action.name.includes('狀態')) {
+            if (currentRsiData.value.rsi > 70) {
+                showToast('RSI > 70 表示超買，可能有回調風險');
+            } else if (currentRsiData.value.rsi < 30) {
+                showToast('RSI < 30 表示超賣，可能有反彈機會');
+            } else {
+                showToast('RSI 在正常範圍內，趨勢相對穩定');
+            }
+        }
+    }
     function getKDClass(kd) {
         if (kd > 80) return 'kd-overbought';
         if (kd < 20) return 'kd-oversold';
@@ -354,19 +418,6 @@
     function getKDStatus(kd) {
         if (kd > 80) return '超買';
         if (kd < 20) return '超賣';
-        return '正常';
-    }
-
-    // RSI 指標樣式和狀態
-    function getRSIClass(rsi) {
-        if (rsi > 70) return 'rsi-overbought';
-        if (rsi < 30) return 'rsi-oversold';
-        return 'rsi-normal';
-    }
-
-    function getRSIStatus(rsi) {
-        if (rsi > 70) return '超買';
-        if (rsi < 30) return '超賣';
         return '正常';
     }
 
