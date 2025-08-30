@@ -285,7 +285,7 @@ export default {
 
 .header-cell {
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--van-text-color);
     cursor: pointer;
     user-select: none;
@@ -302,7 +302,7 @@ export default {
 
 .sort-icon {
     margin-left: 4px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--van-text-color-3);
     transition: color 0.3s;
 }
@@ -331,7 +331,7 @@ export default {
 }
 
 .body-cell {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--van-text-color);
     min-height: 20px;
     display: flex;
@@ -360,11 +360,11 @@ export default {
     .header-cell,
     .body-cell {
         padding: 8px 6px;
-        font-size: 13px;
+        font-size: 14px;
     }
     
     .cell-content {
-        font-size: 13px;
+        font-size: 14px;
     }
 }
 </style>

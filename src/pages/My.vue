@@ -1,29 +1,28 @@
 <template>
     <div class="my-page">
-        <Tabs 
-            v-model:active="activeTab" 
-            swipeable 
-            sticky
-            @change="onTabChange"
-            class="custom-tabs"
-        >
+        <Tabs v-model:active="activeTab" swipeable sticky @change="onTabChange" class="custom-tabs">
             <Tab title="基本" name="basic">
                 <div class="tab-content">
                     <!-- 登入狀態區域 -->
                     <div v-if="!authStore.isAuthenticated" class="auth-section">
                         <div class="login-prompt">
                             <div class="login-icon">
-                                <Icon icon="flowbite:user-circle-solid" width="60" height="60" color="#ccc" />
+                                <Icon
+                                    icon="flowbite:user-circle-solid"
+                                    width="60"
+                                    height="60"
+                                    color="#ccc"
+                                />
                             </div>
                             <h3>歡迎使用 iKDx</h3>
                             <p>登入後可同步您的股票資料</p>
-                            <Button 
-                                type="primary" 
-                                size="large" 
-                                round 
+                            <Button
+                                type="primary"
+                                size="large"
+                                round
                                 block
                                 @click="showLoginSheet"
-                                style="margin-top: 16px;"
+                                style="margin-top: 16px"
                             >
                                 立即登入
                             </Button>
@@ -34,17 +33,17 @@
                     <div v-else-if="authStore.isLoggedIn" class="user-section">
                         <div class="user-info">
                             <div class="user-avatar">
-                                <img 
-                                    v-if="authStore.user?.avatar" 
-                                    :src="authStore.user.avatar" 
+                                <img
+                                    v-if="authStore.user?.avatar"
+                                    :src="authStore.user.avatar"
                                     :alt="authStore.user.name"
                                 />
-                                <Icon 
-                                    v-else 
-                                    icon="flowbite:user-circle-solid" 
-                                    width="60" 
-                                    height="60" 
-                                    color="#ccc" 
+                                <Icon
+                                    v-else
+                                    icon="flowbite:user-circle-solid"
+                                    width="60"
+                                    height="60"
+                                    color="#ccc"
                                 />
                             </div>
                             <div class="user-details">
@@ -58,17 +57,22 @@
                     <div v-else-if="authStore.isGuestMode" class="guest-section">
                         <div class="guest-info">
                             <div class="guest-icon">
-                                <Icon icon="flowbite:user-circle-solid" width="60" height="60" color="#999" />
+                                <Icon
+                                    icon="flowbite:user-circle-solid"
+                                    width="60"
+                                    height="60"
+                                    color="#999"
+                                />
                             </div>
                             <div class="guest-details">
                                 <h3>訪客模式</h3>
                                 <p>資料僅保存在本地</p>
-                                <Button 
-                                    type="primary" 
-                                    size="small" 
+                                <Button
+                                    type="primary"
+                                    size="small"
                                     plain
                                     @click="showLoginSheet"
-                                    style="margin-top: 8px;"
+                                    style="margin-top: 8px"
                                 >
                                     切換到登入
                                 </Button>
@@ -78,7 +82,11 @@
 
                     <div class="setting-list">
                         <!-- 登出設定 -->
-                        <div v-if="authStore.isLoggedIn" class="setting-item" @click="showLogoutConfirm">
+                        <div
+                            v-if="authStore.isLoggedIn"
+                            class="setting-item"
+                            @click="showLogoutConfirm"
+                        >
                             <div class="setting-left">
                                 <span class="setting-title">登出</span>
                             </div>
@@ -86,7 +94,7 @@
                                 <span class="arrow">></span>
                             </div>
                         </div>
-                        
+
                         <!-- 主題設定 -->
                         <div class="setting-item" @click="showThemeSheet">
                             <div class="setting-left">
@@ -97,7 +105,7 @@
                                 <span class="arrow">></span>
                             </div>
                         </div>
-                        
+
                         <!-- 開發者設定 -->
                         <div class="setting-item" @click="showDeveloperSheet">
                             <div class="setting-left">
@@ -136,7 +144,7 @@
             title="Worker Pool 監控"
             cancel-text="關閉"
         >
-            <div style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+            <div style="padding: 20px; max-height: 70vh; overflow-y: auto">
                 <WorkerMonitor />
             </div>
         </ActionSheet>
@@ -168,7 +176,12 @@
                         :loading="googleLoading"
                         @click="loginWithGoogle"
                     >
-                        <Icon icon="logos:google-icon" width="20" height="20" style="margin-right: 8px;" />
+                        <Icon
+                            icon="logos:google-icon"
+                            width="20"
+                            height="20"
+                            style="margin-right: 8px"
+                        />
                         使用 Google 帳號登入
                     </Button>
 
@@ -180,7 +193,12 @@
                         :loading="facebookLoading"
                         @click="loginWithFacebook"
                     >
-                        <Icon icon="logos:facebook" width="20" height="20" style="margin-right: 8px;" />
+                        <Icon
+                            icon="logos:facebook"
+                            width="20"
+                            height="20"
+                            style="margin-right: 8px"
+                        />
                         使用 Facebook 帳號登入
                     </Button>
 
@@ -234,10 +252,10 @@
     const router = useRouter();
     const themeStore = useThemeStore();
     const authStore = useAuthStore();
-    
+
     // Tab 狀態管理
     const activeTab = ref('basic');
-    
+
     // ActionSheet 顯示狀態
     const themeSheetVisible = ref(false);
     const developerSheetVisible = ref(false);
@@ -252,10 +270,14 @@
     // 當前主題標籤
     const currentThemeLabel = computed(() => {
         switch (themeStore.mode) {
-            case 0: return '跟隨系統';
-            case 1: return '亮';
-            case 2: return '暗';
-            default: return '跟隨系統';
+            case 0:
+                return '跟隨系統';
+            case 1:
+                return '亮';
+            case 2:
+                return '暗';
+            default:
+                return '跟隨系統';
         }
     });
 
@@ -263,14 +285,14 @@
     const themeActions = [
         { name: '跟隨系統', value: 0 },
         { name: '亮', value: 1 },
-        { name: '暗', value: 2 }
+        { name: '暗', value: 2 },
     ];
 
     // 開發者選項
     const developerActions = [
         { name: 'Worker Pool 監控', value: 'worker' },
         { name: '應用資訊', value: 'info' },
-        { name: '清除快取', value: 'clear' }
+        { name: '清除快取', value: 'clear' },
     ];
 
     // 顯示主題選擇
@@ -300,16 +322,16 @@
             message: '確定要登出嗎？',
             showCancelButton: true,
             confirmButtonText: '登出',
-            cancelButtonText: '取消'
+            cancelButtonText: '取消',
         })
-        .then(() => {
-            // 執行登出
-            authStore.logout();
-            showToast.success('已登出');
-        })
-        .catch(() => {
-            // 取消登出
-        });
+            .then(() => {
+                // 執行登出
+                authStore.logout();
+                showToast.success('已登出');
+            })
+            .catch(() => {
+                // 取消登出
+            });
     }
 
     // Tab 切換事件
@@ -326,7 +348,7 @@
     // 開發者選項
     function onDeveloperSelect(action) {
         developerSheetVisible.value = false;
-        
+
         switch (action.value) {
             case 'worker':
                 workerMonitorVisible.value = true;
@@ -350,7 +372,7 @@
 
             // 初始化 Google OAuth
             const response = await initGoogleAuth();
-            
+
             if (response.success) {
                 await authStore.loginWithGoogle(response.token);
                 showToast.success('Google 登入成功！');
@@ -375,7 +397,7 @@
 
             // 初始化 Facebook OAuth
             const response = await initFacebookAuth();
-            
+
             if (response.success) {
                 await authStore.loginWithFacebook(response.token);
                 showToast.success('Facebook 登入成功！');
@@ -400,7 +422,7 @@
 
     // Google OAuth 初始化 (模擬)
     async function initGoogleAuth() {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             setTimeout(() => {
                 resolve({
                     success: true,
@@ -409,8 +431,8 @@
                         id: 'google-123',
                         name: '測試用戶',
                         email: 'test@gmail.com',
-                        avatar: ''
-                    }
+                        avatar: '',
+                    },
                 });
             }, 1500);
         });
@@ -418,7 +440,7 @@
 
     // Facebook OAuth 初始化 (模擬)
     async function initFacebookAuth() {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             setTimeout(() => {
                 resolve({
                     success: true,
@@ -427,8 +449,8 @@
                         id: 'fb-123',
                         name: '測試用戶',
                         email: 'test@facebook.com',
-                        avatar: ''
-                    }
+                        avatar: '',
+                    },
                 });
             }, 1500);
         });
@@ -440,7 +462,7 @@
             title: '服務條款',
             message: '這裡是服務條款內容...',
             showCancelButton: false,
-            confirmButtonText: '我知道了'
+            confirmButtonText: '我知道了',
         });
     }
 
@@ -450,12 +472,12 @@
             title: '隱私政策',
             message: '這裡是隱私政策內容...',
             showCancelButton: false,
-            confirmButtonText: '我知道了'
+            confirmButtonText: '我知道了',
         });
     }
 </script>
 
-    <style scoped>
+<style scoped>
     .my-page {
         height: 100%;
         background: var(--page-bg, #eff3f6);
@@ -466,7 +488,7 @@
     }
 
     .tab-content {
-        padding: 16px;
+        padding: 0 16px;
         min-height: 400px;
     }
 
@@ -509,18 +531,16 @@
     }
 
     :deep(.van-tabs__line) {
-        background-color: #FFD600;
+        background-color: #ffd600;
         height: 3px;
         border-radius: 2px;
         bottom: 6px;
     }
 
-    .tab-content {
-        padding-bottom: 20px;
-    }
-
     /* 登入狀態區域 */
-    .auth-section, .user-section, .guest-section {
+    .auth-section,
+    .user-section,
+    .guest-section {
         background: white;
         margin: 16px;
         border-radius: 12px;
@@ -800,4 +820,4 @@
         align-items: center;
         color: white;
     }
-    </style>
+</style>
