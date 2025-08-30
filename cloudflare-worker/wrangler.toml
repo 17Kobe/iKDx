@@ -1,0 +1,36 @@
+name = "ikdx-auth-worker"
+main = "index.js"
+compatibility_date = "2023-12-01"
+
+# 環境變數
+[env.production.vars]
+ENVIRONMENT = "production"
+JWT_SECRET = "your-production-jwt-secret-key"
+GOOGLE_CLIENT_ID = "your-google-client-id"
+FACEBOOK_APP_ID = "your-facebook-app-id"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+JWT_SECRET = "your-staging-jwt-secret-key"
+GOOGLE_CLIENT_ID = "your-google-client-id"
+FACEBOOK_APP_ID = "your-facebook-app-id"
+
+# D1 資料庫配置（如果使用 Cloudflare D1）
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "ikdx-auth-db"
+database_id = "your-d1-database-id"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "ikdx-auth-db-staging"
+database_id = "your-d1-database-staging-id"
+
+# KV 存儲配置（可選，用於 session 或快取）
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-staging-id"

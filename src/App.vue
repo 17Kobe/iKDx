@@ -7,7 +7,12 @@
                 </transition>
             </router-view>
         </div>
-        <Tabbar v-model="active" @change="onTabChange" class="custom-tabbar">
+        <Tabbar 
+            v-if="route.path !== '/login'" 
+            v-model="active" 
+            @change="onTabChange" 
+            class="custom-tabbar"
+        >
             <TabbarItem>
                 <div class="tabbar-icon-wrap">
                     <svg
@@ -19,7 +24,7 @@
                         <g transform="scale(0.9,0.9) translate(3,3)">
                             <path
                                 :fill="active === 0 ? '#fae54c' : 'none'"
-                                stroke= '#959698'
+                                stroke="#959698"
                                 stroke-width="1"
                                 d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937l-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39l3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36z"
                             />
@@ -38,7 +43,7 @@
                     >
                         <g
                             fill="none"
-                            stroke= '#959698'
+                            stroke="#959698"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="1"
@@ -48,9 +53,10 @@
                                 :fill="active === 1 ? '#fae54c' : 'none'"
                                 d="M9.5 3h5A1.5 1.5 0 0 1 16 4.5A3.5 3.5 0 0 1 12.5 8h-1A3.5 3.5 0 0 1 8 4.5A1.5 1.5 0 0 1 9.5 3"
                             />
-                            <path 
-                            :fill="active === 1 ? '#fae54c' : 'none'"
-                            d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4" />
+                            <path
+                                :fill="active === 1 ? '#fae54c' : 'none'"
+                                d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4"
+                            />
                         </g>
                     </svg>
 
@@ -73,13 +79,13 @@
                             cy="13"
                             r="9"
                             :fill="active === 2 ? '#fae54c' : 'none'"
-                            stroke= '#959698'
+                            stroke="#959698"
                             stroke-width="1"
                         />
                         <!-- 圓餅分割區塊（同步放大並下移） -->
                         <path
                             :fill="active === 2 ? '#fae54c' : 'none'"
-                            stroke= '#959698'
+                            stroke="#959698"
                             stroke-width="1"
                             d="M12,13 L12,4 A9,9 0 0,1 21,13 Z"
                         />
@@ -101,7 +107,7 @@
                             cy="10"
                             r="6"
                             :fill="active === 3 ? '#fae54c' : 'none'"
-                            stroke= '#959698'
+                            stroke="#959698"
                             stroke-width="1"
                         />
                         <!-- 身體：橢圓形，寬高更像人 -->
@@ -111,7 +117,7 @@
                             rx="8"
                             ry="3"
                             :fill="active === 3 ? '#fae54c' : 'none'"
-                            stroke= '#959698'
+                            stroke="#959698"
                             stroke-width="1"
                         />
                     </svg>
@@ -129,10 +135,13 @@
     import TabbarProgress from '@/components/TabbarProgress.vue';
     import { useGlobalStore } from '@/stores/global-store.js';
     import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
+    import { useAuthStore } from '@/stores/auth.js';
     import axios from '@/lib/axios';
 
     // 取得 globalStore
     const globalStore = useGlobalStore();
+    // 取得 authStore
+    const authStore = useAuthStore();
     // 取得 CNN 指數資料
     async function fetchGlobal() {
         try {
@@ -155,9 +164,13 @@
     }
 
     // const { height } = useWindowSize();
-    onMounted(() => {
+    onMounted(async () => {
+        // await initDB(); // 初始化 IndexedDB
         fetchGlobal();
         loadUserStockList(); // 從 idb 載入到 pinia
+
+        // 初始化認證狀態
+        authStore.initializeAuth();
     });
 
     import { usePreferredDark } from '@vueuse/core';
@@ -176,7 +189,11 @@
         () => route.path,
         val => {
             const idx = tabRoutes.indexOf(val);
-            if (idx !== -1) active.value = idx;
+            // 只有當路徑在 tabRoutes 中時才更新 active
+            if (idx !== -1) {
+                active.value = idx;
+            }
+            // 如果是登入頁面，不更新 active，保持當前狀態
             if (firstLoad.value && !firstWatch) firstLoad.value = false;
             firstWatch = false;
         },
