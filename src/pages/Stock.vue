@@ -146,7 +146,7 @@
 </template>
 
 <script setup>
-    import { ref, reactive, onMounted, computed, watch } from 'vue';
+    import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
     import {
         FloatingBubble,
         Swipe,
@@ -382,17 +382,23 @@
 
     function onBuyStock(stock) {
         selectedStock.value = stock;
-        stockActionsRef.value?.showTradeSheet();
+        nextTick(() => {
+            stockActionsRef.value?.showTradeSheet();
+        });
     }
 
     function onStrategyStock(stock) {
         selectedStock.value = stock;
-        stockActionsRef.value?.showStrategySheet();
+        nextTick(() => {
+            stockActionsRef.value?.showStrategySheet();
+        });
     }
 
     function onOtherAction(stock) {
         selectedStock.value = stock;
-        stockActionsRef.value?.showMoreSheet();
+        nextTick(() => {
+            stockActionsRef.value?.showMoreSheet();
+        });
     }
 
     function onRemoveStock(stock) {
