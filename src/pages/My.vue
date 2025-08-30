@@ -22,7 +22,7 @@
                                 size="large" 
                                 round 
                                 block
-                                @click="goToLogin"
+                                @click="showLoginSheet"
                                 style="margin-top: 16px;"
                             >
                                 立即登入
@@ -67,7 +67,7 @@
                                     type="primary" 
                                     size="small" 
                                     plain
-                                    @click="goToLogin"
+                                    @click="showLoginSheet"
                                     style="margin-top: 8px;"
                                 >
                                     切換到登入
@@ -140,6 +140,85 @@
                 <WorkerMonitor />
             </div>
         </ActionSheet>
+
+        <!-- 登入 ActionSheet -->
+        <ActionSheet
+            v-model:show="loginSheetVisible"
+            title="登入 iKDx"
+            cancel-text="取消"
+            class="login-action-sheet"
+        >
+            <div class="login-sheet-content">
+                <!-- Logo 區域 -->
+                <div class="login-logo-section">
+                    <div class="app-logo">
+                        <Icon icon="flowbite:star-solid" width="50" height="50" color="#FFD600" />
+                    </div>
+                    <h2 class="app-title">智能股票分析平台</h2>
+                    <p class="login-subtitle">登入後可同步您的股票資料到雲端</p>
+                </div>
+
+                <!-- 登入按鈕區域 -->
+                <div class="login-buttons">
+                    <!-- Google 登入 -->
+                    <Button
+                        class="login-btn google-btn"
+                        size="large"
+                        block
+                        :loading="googleLoading"
+                        @click="loginWithGoogle"
+                    >
+                        <Icon icon="logos:google-icon" width="20" height="20" style="margin-right: 8px;" />
+                        使用 Google 帳號登入
+                    </Button>
+
+                    <!-- Facebook 登入 -->
+                    <Button
+                        class="login-btn facebook-btn"
+                        size="large"
+                        block
+                        :loading="facebookLoading"
+                        @click="loginWithFacebook"
+                    >
+                        <Icon icon="logos:facebook" width="20" height="20" style="margin-right: 8px;" />
+                        使用 Facebook 帳號登入
+                    </Button>
+
+                    <!-- 分隔線 -->
+                    <div class="login-divider">
+                        <span>或</span>
+                    </div>
+
+                    <!-- 繼續訪客模式 -->
+                    <Button
+                        class="guest-continue-btn"
+                        size="large"
+                        block
+                        plain
+                        @click="continueAsGuest"
+                    >
+                        繼續使用訪客模式
+                    </Button>
+                </div>
+
+                <!-- 服務條款 -->
+                <div class="login-terms">
+                    <p class="terms-text">
+                        登入即表示您同意我們的
+                        <a href="#" @click.prevent="showTerms">服務條款</a>
+                        和
+                        <a href="#" @click.prevent="showPrivacy">隱私政策</a>
+                    </p>
+                </div>
+            </div>
+        </ActionSheet>
+
+        <!-- 載入中遮罩 -->
+        <Overlay v-model:show="isLoading" class="loading-overlay">
+            <div class="loading-content">
+                <Loading size="24px" vertical>登入中...</Loading>
+            </div>
+        </Overlay>
     </div>
 </template>
 
@@ -148,7 +227,7 @@
     import { useRouter } from 'vue-router';
     import { useThemeStore } from '../stores/theme';
     import { useAuthStore } from '../stores/auth';
-    import { ActionSheet, Tab, Tabs, Button, showDialog, showToast } from 'vant';
+    import { ActionSheet, Tab, Tabs, Button, showDialog, showToast, Overlay, Loading } from 'vant';
     import { Icon } from '@iconify/vue';
     import WorkerMonitor from '../components/my/WorkerMonitor.vue';
 
@@ -163,6 +242,12 @@
     const themeSheetVisible = ref(false);
     const developerSheetVisible = ref(false);
     const workerMonitorVisible = ref(false);
+    const loginSheetVisible = ref(false);
+
+    // 登入載入狀態
+    const isLoading = ref(false);
+    const googleLoading = ref(false);
+    const facebookLoading = ref(false);
 
     // 當前主題標籤
     const currentThemeLabel = computed(() => {
@@ -198,7 +283,12 @@
         developerSheetVisible.value = true;
     }
 
-    // 跳轉到登入頁面
+    // 顯示登入 ActionSheet
+    function showLoginSheet() {
+        loginSheetVisible.value = true;
+    }
+
+    // 跳轉到登入頁面 (保留備用)
     function goToLogin() {
         router.push('/login');
     }
@@ -250,6 +340,118 @@
                 console.log('清除快取');
                 break;
         }
+    }
+
+    // Google 登入
+    async function loginWithGoogle() {
+        try {
+            googleLoading.value = true;
+            isLoading.value = true;
+
+            // 初始化 Google OAuth
+            const response = await initGoogleAuth();
+            
+            if (response.success) {
+                await authStore.loginWithGoogle(response.token);
+                showToast.success('Google 登入成功！');
+                loginSheetVisible.value = false;
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            console.error('Google 登入失敗:', error);
+            showToast.fail('Google 登入失敗，請稍後再試');
+        } finally {
+            googleLoading.value = false;
+            isLoading.value = false;
+        }
+    }
+
+    // Facebook 登入
+    async function loginWithFacebook() {
+        try {
+            facebookLoading.value = true;
+            isLoading.value = true;
+
+            // 初始化 Facebook OAuth
+            const response = await initFacebookAuth();
+            
+            if (response.success) {
+                await authStore.loginWithFacebook(response.token);
+                showToast.success('Facebook 登入成功！');
+                loginSheetVisible.value = false;
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            console.error('Facebook 登入失敗:', error);
+            showToast.fail('Facebook 登入失敗，請稍後再試');
+        } finally {
+            facebookLoading.value = false;
+            isLoading.value = false;
+        }
+    }
+
+    // 繼續訪客模式
+    function continueAsGuest() {
+        loginSheetVisible.value = false;
+        showToast('繼續使用訪客模式');
+    }
+
+    // Google OAuth 初始化 (模擬)
+    async function initGoogleAuth() {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    success: true,
+                    token: 'mock-google-token',
+                    user: {
+                        id: 'google-123',
+                        name: '測試用戶',
+                        email: 'test@gmail.com',
+                        avatar: ''
+                    }
+                });
+            }, 1500);
+        });
+    }
+
+    // Facebook OAuth 初始化 (模擬)
+    async function initFacebookAuth() {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    success: true,
+                    token: 'mock-facebook-token',
+                    user: {
+                        id: 'fb-123',
+                        name: '測試用戶',
+                        email: 'test@facebook.com',
+                        avatar: ''
+                    }
+                });
+            }, 1500);
+        });
+    }
+
+    // 顯示服務條款
+    function showTerms() {
+        showDialog({
+            title: '服務條款',
+            message: '這裡是服務條款內容...',
+            showCancelButton: false,
+            confirmButtonText: '我知道了'
+        });
+    }
+
+    // 顯示隱私政策
+    function showPrivacy() {
+        showDialog({
+            title: '隱私政策',
+            message: '這裡是隱私政策內容...',
+            showCancelButton: false,
+            confirmButtonText: '我知道了'
+        });
     }
 </script>
 
@@ -462,5 +664,140 @@
         font-size: 16px;
         color: #c8c9cc;
         font-weight: bold;
+    }
+
+    /* 登入 ActionSheet 樣式 */
+    :deep(.login-action-sheet .van-action-sheet__header) {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffb347 100%);
+        color: #8b4513;
+        font-weight: 600;
+    }
+
+    :deep(.login-action-sheet .van-action-sheet__cancel) {
+        color: #666;
+    }
+
+    .login-sheet-content {
+        padding: 20px;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffb347 100%);
+        min-height: 400px;
+    }
+
+    .login-logo-section {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #8b4513;
+    }
+
+    .app-logo {
+        margin-bottom: 12px;
+    }
+
+    .app-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        color: #8b4513;
+    }
+
+    .login-subtitle {
+        font-size: 14px;
+        margin: 0;
+        opacity: 0.8;
+        color: #8b4513;
+    }
+
+    .login-buttons {
+        margin-bottom: 20px;
+    }
+
+    .login-btn {
+        margin-bottom: 12px;
+        height: 48px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .google-btn {
+        background: #fff;
+        border: 1px solid #dadce0;
+        color: #3c4043;
+    }
+
+    .google-btn:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .facebook-btn {
+        background: #1877f2;
+        border: 1px solid #1877f2;
+        color: white;
+    }
+
+    .facebook-btn:hover {
+        background: #166fe5;
+    }
+
+    .login-divider {
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+    }
+
+    .login-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(139, 69, 19, 0.3);
+    }
+
+    .login-divider span {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffb347 100%);
+        padding: 0 16px;
+        color: #8b4513;
+        font-size: 14px;
+    }
+
+    .guest-continue-btn {
+        color: #8b4513;
+        border-color: rgba(139, 69, 19, 0.4);
+        height: 44px;
+        border-radius: 12px;
+    }
+
+    .guest-continue-btn:hover {
+        background: rgba(139, 69, 19, 0.1);
+    }
+
+    .login-terms {
+        text-align: center;
+    }
+
+    .terms-text {
+        font-size: 12px;
+        color: rgba(139, 69, 19, 0.7);
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .terms-text a {
+        color: #8b4513;
+        text-decoration: underline;
+        font-weight: 500;
+    }
+
+    .loading-overlay {
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    .loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: white;
     }
     </style>
