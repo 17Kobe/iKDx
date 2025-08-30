@@ -135,6 +135,13 @@
             title="KDJ 指標詳情"
             @select="onKdjActionSelect"
         />
+
+        <!-- Stock Actions Component -->
+        <StockActions
+            ref="stockActionsRef"
+            :stock-info="selectedStock"
+            v-if="selectedStock"
+        />
     </div>
 </template>
 
@@ -152,6 +159,7 @@
     import StockSearch from '@/components/stock/StockSearch.vue';
     import KdjChart from '@/components/stock/KdjChart.vue';
     import StockName from '@/components/stock/StockName.vue';
+    import StockActions from '@/components/stock/StockActions.vue';
     import { useEventBus, useEventListener } from '@vueuse/core';
     import { useUserStockListStore } from '@/stores/user-stock-list-store.js';
     import draggable from 'vuedraggable/src/vuedraggable';
@@ -170,6 +178,8 @@
     const currentIndicator = ref(0); // 0: 週KD, 1: RSI
     const showKdjActionSheet = ref(false);
     const currentKdjData = ref(null);
+    const stockActionsRef = ref(null);
+    const selectedStock = ref(null);
     // ...已移除 PullRefresh 相關狀態...
 
 
@@ -371,15 +381,18 @@
     }
 
     function onBuyStock(stock) {
-        showToast(`買賣 ${stock.name}`);
+        selectedStock.value = stock;
+        stockActionsRef.value?.showTradeSheet();
     }
 
     function onStrategyStock(stock) {
-        showToast(`${stock.name} 策略設定`);
+        selectedStock.value = stock;
+        stockActionsRef.value?.showStrategySheet();
     }
 
     function onOtherAction(stock) {
-        showToast(`${stock.name} 其他功能`);
+        selectedStock.value = stock;
+        stockActionsRef.value?.showMoreSheet();
     }
 
     function onRemoveStock(stock) {
