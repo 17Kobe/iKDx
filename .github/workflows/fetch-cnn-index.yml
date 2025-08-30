@@ -3,7 +3,7 @@ name: Fetch CNN Index
 
 on:
     schedule:
-        - cron: '0 8 * * *' # 每天 UTC+8 上午8點，台灣時間（UTC+8）要加上 8 小時 → 16:00（下午4點）。
+        - cron: '0 8 * * 1-5' # 星期一到星期五 UTC+8 上午8點，台灣時間（UTC+8）要加上 8 小時 → 16:00（下午4點）。
     workflow_dispatch:
 
 jobs:
